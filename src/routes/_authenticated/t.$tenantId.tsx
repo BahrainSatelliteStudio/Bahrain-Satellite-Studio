@@ -443,7 +443,10 @@ function LayoutEditor(c: Ctx) {
   const [lay, setLay] = useState<AppLayout>(() => resolveLayout(c.t.layout));
   useEffect(() => {
     if (typeof BroadcastChannel === "undefined") return;
-    const ch = new BroadcastChannel(previewChannel(c.t.slug)); ch.postMessage(lay); ch.close();
+    const ch = new BroadcastChannel(previewChannel(c.t.slug));
+    ch.onmessage = (event) => { if (event.data?.type === "request-layout") ch.postMessage(lay); };
+    ch.postMessage(lay);
+    return () => ch.close();
   }, [lay, c.t.slug]);
   const upd = (i: number, p: Partial<SectionCfg>) => setLay({ ...lay, sections: lay.sections.map((s, j) => (j === i ? { ...s, ...p } : s)) });
   const move = (i: number, d: number) => { const a = [...lay.sections]; const j = i + d; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j]!, a[i]!]; setLay({ ...lay, sections: a }); };

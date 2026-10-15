@@ -23,7 +23,7 @@ export type AppLayout = { template: TemplateKey; sections: SectionCfg[] };
 
 export function resolveLayout(raw: unknown): AppLayout {
   const r = (raw ?? {}) as Partial<AppLayout>;
-  const template = TEMPLATES.some((t) => t[0] === r.template) ? (r.template as TemplateKey) : "classic";
+  const template = TEMPLATES.some((t) => t[0] === r.template) ? (r.template as TemplateKey) : "sidebar";
   const given = Array.isArray(r.sections) ? r.sections.filter((s) => SECTION_KEYS.includes(s?.key)) : [];
   const keys = [...given.map((s) => s.key), ...SECTION_KEYS.filter((k) => !given.some((s) => s.key === k))];
   const sections = keys.map((key) => {

@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Tv, Film, Clapperboard, Heart, LogOut, Search, MessageCircle, Send, Phone, ChevronRight, Loader2, Settings, Play, History, Smartphone } from "lucide-react";
+import { Tv, Film, Clapperboard, Heart, LogOut, Search, MessageCircle, Send, Phone, ChevronRight, Loader2, Settings, Play, History, Smartphone, House } from "lucide-react";
 import { xtreamApi, m3uFetch, macCall } from "@/lib/iptv.functions";
 import { prefs, t as str, type AppSettings, type Lang } from "@/lib/player/prefs";
 import { VideoPlayer } from "./VideoPlayer";
 import { resolveLayout, previewChannel, ICONS, type AppLayout, type SectionCfg } from "@/lib/layout";
+import { Button } from "@/components/ui/button";
+import { PREVIEW_CATALOG } from "@/lib/player/demo";
 
 export type TenantConfig = {
   slug: string; name: string; logo_url: string | null; primary_color: string; accent_color: string;
@@ -78,9 +80,13 @@ export function PlayerApp({ cfg, preview = false }: { cfg: TenantConfig; preview
   useTvNav();
   const [layout, setLayout] = useState<AppLayout>(() => resolveLayout(cfg.layout));
   useEffect(() => {
+    setLayout(resolveLayout(cfg.layout));
+  }, [cfg.layout]);
+  useEffect(() => {
     if (!preview || typeof BroadcastChannel === "undefined") return;
     const ch = new BroadcastChannel(previewChannel(cfg.slug));
-    ch.onmessage = (e) => setLayout(resolveLayout(e.data));
+    ch.onmessage = (e) => { if (e.data?.type !== "request-layout") setLayout(resolveLayout(e.data)); };
+    ch.postMessage({ type: "request-layout" });
     return () => ch.close();
   }, [preview, cfg.slug]);
 
@@ -94,8 +100,8 @@ export function PlayerApp({ cfg, preview = false }: { cfg: TenantConfig; preview
   }, [key]);
 
   const L = str(settings.lang);
-  const theme = settings.theme === "auto" ? cfg.theme : settings.theme;
-  const style = { "--primary": cfg.primary_color, "--ring": cfg.primary_color, "--accent": cfg.accent_color, "--primary-foreground": "oklch(0.99 0 0)" } as React.CSSProperties;
+  const theme = preview || settings.theme === "auto" ? cfg.theme : settings.theme;
+  const style = { "--primary": cfg.primary_color, "--ring": cfg.primary_color, "--accent": cfg.accent_color } as React.CSSProperties;
   const themeClass = theme === "blue" ? "theme-blue" : theme === "cinema" ? "theme-cinema" : theme === "bhsat" ? "theme-bhsat" : "";
 
   const saveSettings = (s: AppSettings) => { setSettings(s); prefs.saveSettings(cfg.slug, s); };
@@ -157,24 +163,24 @@ export function PlayerApp({ cfg, preview = false }: { cfg: TenantConfig; preview
   }
 
   return (
-    <Shell cfg={cfg} style={style} themeClass={themeClass} lang={settings.lang}
+    <Shell cfg={cfg} style={style} themeClass={themeClass} lang={settings.lang} sidebar={!!session && layout.template === "sidebar"}
       onSettings={() => setShowSettings(true)}
       onLogout={session && !preview ? () => { localStorage.removeItem(key); setSession(null); } : undefined}>
       {showSettings && <SettingsDialog cfg={cfg} settings={settings} onSave={saveSettings} onClose={() => setShowSettings(false)} />}
       {session
-        ? <Browser cfg={cfg} session={session} settings={settings} layout={layout} />
+        ? <Browser cfg={cfg} session={session} settings={settings} layout={layout} onSettings={() => setShowSettings(true)} />
         : <Login cfg={cfg} onDone={(s) => { localStorage.setItem(key, JSON.stringify(s)); setSession(s); }} />}
     </Shell>
   );
 }
 
-function Shell({ cfg, style, themeClass, lang, children, onLogout, onSettings }: {
+function Shell({ cfg, style, themeClass, lang, children, onLogout, onSettings, sidebar = false }: {
   cfg: TenantConfig; style: React.CSSProperties; themeClass: string; lang: Lang;
-  children: React.ReactNode; onLogout?: (() => void) | undefined; onSettings?: (() => void) | undefined;
+  children: React.ReactNode; onLogout?: (() => void) | undefined; onSettings?: (() => void) | undefined; sidebar?: boolean;
 }) {
   return (
     <div style={style} dir={lang === "ar" ? "rtl" : "ltr"} className={`min-h-screen bg-background text-foreground ${themeClass}`}>
-      <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b bg-background/90 px-4 py-3 backdrop-blur">
+      <header className={`sticky top-0 z-30 flex items-center justify-between gap-3 border-b bg-background/90 px-4 py-3 backdrop-blur ${sidebar ? "md:hidden" : ""}`}>
         <div className="flex items-center gap-3">
           {cfg.logo_url ? <img src={cfg.logo_url} alt={cfg.name} className="h-10 w-10 rounded-xl object-cover" /> : <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-extrabold text-primary-foreground">{cfg.name[0]}</div>}
           <span className="text-lg font-extrabold">{cfg.name}</span>
@@ -187,7 +193,7 @@ function Shell({ cfg, style, themeClass, lang, children, onLogout, onSettings }:
           {onLogout && <button data-nav aria-label="خروج" onClick={onLogout} className="rounded-lg bg-secondary p-2"><LogOut className="h-5 w-5" /></button>}
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-4 pb-16 pt-4">{children}</main>
+      <main className={sidebar ? "mx-auto max-w-[1600px] px-4 pb-8 pt-4 md:px-5" : "mx-auto max-w-7xl px-4 pb-16 pt-4"}>{children}</main>
     </div>
   );
 }
@@ -354,7 +360,9 @@ function Announcements({ cfg }: { cfg: TenantConfig }) {
 }
 
 const DEMO_CATS: Record<Kind, string[]> = { live: ["رياضة", "أخبار", "أطفال", "وثائقي", "منوعات"], movie: ["أكشن", "دراما", "كوميديا", "رعب"], series: ["خليجي", "تركي", "أجنبي", "كرتون"] };
-const demoItems = (kind: Kind, cat: string): Item[] => Array.from({ length: 18 }, (_, i) => ({ id: `${kind}-${cat}-${i}`, name: `${cat} ${i + 1}`, kind, url: "" }));
+const demoItems = (kind: Kind, cat?: string): Item[] => kind === "live"
+  ? Array.from({ length: 12 }, (_, i) => ({ id: `live-${cat}-${i}`, name: `${cat ?? "قناة"} ${i + 1}`, kind, url: "" }))
+  : PREVIEW_CATALOG[kind].filter((item) => !cat || item.category === cat).map((item, i) => ({ id: `${kind}-${i}-${item.name}`, name: item.name, logo: item.logo, kind, url: "" }));
 
 const SIZE: Record<SectionCfg["size"], { grid: string; row: string }> = {
   sm: { grid: "grid-cols-3 sm:grid-cols-5 lg:grid-cols-8", row: "w-28" },
@@ -362,15 +370,16 @@ const SIZE: Record<SectionCfg["size"], { grid: string; row: string }> = {
   lg: { grid: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4", row: "w-56" },
 };
 
-function Browser({ cfg, session, settings, layout }: { cfg: TenantConfig; session: Session; settings: AppSettings; layout: AppLayout }) {
+function Browser({ cfg, session, settings, layout, onSettings }: { cfg: TenantConfig; session: Session; settings: AppSettings; layout: AppLayout; onSettings: () => void }) {
   const xt = useServerFn(xtreamApi); const m3 = useServerFn(m3uFetch); const mc = useServerFn(macCall);
   const L = str(settings.lang);
   const full = session.type === "xtream" || session.type === "demo";
   const tabs = layout.sections.filter((s) => s.visible && s.key !== "continue" && (full || s.key === "live" || s.key === "fav")) as (SectionCfg & { key: Kind | "fav" })[];
-  const contSec = layout.sections.find((s) => s.key === "continue")!;
+  const contSec = layout.sections.find((s) => s.key === "continue") ?? resolveLayout(null).sections[0];
+  const [screen, setScreen] = useState<"home" | "browse" | "continue">("home");
   const [tab, setTab] = useState<Kind | "fav">(tabs[0]?.key ?? "live");
-  useEffect(() => { if (tabs.length && !tabs.some((t) => t.key === tab)) setTab(tabs[0]!.key); }, [tabs, tab]);
-  const sec = tabs.find((t) => t.key === tab) ?? layout.sections.find((s) => s.key === tab)!;
+  useEffect(() => { const first = tabs[0]; if (first && !tabs.some((t) => t.key === tab)) setTab(first.key); }, [tabs, tab]);
+  const sec = tabs.find((t) => t.key === tab) ?? resolveLayout(null).sections.find((s) => s.key === tab) ?? { key: "live", visible: false, label: "", icon: "tv", view: "grid", size: "md", limit: 0, hiddenCats: [] } satisfies SectionCfg;
   const [cats, setCats] = useState<Cat[]>([]);
   const [cat, setCat] = useState<Cat | null>(null);
   const [items, setItems] = useState<Item[]>([]);
@@ -379,7 +388,7 @@ function Browser({ cfg, session, settings, layout }: { cfg: TenantConfig; sessio
   const [q, setQ] = useState("");
   const [playing, setPlaying] = useState<Playing | null>(null);
   const [m3uAll, setM3uAll] = useState<{ name: string; group: string; logo: string; url: string }[] | null>(null);
-  const favKey = `iptv:${cfg.slug}:fav`;
+  const favKey = `iptv:${cfg.slug}:${session.type === "demo" ? "preview:" : ""}fav`;
   const [favs, setFavs] = useState<Item[]>([]);
   const [history, setHistory] = useState(() => prefs.progress(cfg.slug));
   useEffect(() => { try { setFavs(JSON.parse(localStorage.getItem(favKey) || "[]")); } catch {} }, [favKey]);
@@ -469,39 +478,43 @@ function Browser({ cfg, session, settings, layout }: { cfg: TenantConfig; sessio
   const visCats = cats.filter((c) => !hidden.has(c.name?.trim().toLowerCase()));
   const shownCats = q && !cat ? visCats.filter((c) => c.name?.toLowerCase().includes(q.toLowerCase())) : visCats;
   const showItems = tab === "fav" || cat;
-  const historyList = Object.entries(history).sort((a, b) => b[1].at - a[1].at).slice(0, contSec.limit || 12);
+  const historyList = Object.entries(history).sort((a, b) => b[1].at - a[1].at).slice(0, contSec?.limit || 12);
   const tpl = layout.template;
   const sz = SIZE[sec.size];
 
   const nav = (
-    <nav className={tpl === "sidebar" ? "flex shrink-0 flex-col gap-2 md:sticky md:top-4 md:w-52 md:self-start max-md:flex-row max-md:overflow-x-auto"
+    <nav aria-label="أقسام التطبيق" className={tpl === "sidebar" ? "flex shrink-0 flex-col gap-1 md:sticky md:top-4 md:w-60 md:self-start max-md:flex-row max-md:overflow-x-auto"
       : tpl === "cinema" ? "fixed inset-x-0 bottom-0 z-30 flex justify-around border-t bg-card/95 px-2 py-2 backdrop-blur"
       : "flex gap-2 overflow-x-auto"}>
+      {tpl === "sidebar" && <div className="mb-5 hidden min-h-24 items-center justify-center gap-3 md:flex">{cfg.logo_url && <img src={cfg.logo_url} alt={cfg.name} className="max-h-24 max-w-full object-contain" />}{!cfg.logo_url && <h1 className="text-center text-2xl font-extrabold text-primary">{cfg.name}</h1>}</div>}
+      <Button data-nav variant="ghost" onClick={() => setScreen("home")} className={`h-auto shrink-0 justify-start gap-3 rounded-lg border px-4 py-4 ${screen === "home" ? "border-primary text-primary" : "border-border"}`}><House />الرئيسية</Button>
       {tabs.map((tb) => {
-        const Icon = ICONS[tb.icon] ?? Tv; const on = tab === tb.key;
+        const Icon = ICONS[tb.icon] ?? Tv; const on = screen === "browse" && tab === tb.key;
         return tpl === "cinema"
-          ? <button data-nav key={tb.key} onClick={() => setTab(tb.key)} className={`flex flex-1 flex-col items-center gap-1 rounded-xl py-1.5 text-xs font-bold ${on ? "text-primary" : "text-muted-foreground"}`}><Icon className="h-6 w-6" />{tb.label}</button>
-          : <button data-nav key={tb.key} onClick={() => setTab(tb.key)} className={`flex shrink-0 items-center gap-2 rounded-xl px-5 py-3 font-bold transition ${on ? "bg-primary text-primary-foreground" : "bg-secondary"}`}><Icon className="h-5 w-5" />{tb.label}</button>;
+          ? <Button variant="ghost" data-nav key={tb.key} onClick={() => { setTab(tb.key); setScreen("browse"); }} className={`h-auto flex-1 flex-col gap-1 py-1.5 text-xs font-bold ${on ? "text-primary" : "text-muted-foreground"}`}><Icon />{tb.label}</Button>
+          : <Button variant="ghost" data-nav key={tb.key} onClick={() => { setTab(tb.key); setScreen("browse"); }} className={`h-auto shrink-0 justify-start gap-3 rounded-lg border px-4 py-4 font-bold ${on ? "border-primary bg-primary/10 text-primary" : "border-border bg-card"}`}><Icon />{tb.label}</Button>;
       })}
+      {contSec?.visible && <Button data-nav variant="ghost" onClick={() => setScreen("continue")} className={`h-auto shrink-0 justify-start gap-3 rounded-lg border px-4 py-4 ${screen === "continue" ? "border-primary text-primary" : "border-border"}`}><History />{contSec.label}</Button>}
+      {tpl === "sidebar" && <Button data-nav variant="ghost" onClick={onSettings} className="h-auto shrink-0 justify-start gap-3 rounded-lg border px-4 py-4"><Settings />{L.settings}</Button>}
     </nav>
   );
 
   const card = (it: Item, extra = "") => {
     const fav = favs.some((f) => f.id === it.id && f.kind === it.kind);
     return (
-      <div key={it.kind + it.id} className={`group relative overflow-hidden rounded-2xl border bg-card transition hover:border-primary focus-within:border-primary ${extra}`}>
-        <button data-nav onClick={() => play(it)} className="block w-full text-start focus:outline-none">
+      <div key={it.kind + it.id} className={`group relative overflow-hidden rounded-lg border border-primary/40 bg-card transition hover:border-primary focus-within:border-primary ${extra}`}>
+        <Button variant="ghost" data-nav onClick={() => play(it)} className="block h-auto w-full whitespace-normal rounded-none p-0 text-start hover:bg-card focus:outline-none">
           <div className={`flex items-center justify-center bg-secondary ${it.kind === "live" ? "aspect-video" : "aspect-[2/3]"}`}>
-            {it.logo ? <img src={it.logo} alt="" loading="lazy" className="h-full w-full object-contain" onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} /> : <Tv className="h-8 w-8 text-muted-foreground" />}
+            {it.logo ? <img src={it.logo} alt={it.name} loading="lazy" className="h-full w-full object-cover" /> : <Tv className="h-8 w-8 text-muted-foreground" />}
           </div>
           <p className="line-clamp-2 p-2 text-sm font-bold">{it.name}</p>
-        </button>
-        {it.kind !== "episode" && <button data-nav aria-label="مفضلة" onClick={() => toggleFav(it)} className="absolute end-2 top-2 rounded-full bg-background/80 p-1.5"><Heart className={`h-4 w-4 ${fav ? "fill-primary text-primary" : ""}`} /></button>}
+        </Button>
+        {it.kind !== "episode" && <Button size="icon" variant="ghost" data-nav aria-label={`مفضلة ${it.name}`} onClick={() => toggleFav(it)} className="absolute end-2 top-2 h-7 w-7 rounded-full bg-background/80"><Heart className={`h-4 w-4 ${fav ? "fill-primary text-primary" : ""}`} /></Button>}
       </div>
     );
   };
 
-  const ContIcon = ICONS[contSec.icon] ?? History;
+  const ContIcon = ICONS[contSec?.icon ?? "history"] ?? History;
   const body = (
     <div className="min-w-0 flex-1 space-y-4">
       <div className="flex items-center gap-2">
@@ -509,7 +522,7 @@ function Browser({ cfg, session, settings, layout }: { cfg: TenantConfig; sessio
         <div className="relative flex-1"><Search className="absolute start-3 top-3.5 h-5 w-5 text-muted-foreground" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder={L.search} className={`${field} ps-11`} /></div>
       </div>
 
-      {contSec.visible && !showItems && !q && historyList.length > 0 && (
+      {contSec?.visible && !showItems && !q && historyList.length > 0 && (
         <section className="space-y-2">
           <h2 className="flex items-center gap-2 text-lg font-extrabold"><ContIcon className="h-5 w-5 text-primary" />{contSec.label}</h2>
           <div className="flex gap-3 overflow-x-auto pb-2">
@@ -555,11 +568,34 @@ function Browser({ cfg, session, settings, layout }: { cfg: TenantConfig; sessio
     </div>
   );
 
+  const homeSections = layout.sections.filter((s) => s.visible && (s.key === "movie" || s.key === "series"));
+  const home = (
+    <div className="min-w-0 flex-1 space-y-5">
+      <div className="flex items-center justify-between border-b pb-3"><h2 className="font-extrabold">{cfg.name}</h2><span className="text-xs text-muted-foreground">v{cfg.latest_version}</span></div>
+      {homeSections.map((s) => {
+        const kind = s.key as "movie" | "series";
+        const hiddenCategories = new Set(s.hiddenCats.map((name) => name.trim().toLowerCase()));
+        const entries = session.type === "demo" ? demoItems(kind).filter((item) => {
+          const category = PREVIEW_CATALOG[kind].find((entry) => entry.name === item.name)?.category;
+          return !hiddenCategories.has(category?.toLowerCase() ?? "");
+        }).slice(0, s.limit || 2000) : [];
+        return <section key={s.key} aria-label={s.label} className="space-y-3">
+          <div className="flex items-center justify-between"><h2 className="text-xl font-extrabold">{s.label}</h2><Button variant="ghost" size="sm" onClick={() => { setTab(kind); setScreen("browse"); }}>عرض الكل<ChevronRight /></Button></div>
+          {entries.length > 0 ? <div className={s.view === "row" ? "flex gap-3 overflow-x-auto pb-2" : `grid gap-3 ${SIZE[s.size].grid}`}>{entries.map((item) => card(item, s.view === "row" ? `${SIZE[s.size].row} shrink-0` : ""))}</div>
+            : <Button variant="outline" className="h-24 w-full" onClick={() => { setTab(kind); setScreen("browse"); }}>{session.type === "demo" ? L.noContent : s.label}</Button>}
+        </section>;
+      })}
+      {!homeSections.length && <p className="py-12 text-center text-muted-foreground">لا توجد أقسام معروضة في الرئيسية</p>}
+    </div>
+  );
+  const continuation = <section className="min-w-0 flex-1 space-y-3"><h2 className="text-xl font-extrabold">{contSec?.label}</h2>{historyList.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{historyList.map(([id, item]) => card({ id, name: item.title, ...(item.logo ? { logo: item.logo } : {}), url: item.url, kind: "movie" }))}</div> : <p className="py-12 text-center text-muted-foreground">لا توجد مشاهدة سابقة</p>}</section>;
+  const content = screen === "home" ? home : screen === "continue" ? continuation : tabs.length ? body : <p className="py-12 text-center text-muted-foreground">كل الأقسام مخفية</p>;
+
   return (
     <div className={`space-y-4 ${tpl === "cinema" ? "pb-24" : ""}`}>
       {playing && <VideoPlayer src={playing.src} title={playing.title} slug={cfg.slug} itemId={playing.itemId} logo={playing.logo} onClose={() => setPlaying(null)} />}
       <Announcements cfg={cfg} />
-      {tpl === "sidebar" ? <div className="flex gap-4 max-md:flex-col">{nav}{body}</div> : <>{nav}{body}</>}
+      {tpl === "sidebar" ? <div className="flex gap-6 max-md:flex-col">{nav}{content}</div> : <>{nav}{content}</>}
     </div>
   );
 }
