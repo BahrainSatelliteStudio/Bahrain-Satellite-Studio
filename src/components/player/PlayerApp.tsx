@@ -8,7 +8,7 @@ import { VideoPlayer } from "./VideoPlayer";
 
 export type TenantConfig = {
   slug: string; name: string; logo_url: string | null; primary_color: string; accent_color: string;
-  theme: "default" | "blue" | "cinema";
+  theme: "default" | "blue" | "cinema" | "bhsat";
   support_whatsapp: string | null; support_telegram: string | null; support_phone: string | null;
   latest_version: string; min_version: string; update_url: string | null;
   sources: { id: string; type: string; name: string }[];
@@ -84,7 +84,7 @@ export function PlayerApp({ cfg }: { cfg: TenantConfig }) {
   const L = str(settings.lang);
   const theme = settings.theme === "auto" ? cfg.theme : settings.theme;
   const style = { "--primary": cfg.primary_color, "--ring": cfg.primary_color, "--accent": cfg.accent_color, "--primary-foreground": "oklch(0.99 0 0)" } as React.CSSProperties;
-  const themeClass = theme === "blue" ? "theme-blue" : theme === "cinema" ? "theme-cinema" : "";
+  const themeClass = theme === "blue" ? "theme-blue" : theme === "cinema" ? "theme-cinema" : theme === "bhsat" ? "theme-bhsat" : "";
 
   const saveSettings = (s: AppSettings) => { setSettings(s); prefs.saveSettings(cfg.slug, s); };
 
@@ -212,10 +212,10 @@ function SettingsDialog({ cfg, settings, onSave, onClose }: { cfg: TenantConfig;
             <div className="space-y-1">
               <label className="text-sm font-bold">{L.theme}</label>
               <div className="grid grid-cols-4 gap-2">
-                {(["auto", "default", "blue", "cinema"] as const).map((th) => (
+                {(["auto", "default", "blue", "cinema", "bhsat"] as const).map((th) => (
                   <button key={th} data-nav onClick={() => onSave({ ...settings, theme: th })}
                     className={`rounded-xl border py-2 text-xs font-bold ${settings.theme === th ? "border-primary bg-primary text-primary-foreground" : "bg-secondary"}`}>
-                    {{ auto: L.themeAuto, default: L.themeDefault, blue: L.themeBlue, cinema: L.themeCinema }[th]}
+                    {{ auto: L.themeAuto, default: L.themeDefault, blue: L.themeBlue, cinema: L.themeCinema, bhsat: L.themeBhsat }[th]}
                   </button>
                 ))}
               </div>

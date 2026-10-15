@@ -168,6 +168,23 @@ body { font-family: 'Tajawal', system-ui, sans-serif; }
   --border: oklch(0.26 0.015 40);
   --input: oklch(0.24 0.015 40);
 }
+/* ثيم Bahrain Satellite: ذهبي #FBBD23 على كحلي غامق #14181F */
+.theme-bhsat {
+  --background: oklch(0.185 0.015 260);
+  --foreground: oklch(0.97 0.003 95);
+  --card: oklch(0.235 0.015 260);
+  --card-foreground: oklch(0.97 0.003 95);
+  --primary: oklch(0.84 0.155 85);
+  --primary-foreground: oklch(0.185 0.015 260);
+  --accent: oklch(0.75 0.135 80);
+  --accent-foreground: oklch(0.185 0.015 260);
+  --secondary: oklch(0.29 0.02 260);
+  --secondary-foreground: oklch(0.97 0.003 95);
+  --muted-foreground: oklch(0.7 0.02 260);
+  --border: oklch(0.32 0.02 260);
+  --input: oklch(0.3 0.02 260);
+  --ring: oklch(0.84 0.155 85);
+}
 /* تصميم سينما: ملصقات أكبر وزوايا أنعم */
 .theme-cinema .poster-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 .theme-cinema img { filter: saturate(1.08); }

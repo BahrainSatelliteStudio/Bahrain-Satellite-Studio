@@ -2,7 +2,7 @@
 export type Progress = { t: number; d: number; title: string; logo?: string | undefined; url: string; at: number };
 export type AppSettings = {
   pin: string;            // رقم حماية الإعدادات (افتراضي 0000)
-  theme: "auto" | "default" | "blue" | "cinema"; // auto = حسب اختيار الزبون من لوحته
+  theme: "auto" | "default" | "blue" | "cinema" | "bhsat"; // auto = حسب اختيار الزبون من لوحته
   lang: "ar" | "en";
 };
 
@@ -54,7 +54,7 @@ const STR = {
     pinTitle: "أدخل رقم PIN", pinWrong: "رقم PIN غير صحيح", changePin: "تغيير رقم PIN",
     newPin: "الرقم الجديد (4 أرقام)", saved: "تم الحفظ", clearFavs: "مسح المفضلة",
     clearHistory: "مسح سجل المشاهدة", backup: "تنزيل نسخة احتياطية", restore: "استعادة نسخة احتياطية",
-    theme: "شكل الواجهة", themeAuto: "حسب الزبون", themeDefault: "عادي", themeBlue: "أزرق", themeCinema: "سينما",
+    theme: "شكل الواجهة", themeAuto: "حسب الزبون", themeDefault: "عادي", themeBlue: "أزرق", themeCinema: "سينما", themeBhsat: "Bahrain Satellite",
     lang: "اللغة", noCats: "لا توجد أقسام", noContent: "لا يوجد محتوى", open: "فتح",
   },
   en: {
@@ -63,7 +63,7 @@ const STR = {
     pinTitle: "Enter PIN", pinWrong: "Wrong PIN", changePin: "Change PIN",
     newPin: "New PIN (4 digits)", saved: "Saved", clearFavs: "Clear favorites",
     clearHistory: "Clear watch history", backup: "Download backup", restore: "Restore backup",
-    theme: "Theme", themeAuto: "Tenant default", themeDefault: "Default", themeBlue: "Blue", themeCinema: "Cinema",
+    theme: "Theme", themeAuto: "Tenant default", themeDefault: "Default", themeBlue: "Blue", themeCinema: "Cinema", themeBhsat: "Bahrain Satellite",
     lang: "Language", noCats: "No categories", noContent: "No content", open: "Open",
   },
 } as const;
