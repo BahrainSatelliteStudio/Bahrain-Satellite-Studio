@@ -1,0 +1,1 @@
+ALTER TABLE public.tenants ADD COLUMN IF NOT EXISTS theme TEXT NOT NULL DEFAULT 'default' CHECK (theme IN ('default','blue','cinema'));

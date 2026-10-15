@@ -280,6 +280,7 @@ export type Database = {
           support_phone: string | null
           support_telegram: string | null
           support_whatsapp: string | null
+          theme: string
           update_url: string | null
         }
         Insert: {
@@ -297,6 +298,7 @@ export type Database = {
           support_phone?: string | null
           support_telegram?: string | null
           support_whatsapp?: string | null
+          theme?: string
           update_url?: string | null
         }
         Update: {
@@ -314,6 +316,7 @@ export type Database = {
           support_phone?: string | null
           support_telegram?: string | null
           support_whatsapp?: string | null
+          theme?: string
           update_url?: string | null
         }
         Relationships: []
