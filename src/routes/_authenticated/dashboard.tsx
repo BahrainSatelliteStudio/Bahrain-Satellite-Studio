@@ -147,8 +147,22 @@ const AR: Record<string, string> = {
   "ن": "n", "ه": "h", "و": "w", "ي": "y", "ى": "a", "ة": "h", "ؤ": "o", "ئ": "e", "ء": "",
 };
 
+// كلمات شائعة في أسماء التطبيقات — نفضّل شكلها الإنجليزي المعروف
+const WORDS: Record<string, string> = {
+  "البحرين": "bahrain", "بحرين": "bahrain", "البحريني": "bahrain", "بحريني": "bahrain",
+  "سات": "sat", "ساتلايت": "satellite", "تلفاز": "tv", "تلفزيون": "tv", "tv": "tv",
+  "قناة": "channel", "قنوات": "channels", "رياضة": "sport", "رياضي": "sport", "رياضية": "sport",
+  "أطفال": "kids", "اطفال": "kids", "أفلام": "movies", "افلام": "movies", "فيلم": "movie",
+  "مباشر": "live", "عربى": "arabic", "عربي": "arabic", "عربية": "arabic", "بريميوم": "premium",
+  "ذهبي": "gold", "فضي": "silver", "جديد": "new", "الاول": "one", "الأول": "one",
+};
+
 function slugify(name: string) {
-  const latin = Array.from(name.toLowerCase()).map((ch) => (AR[ch] !== undefined ? AR[ch] : ch)).join("");
+  const words = name.trim().split(/\s+/).map((w) => {
+    const t = w.replace(/[\u064B-\u0652]/g, "");
+    return WORDS[t] ?? WORDS[t.replace(/^[أإآا]ل(.+)$/, "$1")] ?? t;
+  });
+  const latin = Array.from(words.join(" ").toLowerCase()).map((ch) => (AR[ch] !== undefined ? AR[ch] : ch)).join("");
   const s = latin
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/-{2,}/g, "-")
