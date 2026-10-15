@@ -339,6 +339,8 @@ export type Database = {
           max_hosts: number
           min_version: string
           name: string
+          owner_email: string | null
+          owner_phone: string | null
           package_id: string
           panel_url: string | null
           plan_name: string
@@ -370,6 +372,8 @@ export type Database = {
           max_hosts?: number
           min_version?: string
           name: string
+          owner_email?: string | null
+          owner_phone?: string | null
           package_id: string
           panel_url?: string | null
           plan_name?: string
@@ -401,6 +405,8 @@ export type Database = {
           max_hosts?: number
           min_version?: string
           name?: string
+          owner_email?: string | null
+          owner_phone?: string | null
           package_id?: string
           panel_url?: string | null
           plan_name?: string
