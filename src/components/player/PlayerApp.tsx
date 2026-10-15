@@ -5,6 +5,7 @@ import { Tv, Film, Clapperboard, Heart, LogOut, Search, MessageCircle, Send, Pho
 import { xtreamApi, m3uFetch, macCall } from "@/lib/iptv.functions";
 import { prefs, t as str, type AppSettings, type Lang } from "@/lib/player/prefs";
 import { VideoPlayer } from "./VideoPlayer";
+import { resolveLayout, previewChannel, ICONS, type AppLayout, type SectionCfg } from "@/lib/layout";
 
 export type TenantConfig = {
   slug: string; name: string; logo_url: string | null; primary_color: string; accent_color: string;
@@ -13,12 +14,14 @@ export type TenantConfig = {
   latest_version: string; min_version: string; update_url: string | null;
   sources: { id: string; type: string; name: string }[];
   announcements: { id: string; title: string; body: string | null; image_url: string | null }[];
+  layout?: unknown;
 };
 
 type Session =
   | { type: "xtream"; sourceId: string; username: string; password: string }
   | { type: "m3u"; sourceId: string }
-  | { type: "mac"; sourceId: string; mac: string; token: string };
+  | { type: "mac"; sourceId: string; mac: string; token: string }
+  | { type: "demo"; sourceId: string };
 type Kind = "live" | "movie" | "series";
 type Cat = { id: string; name: string };
 type Item = { id: string; name: string; logo?: string; url?: string; cmd?: string; kind: Kind | "episode" };
@@ -63,7 +66,7 @@ function useTvNav() {
   }, []);
 }
 
-export function PlayerApp({ cfg }: { cfg: TenantConfig }) {
+export function PlayerApp({ cfg, preview = false }: { cfg: TenantConfig; preview?: boolean }) {
   const key = `iptv:${cfg.slug}`;
   const [session, setSession] = useState<Session | null>(null);
   const [ready, setReady] = useState(false);
@@ -73,12 +76,20 @@ export function PlayerApp({ cfg }: { cfg: TenantConfig }) {
   const [setupStep, setSetupStep] = useState<"device" | "lang">("device");
   const [showSettings, setShowSettings] = useState(false);
   useTvNav();
+  const [layout, setLayout] = useState<AppLayout>(() => resolveLayout(cfg.layout));
+  useEffect(() => {
+    if (!preview || typeof BroadcastChannel === "undefined") return;
+    const ch = new BroadcastChannel(previewChannel(cfg.slug));
+    ch.onmessage = (e) => setLayout(resolveLayout(e.data));
+    return () => ch.close();
+  }, [preview, cfg.slug]);
 
   useEffect(() => {
-    try { const s = localStorage.getItem(key); if (s) setSession(JSON.parse(s)); } catch {}
+    if (preview) setSession({ type: "demo", sourceId: "" });
+    else try { const s = localStorage.getItem(key); if (s) setSession(JSON.parse(s)); } catch {}
     const v = new URLSearchParams(location.search).get("v") || sessionStorage.getItem("appver");
     if (v) { sessionStorage.setItem("appver", v); setAppVer(v); }
-    setLangChosen(!!localStorage.getItem(`${key}:langChosen`));
+    setLangChosen(preview || !!localStorage.getItem(`${key}:langChosen`));
     setReady(true);
   }, [key]);
 
@@ -148,10 +159,10 @@ export function PlayerApp({ cfg }: { cfg: TenantConfig }) {
   return (
     <Shell cfg={cfg} style={style} themeClass={themeClass} lang={settings.lang}
       onSettings={() => setShowSettings(true)}
-      onLogout={session ? () => { localStorage.removeItem(key); setSession(null); } : undefined}>
+      onLogout={session && !preview ? () => { localStorage.removeItem(key); setSession(null); } : undefined}>
       {showSettings && <SettingsDialog cfg={cfg} settings={settings} onSave={saveSettings} onClose={() => setShowSettings(false)} />}
       {session
-        ? <Browser cfg={cfg} session={session} settings={settings} />
+        ? <Browser cfg={cfg} session={session} settings={settings} layout={layout} />
         : <Login cfg={cfg} onDone={(s) => { localStorage.setItem(key, JSON.stringify(s)); setSession(s); }} />}
     </Shell>
   );
