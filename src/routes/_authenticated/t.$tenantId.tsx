@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { FEATURES, PLANS, resolveFeatures, type FeatureKey, type FeatureState, type PlanKey } from "@/lib/features";
 
 type Tenant = Database["public"]["Tables"]["tenants"]["Row"];
 type Source = Database["public"]["Tables"]["tenant_sources"]["Row"];
@@ -48,6 +49,10 @@ function Panel() {
   if (!tq.data) return <div className="theme-bhsat min-h-screen bg-background p-10 text-center text-muted-foreground">جاري التحميل...</div>;
   const t = tq.data;
   const ctx = { t, isAdmin: !!me.data?.isAdmin, email: me.data?.email ?? "", uid: me.data?.uid ?? "", go: setSec };
+  const feats = resolveFeatures(t.features);
+  const allowed = (k: string) => ctx.isAdmin || !(k in feats) || feats[k as FeatureKey];
+  const visible = SECTIONS.filter((s) => allowed(s[0]));
+  if (!allowed(sec)) { setTimeout(() => setSec("home")); }
   const title = SECTIONS.find((s) => s[0] === sec)![1];
   return (
     <div dir="rtl" className="theme-bhsat min-h-screen bg-background text-foreground lg:flex">
@@ -58,7 +63,7 @@ function Panel() {
           <button className="mr-auto lg:hidden" onClick={() => setOpen(false)} aria-label="إغلاق"><X className="h-5 w-5" /></button>
         </div>
         <nav className="space-y-1">
-          {SECTIONS.map(([k, label, Icon]) => (
+          {visible.map(([k, label, Icon]) => (
             <button key={k} onClick={() => { setSec(k); setOpen(false); }}
               className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition ${sec === k ? "border border-primary/40 bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}>
               <Icon className="h-4 w-4" />{label}
@@ -173,12 +178,48 @@ function Home(c: Ctx) {
         <Button variant="secondary" onClick={() => c.go("notify")}><Bell className="h-4 w-4" />إرسال إشعار</Button>
         <Button variant="secondary" onClick={() => c.go("brand")}><Palette className="h-4 w-4" />تغيير الثيم</Button>
       </div>
+      {c.isAdmin && <PlanEditor c={c} />}
       {c.isAdmin && <PanelLink c={c} />}
       <div className={card}>
         <h2 className="text-lg font-extrabold">الإشعارات الفعّالة في التطبيق</h2>
         {live.length === 0 ? <p className="py-6 text-center text-sm text-muted-foreground">لا توجد إشعارات منشورة حاليًا.</p> :
           live.map((a) => <div key={a.id} className="rounded-xl bg-secondary p-3"><p className="font-bold">{a.title}</p><p className="text-sm text-muted-foreground">{a.body}</p></div>)}
       </div>
+    </div>
+  );
+}
+
+/* ---------------- Plan + permissions (admin only) ---------------- */
+function PlanEditor({ c }: { c: Ctx }) {
+  const save = useSave(c);
+  const init = (c.t.features ?? {}) as FeatureState;
+  const [plan, setPlan] = useState<PlanKey>(((init.plan as PlanKey) in PLANS ? init.plan : "premium") as PlanKey);
+  const [ov, setOv] = useState<Partial<Record<FeatureKey, boolean>>>(init.overrides ?? {});
+  const [maxHosts, setMaxHosts] = useState(c.t.max_hosts);
+  const eff = resolveFeatures({ plan, overrides: ov });
+  const pick = (p: PlanKey) => { setPlan(p); setOv({}); setMaxHosts(PLANS[p].maxHosts); };
+  const toggle = (k: FeatureKey, v: boolean) => setOv((o) => {
+    const n = { ...o }; if (PLANS[plan].on.includes(k) === v) delete n[k]; else n[k] = v; return n;
+  });
+  return (
+    <div className={card}>
+      <h2 className="text-lg font-extrabold">الباقة والصلاحيات</h2>
+      <p className="text-sm text-muted-foreground">اختر باقة جاهزة ثم خصّص أي ميزة. الأقسام المقفلة تختفي من لوحة الزبون.</p>
+      <div className="flex flex-wrap gap-2">
+        {Object.entries(PLANS).map(([k, p]) => (
+          <Button key={k} variant={plan === k ? "default" : "secondary"} onClick={() => pick(k as PlanKey)}>{p.label}</Button>
+        ))}
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {FEATURES.map(([k, label]) => (
+          <label key={k} className="flex items-center justify-between rounded-xl bg-secondary p-3 text-sm font-bold">
+            <span>{label}{ov[k] !== undefined && <span className="mr-2 text-xs text-primary">مخصص</span>}</span>
+            <Switch checked={eff[k]} onCheckedChange={(v) => toggle(k, v)} />
+          </label>
+        ))}
+      </div>
+      <div className="flex items-center gap-2"><Label>حد الهوستات</Label><Input type="number" min={1} className="w-24" value={maxHosts} onChange={(e) => setMaxHosts(Number(e.target.value) || 1)} /></div>
+      <Button onClick={() => save({ features: { plan, overrides: ov }, plan_name: PLANS[plan].label, max_hosts: maxHosts }, "الباقة", `الباقة: ${PLANS[plan].label}`)}>حفظ الباقة</Button>
     </div>
   );
 }
