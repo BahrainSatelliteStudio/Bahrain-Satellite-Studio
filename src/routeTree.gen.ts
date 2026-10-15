@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as InstallSlugRouteImport } from './routes/install.$slug'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
+import { Route as AuthenticatedTTenantIdRouteImport } from './routes/_authenticated/t.$tenantId'
 import { Route as ApiPublicBuildCompleteRouteImport } from './routes/api/public/build-complete'
 import { Route as ApiPublicFileRouteImport } from './routes/api/public/file'
 import { Route as ApiPublicAppSlugRouteImport } from './routes/api/public/app.$slug'
@@ -48,6 +49,11 @@ const PSlugRoute = PSlugRouteImport.update({
   path: '/p/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedTTenantIdRoute = AuthenticatedTTenantIdRouteImport.update({
+  id: '/t/$tenantId',
+  path: '/t/$tenantId',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ApiPublicBuildCompleteRoute = ApiPublicBuildCompleteRouteImport.update({
   id: '/api/public/build-complete',
   path: '/api/public/build-complete',
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/install/$slug': typeof InstallSlugRoute
   '/p/$slug': typeof PSlugRoute
+  '/t/$tenantId': typeof AuthenticatedTTenantIdRoute
   '/api/public/build-complete': typeof ApiPublicBuildCompleteRoute
   '/api/public/file': typeof ApiPublicFileRoute
   '/api/public/app/$slug': typeof ApiPublicAppSlugRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/install/$slug': typeof InstallSlugRoute
   '/p/$slug': typeof PSlugRoute
+  '/t/$tenantId': typeof AuthenticatedTTenantIdRoute
   '/api/public/build-complete': typeof ApiPublicBuildCompleteRoute
   '/api/public/file': typeof ApiPublicFileRoute
   '/api/public/app/$slug': typeof ApiPublicAppSlugRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/install/$slug': typeof InstallSlugRoute
   '/p/$slug': typeof PSlugRoute
+  '/_authenticated/t/$tenantId': typeof AuthenticatedTTenantIdRoute
   '/api/public/build-complete': typeof ApiPublicBuildCompleteRoute
   '/api/public/file': typeof ApiPublicFileRoute
   '/api/public/app/$slug': typeof ApiPublicAppSlugRoute
@@ -104,6 +113,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/install/$slug'
     | '/p/$slug'
+    | '/t/$tenantId'
     | '/api/public/build-complete'
     | '/api/public/file'
     | '/api/public/app/$slug'
@@ -114,6 +124,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/install/$slug'
     | '/p/$slug'
+    | '/t/$tenantId'
     | '/api/public/build-complete'
     | '/api/public/file'
     | '/api/public/app/$slug'
@@ -125,6 +136,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/install/$slug'
     | '/p/$slug'
+    | '/_authenticated/t/$tenantId'
     | '/api/public/build-complete'
     | '/api/public/file'
     | '/api/public/app/$slug'
@@ -185,6 +197,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/t/$tenantId': {
+      id: '/_authenticated/t/$tenantId'
+      path: '/t/$tenantId'
+      fullPath: '/t/$tenantId'
+      preLoaderRoute: typeof AuthenticatedTTenantIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/build-complete': {
       id: '/api/public/build-complete'
       path: '/api/public/build-complete'
@@ -211,10 +230,12 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedTTenantIdRoute: typeof AuthenticatedTTenantIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedTTenantIdRoute: AuthenticatedTTenantIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

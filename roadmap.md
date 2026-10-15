@@ -1,6 +1,8 @@
-# خارطة المهام — Bahrain Satellite
+# خارطة المهام — صانع مشغلات IPTV
 
-1. [منجز] إعادة بناء لوحة التحكم الحالية (panel.bhsat.me) بتصميم عصري على Lovable Cloud — سيرفرات وهوستات، هوية التطبيق، أرقام دعم، إعدادات موقّعة، نسخ احتياطية.
-2. [منجز] تجهيز غلاف أندرويد: Capacitor مثبت + إعدادات capacitor.config.ts + مسارا بناء APK (GitHub Actions في .github/workflows/android-apk.yml وسكربت VPS في scripts/build-apk-vps.sh).
-3. [مطلوب من المستخدم] ربط المشروع بـ GitHub (قائمة + ← GitHub ← Connect project) لتفعيل البناء التلقائي، وتغيير server.url في capacitor.config.ts إلى الرابط المنشور النهائي.
-4. [مطلوب لاحقًا] نسخة Release موقّعة بمفتاح التوقيع القديم (keystore) حتى تصل كتحديث للمستخدمين الحاليين — يحتاج ملف .jks/.keystore من المستخدم.
+1. [منجز] قاعدة البيانات: زبائن، أعضاء، سيرفرات (Xtream/M3U/MAC)، إعلانات، بناءات + تخزين.
+2. [منجز] لوحة المسؤول (إنشاء زبون + حسابه) ولوحة الزبون (هوية، سيرفرات، إعلانات، دعم وتحديث، بناء).
+3. [منجز] المشغل /p/<slug> وصفحة التثبيت /install/<slug>.
+4. [منجز] مسار بناء APK لكل زبون عبر GitHub Actions.
+5. [مطلوب من المستخدم] ربط GitHub + إضافة GITHUB_TOKEN و GITHUB_REPO و BUILD_CALLBACK_SECRET (نفس القيمة في أسرار GitHub).
+6. [لاحقًا] توقيع Release بمفتاح خاص.
