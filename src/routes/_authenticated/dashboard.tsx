@@ -240,12 +240,13 @@ function NewTenant({ autoOpen, onDone }: { autoOpen: boolean; onDone: () => void
             <li><b>ضروري:</b> اسم التطبيق، الشعار (PNG/JPG)، بريد الدخول.</li>
             <li><b>السيرفر:</b> Host + يوزر + باسورد، والنوع Xtream / M3U.</li>
             <li><b>التواصل:</b> رقم واتساب الدعم.</li>
-            <li><b>نحدده نحن:</b> اسم الحزمة (لا يتغير)، الباقة، القالب، كلمة المرور.</li>
+            <li><b>نحدده تلقائيًا:</b> الرابط المختصر، اسم الحزمة، اسم المستخدم، كلمة المرور.</li>
             <li className="text-muted-foreground">الباقي (ألوان، روابط، رسائل) يعدّله الزبون بنفسه من لوحته.</li>
           </ul>
         </details>
         <form onSubmit={submit} className="space-y-3">
-          <div className="space-y-1"><Label>اسم التطبيق</Label><Input required value={f.name} onChange={set("name")} /></div>
+          <div className="space-y-1"><Label>اسم التطبيق</Label><Input required value={f.name} onChange={set("name")} placeholder="Bahrain Satellite" /></div>
+          <p className="-mt-2 text-xs text-muted-foreground">الحقول التالية تُعبَّأ تلقائيًا من الاسم — تعدّل أيًّا منها لو تبي.</p>
           <div className="space-y-1"><Label>الرابط المختصر (إنجليزي صغير)</Label><Input dir="ltr" required pattern="[a-z0-9][a-z0-9\-]{1,30}" value={f.slug} onChange={set("slug")} placeholder="mytv" /></div>
           <div className="space-y-1"><Label>اسم الحزمة (لا يتغير لاحقًا)</Label><Input dir="ltr" required value={f.package_id} onChange={set("package_id")} /></div>
           <div className="space-y-1"><Label>اسم مستخدم الزبون (إنجليزي صغير)</Label><Input dir="ltr" required pattern="[a-z0-9._\-]{3,30}" value={f.username} onChange={set("username")} placeholder="mytv" /></div>
