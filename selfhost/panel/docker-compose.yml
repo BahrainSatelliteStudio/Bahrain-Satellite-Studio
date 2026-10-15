@@ -1,0 +1,12 @@
+services:
+  panel:
+    image: bhsat-panel:1.0.0
+    build: .
+    container_name: bhsat-panel
+    restart: always
+    ports:
+      - "8090:8090"
+    environment:
+      - PANEL_ADMIN_USER=admin
+    volumes:
+      - ./data:/data

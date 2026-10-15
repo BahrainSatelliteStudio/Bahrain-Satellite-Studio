@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>لوحة إدارة التطبيق</title>
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+<div id="login" class="login hidden">
+  <div class="login-box">
+    <img id="loginLogo" class="login-logo hidden" alt="" />
+    <p class="muted center">لوحة إدارة التطبيق</p>
+    <h1 class="center">مرحبًا بعودتك</h1>
+    <form id="loginForm">
+      <label>Username<input name="username" autocomplete="username" required /></label>
+      <label>Password<input name="password" type="password" autocomplete="current-password" required /></label>
+      <button class="btn primary wide">تسجيل الدخول ←</button>
+      <p id="loginErr" class="err"></p>
+    </form>
+  </div>
+</div>
+<div id="app" class="layout hidden">
+  <aside id="side">
+    <div class="brand"><img id="sideLogo" alt="" class="hidden" /><div><b id="sideName"></b><small class="muted">لوحة إدارة التطبيق</small></div></div>
+    <nav id="nav"></nav>
+    <div class="side-foot muted"><p>● <span id="who"></span></p><p>إصدار اللوحة <span id="ver"></span></p><button class="link" id="logout">تسجيل الخروج</button></div>
+  </aside>
+  <main>
+    <button class="btn ghost menu" id="menuBtn">☰</button>
+    <p class="eyebrow" id="eyebrow"></p>
+    <h1 id="title"></h1>
+    <div id="view"></div>
+  </main>
+</div>
+<div id="toast"></div>
+<script src="/app.js"></script>
+</body>
+</html>
