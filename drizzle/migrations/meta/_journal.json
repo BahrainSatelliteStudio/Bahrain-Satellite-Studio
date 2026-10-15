@@ -29,6 +29,13 @@
       "when": 1792053964911,
       "tag": "0003_add_bhsat_theme",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792059157046,
+      "tag": "0004_customer_panel",
+      "breakpoints": true
     }
   ]
 }

@@ -19,8 +19,10 @@ export type Database = {
           active: boolean
           body: string | null
           created_at: string
+          expires_at: string | null
           id: string
           image_url: string | null
+          kind: string
           tenant_id: string
           title: string
         }
@@ -28,8 +30,10 @@ export type Database = {
           active?: boolean
           body?: string | null
           created_at?: string
+          expires_at?: string | null
           id?: string
           image_url?: string | null
+          kind?: string
           tenant_id: string
           title: string
         }
@@ -37,8 +41,10 @@ export type Database = {
           active?: boolean
           body?: string | null
           created_at?: string
+          expires_at?: string | null
           id?: string
           image_url?: string | null
+          kind?: string
           tenant_id?: string
           title?: string
         }
@@ -197,6 +203,44 @@ export type Database = {
         }
         Relationships: []
       }
+      tenant_changes: {
+        Row: {
+          created_at: string
+          id: string
+          section: string
+          summary: string
+          tenant_id: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          section: string
+          summary: string
+          tenant_id: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          section?: string
+          summary?: string
+          tenant_id?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_changes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_members: {
         Row: {
           id: string
@@ -225,9 +269,14 @@ export type Database = {
       }
       tenant_sources: {
         Row: {
+          activation_api_url: string | null
+          backup_urls: string[]
           created_at: string
           enabled: boolean
           id: string
+          last_check_at: string | null
+          last_check_ok: boolean | null
+          login_code: string | null
           name: string
           sort_order: number
           tenant_id: string
@@ -235,9 +284,14 @@ export type Database = {
           url: string
         }
         Insert: {
+          activation_api_url?: string | null
+          backup_urls?: string[]
           created_at?: string
           enabled?: boolean
           id?: string
+          last_check_at?: string | null
+          last_check_ok?: boolean | null
+          login_code?: string | null
           name: string
           sort_order?: number
           tenant_id: string
@@ -245,9 +299,14 @@ export type Database = {
           url: string
         }
         Update: {
+          activation_api_url?: string | null
+          backup_urls?: string[]
           created_at?: string
           enabled?: boolean
           id?: string
+          last_check_at?: string | null
+          last_check_ok?: boolean | null
+          login_code?: string | null
           name?: string
           sort_order?: number
           tenant_id?: string
@@ -267,54 +326,84 @@ export type Database = {
       tenants: {
         Row: {
           accent_color: string
+          banner_url: string | null
+          colors: Json
           created_at: string
+          customer_notice: string | null
           enabled: boolean
           id: string
           latest_version: string
           logo_url: string | null
+          max_hosts: number
           min_version: string
           name: string
           package_id: string
+          plan_name: string
           primary_color: string
           slug: string
+          store_url: string | null
+          subscription_expires_at: string | null
+          support_email: string | null
+          support_facebook: string | null
           support_phone: string | null
           support_telegram: string | null
+          support_website: string | null
           support_whatsapp: string | null
           theme: string
           update_url: string | null
         }
         Insert: {
           accent_color?: string
+          banner_url?: string | null
+          colors?: Json
           created_at?: string
+          customer_notice?: string | null
           enabled?: boolean
           id?: string
           latest_version?: string
           logo_url?: string | null
+          max_hosts?: number
           min_version?: string
           name: string
           package_id: string
+          plan_name?: string
           primary_color?: string
           slug: string
+          store_url?: string | null
+          subscription_expires_at?: string | null
+          support_email?: string | null
+          support_facebook?: string | null
           support_phone?: string | null
           support_telegram?: string | null
+          support_website?: string | null
           support_whatsapp?: string | null
           theme?: string
           update_url?: string | null
         }
         Update: {
           accent_color?: string
+          banner_url?: string | null
+          colors?: Json
           created_at?: string
+          customer_notice?: string | null
           enabled?: boolean
           id?: string
           latest_version?: string
           logo_url?: string | null
+          max_hosts?: number
           min_version?: string
           name?: string
           package_id?: string
+          plan_name?: string
           primary_color?: string
           slug?: string
+          store_url?: string | null
+          subscription_expires_at?: string | null
+          support_email?: string | null
+          support_facebook?: string | null
           support_phone?: string | null
           support_telegram?: string | null
+          support_website?: string | null
           support_whatsapp?: string | null
           theme?: string
           update_url?: string | null
