@@ -107,7 +107,7 @@ function Brand({ t, isAdmin }: { t: Tenant; isAdmin: boolean }) {
       <div className="space-y-1">
         <Label>تصميم الواجهة الافتراضي</Label>
         <div className="grid grid-cols-3 gap-2">
-          {([["default", "عادي"], ["blue", "أزرق"], ["cinema", "سينما"]] as const).map(([v, label]) => (
+          {([["default", "عادي"], ["blue", "أزرق"], ["cinema", "سينما"], ["bhsat", "Bahrain Satellite"]] as const).map(([v, label]) => (
             <button type="button" key={v} onClick={() => setF({ ...f, theme: v })}
               className={`rounded-xl border py-2.5 text-sm font-bold ${f.theme === v ? "border-primary bg-primary text-primary-foreground" : "bg-secondary"}`}>{label}</button>
           ))}
