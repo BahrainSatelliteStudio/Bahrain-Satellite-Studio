@@ -13,7 +13,12 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as ApiPublicConfigRouteImport } from './routes/api/public/config'
+import { Route as InstallSlugRouteImport } from './routes/install.$slug'
+import { Route as PSlugRouteImport } from './routes/p.$slug'
+import { Route as AuthenticatedTTenantIdRouteImport } from './routes/_authenticated/t.$tenantId'
+import { Route as ApiPublicBuildCompleteRouteImport } from './routes/api/public/build-complete'
+import { Route as ApiPublicFileRouteImport } from './routes/api/public/file'
+import { Route as ApiPublicAppSlugRouteImport } from './routes/api/public/app.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -34,9 +39,34 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const ApiPublicConfigRoute = ApiPublicConfigRouteImport.update({
-  id: '/api/public/config',
-  path: '/api/public/config',
+const InstallSlugRoute = InstallSlugRouteImport.update({
+  id: '/install/$slug',
+  path: '/install/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PSlugRoute = PSlugRouteImport.update({
+  id: '/p/$slug',
+  path: '/p/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedTTenantIdRoute = AuthenticatedTTenantIdRouteImport.update({
+  id: '/t/$tenantId',
+  path: '/t/$tenantId',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiPublicBuildCompleteRoute = ApiPublicBuildCompleteRouteImport.update({
+  id: '/api/public/build-complete',
+  path: '/api/public/build-complete',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicFileRoute = ApiPublicFileRouteImport.update({
+  id: '/api/public/file',
+  path: '/api/public/file',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAppSlugRoute = ApiPublicAppSlugRouteImport.update({
+  id: '/api/public/app/$slug',
+  path: '/api/public/app/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -44,13 +74,23 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/api/public/config': typeof ApiPublicConfigRoute
+  '/install/$slug': typeof InstallSlugRoute
+  '/p/$slug': typeof PSlugRoute
+  '/t/$tenantId': typeof AuthenticatedTTenantIdRoute
+  '/api/public/build-complete': typeof ApiPublicBuildCompleteRoute
+  '/api/public/file': typeof ApiPublicFileRoute
+  '/api/public/app/$slug': typeof ApiPublicAppSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/api/public/config': typeof ApiPublicConfigRoute
+  '/install/$slug': typeof InstallSlugRoute
+  '/p/$slug': typeof PSlugRoute
+  '/t/$tenantId': typeof AuthenticatedTTenantIdRoute
+  '/api/public/build-complete': typeof ApiPublicBuildCompleteRoute
+  '/api/public/file': typeof ApiPublicFileRoute
+  '/api/public/app/$slug': typeof ApiPublicAppSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -58,27 +98,59 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/api/public/config': typeof ApiPublicConfigRoute
+  '/install/$slug': typeof InstallSlugRoute
+  '/p/$slug': typeof PSlugRoute
+  '/_authenticated/t/$tenantId': typeof AuthenticatedTTenantIdRoute
+  '/api/public/build-complete': typeof ApiPublicBuildCompleteRoute
+  '/api/public/file': typeof ApiPublicFileRoute
+  '/api/public/app/$slug': typeof ApiPublicAppSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard' | '/api/public/config'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/install/$slug'
+    | '/p/$slug'
+    | '/t/$tenantId'
+    | '/api/public/build-complete'
+    | '/api/public/file'
+    | '/api/public/app/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard' | '/api/public/config'
+  to:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/install/$slug'
+    | '/p/$slug'
+    | '/t/$tenantId'
+    | '/api/public/build-complete'
+    | '/api/public/file'
+    | '/api/public/app/$slug'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/dashboard'
-    | '/api/public/config'
+    | '/install/$slug'
+    | '/p/$slug'
+    | '/_authenticated/t/$tenantId'
+    | '/api/public/build-complete'
+    | '/api/public/file'
+    | '/api/public/app/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
-  ApiPublicConfigRoute: typeof ApiPublicConfigRoute
+  InstallSlugRoute: typeof InstallSlugRoute
+  PSlugRoute: typeof PSlugRoute
+  ApiPublicBuildCompleteRoute: typeof ApiPublicBuildCompleteRoute
+  ApiPublicFileRoute: typeof ApiPublicFileRoute
+  ApiPublicAppSlugRoute: typeof ApiPublicAppSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -111,11 +183,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/config': {
-      id: '/api/public/config'
-      path: '/api/public/config'
-      fullPath: '/api/public/config'
-      preLoaderRoute: typeof ApiPublicConfigRouteImport
+    '/install/$slug': {
+      id: '/install/$slug'
+      path: '/install/$slug'
+      fullPath: '/install/$slug'
+      preLoaderRoute: typeof InstallSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/p/$slug': {
+      id: '/p/$slug'
+      path: '/p/$slug'
+      fullPath: '/p/$slug'
+      preLoaderRoute: typeof PSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/t/$tenantId': {
+      id: '/_authenticated/t/$tenantId'
+      path: '/t/$tenantId'
+      fullPath: '/t/$tenantId'
+      preLoaderRoute: typeof AuthenticatedTTenantIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/build-complete': {
+      id: '/api/public/build-complete'
+      path: '/api/public/build-complete'
+      fullPath: '/api/public/build-complete'
+      preLoaderRoute: typeof ApiPublicBuildCompleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/file': {
+      id: '/api/public/file'
+      path: '/api/public/file'
+      fullPath: '/api/public/file'
+      preLoaderRoute: typeof ApiPublicFileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/app/$slug': {
+      id: '/api/public/app/$slug'
+      path: '/api/public/app/$slug'
+      fullPath: '/api/public/app/$slug'
+      preLoaderRoute: typeof ApiPublicAppSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -123,10 +230,12 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedTTenantIdRoute: typeof AuthenticatedTTenantIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedTTenantIdRoute: AuthenticatedTTenantIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -136,7 +245,11 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
-  ApiPublicConfigRoute: ApiPublicConfigRoute,
+  InstallSlugRoute: InstallSlugRoute,
+  PSlugRoute: PSlugRoute,
+  ApiPublicBuildCompleteRoute: ApiPublicBuildCompleteRoute,
+  ApiPublicFileRoute: ApiPublicFileRoute,
+  ApiPublicAppSlugRoute: ApiPublicAppSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

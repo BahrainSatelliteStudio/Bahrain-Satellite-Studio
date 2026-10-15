@@ -9,9 +9,9 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "دخول المسؤول — Bahrain Satellite" },
+      { title: "الدخول — BHSAT Studio" },
       { name: "description", content: "تسجيل دخول فريق إدارة Bahrain Satellite" },
-      { property: "og:title", content: "دخول المسؤول — Bahrain Satellite" },
+      { property: "og:title", content: "الدخول — BHSAT Studio" },
       { property: "og:description", content: "تسجيل دخول فريق الإدارة" },
     ],
   }),
@@ -45,7 +45,7 @@ function AuthPage() {
       <form onSubmit={submit} className="w-full max-w-sm space-y-4 rounded-2xl border bg-card p-6 shadow-xl">
         <div className="text-center">
           <h1 className="text-2xl font-extrabold">لوحة التحكم</h1>
-          <p className="text-sm text-muted-foreground">{mode === "in" ? "سجّل دخولك كمسؤول" : "أول حساب يُنشأ يصبح المسؤول"}</p>
+          <p className="text-sm text-muted-foreground">{mode === "in" ? "سجّل دخولك للوحة التحكم" : "أول حساب يُنشأ يصبح المسؤول"}</p>
         </div>
         <div className="space-y-1"><Label>البريد الإلكتروني</Label><Input type="email" dir="ltr" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
         <div className="space-y-1"><Label>كلمة المرور</Label><Input type="password" dir="ltr" minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} /></div>
