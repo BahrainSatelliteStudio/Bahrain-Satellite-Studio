@@ -114,14 +114,15 @@ export const createTenant = createServerFn({ method: "POST" })
       name: z.string().min(2).max(60), slug: slugZ,
       package_id: z.string().regex(/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/),
       username: z.string().regex(/^[a-z0-9._-]{3,30}$/),
-      email: z.string().email().optional().or(z.literal("")),
+      email: z.string().trim().email().max(255),
+      phone: z.string().regex(/^\+\d{1,4} ?\d{6,14}$/),
       password: z.string().min(8).max(72),
     }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const authEmail = `${data.username}@users.bhsat.me`;
-    const { data: t, error } = await supabaseAdmin.from("tenants").insert({ name: data.name, slug: data.slug, package_id: data.package_id, support_email: data.email || null }).select("id").single();
+    const { data: t, error } = await supabaseAdmin.from("tenants").insert({ name: data.name, slug: data.slug, package_id: data.package_id, owner_email: data.email, owner_phone: data.phone }).select("id").single();
     if (error) throw new Error(error.message.includes("duplicate") ? "الرابط أو اسم الحزمة مستخدم مسبقًا" : error.message);
     let userId: string | undefined;
     const created = await supabaseAdmin.auth.admin.createUser({ email: authEmail, password: data.password, email_confirm: true });

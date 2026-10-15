@@ -223,7 +223,7 @@ function NewTenant({ autoOpen, onDone }: { autoOpen: boolean; onDone: () => void
   };
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true);
-    try { await create({ data: f }); toast.success("تم إنشاء الزبون وحسابه"); setDone({ name: f.name, slug: f.slug, username: f.username, password: f.password }); setF({ name: "", slug: "", package_id: "", username: "", email: "", password: "" }); setTouched({}); onDone(); }
+    try { await create({ data: { ...f, phone: `${cc} ${phone}` } }); setPhone(""); toast.success("تم إنشاء الزبون وحسابه"); setDone({ name: f.name, slug: f.slug, username: f.username, password: f.password }); setF({ name: "", slug: "", package_id: "", username: "", email: "", password: "" }); setTouched({}); onDone(); }
     catch (err) { toast.error(err instanceof Error ? err.message : "خطأ"); }
     setBusy(false);
   }
@@ -264,6 +264,8 @@ function NewTenant({ autoOpen, onDone }: { autoOpen: boolean; onDone: () => void
           <p className="-mt-2 text-xs text-muted-foreground">الحقول التالية تُعبَّأ تلقائيًا من الاسم — تعدّل أيًّا منها لو تبي.</p>
           <div className="space-y-1"><Label>الرابط المختصر (إنجليزي صغير)</Label><Input dir="ltr" required pattern="[a-z0-9][a-z0-9\-]{1,30}" value={f.slug} onChange={set("slug")} placeholder="mytv" /></div>
           <div className="space-y-1"><Label>اسم الحزمة (لا يتغير لاحقًا)</Label><Input dir="ltr" required value={f.package_id} onChange={set("package_id")} /></div>
+          <div className="rounded-lg border border-primary/40 bg-primary/5 p-3 space-y-3">
+          <p className="text-sm font-bold">بيانات لوحة التحكم والتواصل مع الزبون <span className="text-xs font-normal text-muted-foreground">(إلزامية — لا تظهر في التطبيق)</span></p>
           <div className="space-y-1"><Label>اسم مستخدم الزبون (إنجليزي صغير)</Label><Input dir="ltr" required pattern="[a-z0-9._\-]{3,30}" value={f.username} onChange={set("username")} placeholder="mytv" /></div>
           <div className="space-y-1"><Label>كلمة مرور الزبون</Label>
             <div className="flex gap-2">
@@ -271,7 +273,16 @@ function NewTenant({ autoOpen, onDone }: { autoOpen: boolean; onDone: () => void
               <Button type="button" size="icon" variant="outline" title="كلمة مرور جديدة" onClick={() => { setTouched((t) => ({ ...t, password: true })); setF((p) => ({ ...p, password: genPass() })); }}><RefreshCw className="h-4 w-4" /></Button>
             </div>
           </div>
-          <div className="space-y-1"><Label>بريد الزبون (اختياري — للتواصل)</Label><Input dir="ltr" type="email" value={f.email} onChange={set("email")} /></div>
+          <div className="space-y-1"><Label>بريد الزبون</Label><Input dir="ltr" type="email" required maxLength={255} value={f.email} onChange={set("email")} placeholder="name@example.com" /></div>
+          <div className="space-y-1"><Label>رقم جوال الزبون</Label>
+            <div className="flex gap-2" dir="ltr">
+              <select className="h-9 rounded-md border bg-background px-2 text-sm" value={cc} onChange={(e) => setCc(e.target.value)}>
+                {COUNTRIES.map((c) => <option key={c[1] + c[0]} value={c[1]}>{c[0]} {c[1]}</option>)}
+              </select>
+              <Input dir="ltr" required inputMode="numeric" pattern="[0-9]{6,14}" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").replace(/^0+/, ""))} placeholder="33001122" />
+            </div>
+          </div>
+          </div>
           <Button className="w-full" disabled={busy}>إنشاء</Button>
         </form>
         </>)}
