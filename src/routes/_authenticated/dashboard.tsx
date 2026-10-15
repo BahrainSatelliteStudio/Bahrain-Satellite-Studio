@@ -79,6 +79,7 @@ function NewTenant({ onDone }: { onDone: () => void }) {
   const [open, setOpen] = useState(false);
   const [f, setF] = useState({ name: "", slug: "", package_id: "", email: "", password: "" });
   const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState<{ name: string; slug: string } | null>(null);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
     setF((p) => {
@@ -89,15 +90,36 @@ function NewTenant({ onDone }: { onDone: () => void }) {
   };
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true);
-    try { await create({ data: f }); toast.success("تم إنشاء الزبون وحسابه"); setOpen(false); setF({ name: "", slug: "", package_id: "", email: "", password: "" }); onDone(); }
+    try { await create({ data: f }); toast.success("تم إنشاء الزبون وحسابه"); setDone({ name: f.name, slug: f.slug }); setF({ name: "", slug: "", package_id: "", email: "", password: "" }); onDone(); }
     catch (err) { toast.error(err instanceof Error ? err.message : "خطأ"); }
     setBusy(false);
   }
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setDone(null); }}>
       <DialogTrigger asChild><Button><Plus className="h-4 w-4" />زبون جديد</Button></DialogTrigger>
-      <DialogContent dir="rtl">
+      <DialogContent dir="rtl" className="max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>إضافة زبون جديد</DialogTitle></DialogHeader>
+        {done ? (
+          <div className="space-y-3 text-sm leading-7">
+            <p className="font-bold text-primary">تم إنشاء «{done.name}» ✅ — الخطوة التالية: سلّم الزبون دليله الشامل.</p>
+            <p className="text-muted-foreground">الدليل يشرح التطبيق ولوحة التحكم وطريقة تثبيتها على Windows وMac/Linux وVPS وDocker وWindows Server وcPanel.</p>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild><a href={`/guide/${done.slug}?name=${encodeURIComponent(done.name)}`} target="_blank" rel="noreferrer">فتح دليل الزبون</a></Button>
+              <Button variant="outline" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/guide/${done.slug}?name=${encodeURIComponent(done.name)}`); toast.success("نُسخ رابط الدليل"); }}>نسخ الرابط للزبون</Button>
+              <Button variant="ghost" onClick={() => { setOpen(false); setDone(null); }}>إغلاق</Button>
+            </div>
+          </div>
+        ) : (<>
+        <details className="rounded-lg border bg-muted/40 p-3 text-sm leading-7" open>
+          <summary className="cursor-pointer font-bold">قائمة استقبال الزبون — اطلب منه:</summary>
+          <ul className="list-disc pr-5 mt-1">
+            <li><b>ضروري:</b> اسم التطبيق، الشعار (PNG/JPG)، بريد الدخول.</li>
+            <li><b>السيرفر:</b> Host + يوزر + باسورد، والنوع Xtream / M3U.</li>
+            <li><b>التواصل:</b> رقم واتساب الدعم.</li>
+            <li><b>نحدده نحن:</b> اسم الحزمة (لا يتغير)، الباقة، القالب، كلمة المرور.</li>
+            <li className="text-muted-foreground">الباقي (ألوان، روابط، رسائل) يعدّله الزبون بنفسه من لوحته.</li>
+          </ul>
+        </details>
         <form onSubmit={submit} className="space-y-3">
           <div className="space-y-1"><Label>اسم التطبيق</Label><Input required value={f.name} onChange={set("name")} /></div>
           <div className="space-y-1"><Label>الرابط المختصر (إنجليزي صغير)</Label><Input dir="ltr" required pattern="[a-z0-9][a-z0-9\-]{1,30}" value={f.slug} onChange={set("slug")} placeholder="mytv" /></div>
@@ -106,6 +128,7 @@ function NewTenant({ onDone }: { onDone: () => void }) {
           <div className="space-y-1"><Label>كلمة مرور الزبون</Label><Input dir="ltr" minLength={8} required value={f.password} onChange={set("password")} /></div>
           <Button className="w-full" disabled={busy}>إنشاء</Button>
         </form>
+        </>)}
       </DialogContent>
     </Dialog>
   );
