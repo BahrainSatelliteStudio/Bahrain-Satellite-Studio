@@ -143,9 +143,9 @@ function NewTenant({ autoOpen, onDone }: { autoOpen: boolean; onDone: () => void
   const create = useServerFn(createTenant);
   const [open, setOpen] = useState(false);
   useEffect(() => { if (autoOpen) setOpen(true); }, [autoOpen]);
-  const [f, setF] = useState({ name: "", slug: "", package_id: "", email: "", password: "" });
+  const [f, setF] = useState({ name: "", slug: "", package_id: "", username: "", email: "", password: "" });
   const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState<{ name: string; slug: string } | null>(null);
+  const [done, setDone] = useState<{ name: string; slug: string; username: string; password: string } | null>(null);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
     setF((p) => {
@@ -156,7 +156,7 @@ function NewTenant({ autoOpen, onDone }: { autoOpen: boolean; onDone: () => void
   };
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true);
-    try { await create({ data: f }); toast.success("تم إنشاء الزبون وحسابه"); setDone({ name: f.name, slug: f.slug }); setF({ name: "", slug: "", package_id: "", email: "", password: "" }); onDone(); }
+    try { await create({ data: f }); toast.success("تم إنشاء الزبون وحسابه"); setDone({ name: f.name, slug: f.slug, username: f.username, password: f.password }); setF({ name: "", slug: "", package_id: "", username: "", email: "", password: "" }); onDone(); }
     catch (err) { toast.error(err instanceof Error ? err.message : "خطأ"); }
     setBusy(false);
   }
@@ -167,7 +167,13 @@ function NewTenant({ autoOpen, onDone }: { autoOpen: boolean; onDone: () => void
         <DialogHeader><DialogTitle>إضافة زبون جديد</DialogTitle></DialogHeader>
         {done ? (
           <div className="space-y-3 text-sm leading-7">
-            <p className="font-bold text-primary">تم إنشاء «{done.name}» ✅ — الخطوة التالية: سلّم الزبون دليله الشامل.</p>
+            <p className="font-bold text-primary">تم إنشاء «{done.name}» ✅ — الخطوة التالية: سلّم الزبون بيانات دخوله ودليله الشامل.</p>
+            <div className="rounded-lg border bg-muted/40 p-3" dir="ltr">
+              <p className="text-xs text-muted-foreground" dir="rtl">بيانات دخول الزبون للوحة التحكم (تظهر مرة واحدة فقط):</p>
+              <p className="font-mono text-sm">user: {done.username}</p>
+              <p className="font-mono text-sm">pass: {done.password}</p>
+            </div>
+            <Button variant="outline" className="w-full" onClick={() => { navigator.clipboard.writeText(`بيانات دخول لوحة التحكم:\nاسم المستخدم: ${done.username}\nكلمة المرور: ${done.password}\nرابط الدخول: ${window.location.origin}/auth`); toast.success("نُسخت بيانات الدخول"); }}>نسخ بيانات الدخول للزبون</Button>
             <p className="text-muted-foreground">الدليل يشرح التطبيق ولوحة التحكم وطريقة تثبيتها على Windows وMac/Linux وVPS وDocker وWindows Server وcPanel.</p>
             <div className="flex flex-wrap gap-2">
               <Button asChild><a href={`/guide/${done.slug}?name=${encodeURIComponent(done.name)}`} target="_blank" rel="noreferrer">فتح دليل الزبون</a></Button>
@@ -190,8 +196,9 @@ function NewTenant({ autoOpen, onDone }: { autoOpen: boolean; onDone: () => void
           <div className="space-y-1"><Label>اسم التطبيق</Label><Input required value={f.name} onChange={set("name")} /></div>
           <div className="space-y-1"><Label>الرابط المختصر (إنجليزي صغير)</Label><Input dir="ltr" required pattern="[a-z0-9][a-z0-9\-]{1,30}" value={f.slug} onChange={set("slug")} placeholder="mytv" /></div>
           <div className="space-y-1"><Label>اسم الحزمة (لا يتغير لاحقًا)</Label><Input dir="ltr" required value={f.package_id} onChange={set("package_id")} /></div>
-          <div className="space-y-1"><Label>بريد دخول الزبون</Label><Input dir="ltr" type="email" required value={f.email} onChange={set("email")} /></div>
+          <div className="space-y-1"><Label>اسم مستخدم الزبون (إنجليزي صغير)</Label><Input dir="ltr" required pattern="[a-z0-9._\-]{3,30}" value={f.username} onChange={set("username")} placeholder="mytv" /></div>
           <div className="space-y-1"><Label>كلمة مرور الزبون</Label><Input dir="ltr" minLength={8} required value={f.password} onChange={set("password")} /></div>
+          <div className="space-y-1"><Label>بريد الزبون (اختياري — للتواصل)</Label><Input dir="ltr" type="email" value={f.email} onChange={set("email")} /></div>
           <Button className="w-full" disabled={busy}>إنشاء</Button>
         </form>
         </>)}
