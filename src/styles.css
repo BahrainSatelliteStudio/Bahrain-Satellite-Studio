@@ -144,3 +144,39 @@
 }
 
 body { font-family: 'Tajawal', system-ui, sans-serif; }
+
+/* ===== تصاميم المشغل (يختارها الزبون أو المستخدم) ===== */
+.theme-blue {
+  --background: oklch(0.17 0.045 255);
+  --foreground: oklch(0.96 0.01 250);
+  --card: oklch(0.21 0.05 255);
+  --card-foreground: oklch(0.96 0.01 250);
+  --secondary: oklch(0.26 0.055 255);
+  --secondary-foreground: oklch(0.96 0.01 250);
+  --muted-foreground: oklch(0.72 0.03 255);
+  --border: oklch(0.32 0.05 255);
+  --input: oklch(0.3 0.05 255);
+}
+.theme-cinema {
+  --background: oklch(0.1 0.008 40);
+  --foreground: oklch(0.95 0.01 60);
+  --card: oklch(0.15 0.012 40);
+  --card-foreground: oklch(0.95 0.01 60);
+  --secondary: oklch(0.2 0.015 40);
+  --secondary-foreground: oklch(0.95 0.01 60);
+  --muted-foreground: oklch(0.68 0.02 60);
+  --border: oklch(0.26 0.015 40);
+  --input: oklch(0.24 0.015 40);
+}
+/* تصميم سينما: ملصقات أكبر وزوايا أنعم */
+.theme-cinema .poster-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.theme-cinema img { filter: saturate(1.08); }
+
+/* تركيز الريموت/الكيبورد في التلفاز */
+[data-nav]:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+  transform: scale(1.04);
+  z-index: 5;
+}
+[data-nav] { transition: transform 0.12s ease, outline-color 0.12s ease; }
