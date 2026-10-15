@@ -46,6 +46,7 @@ function Dashboard() {
       <header className="flex items-center justify-between border-b px-6 py-4">
         <span className="text-xl font-extrabold">BHSAT <span className="text-primary">Studio</span></span>
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <Link to="/diagnose" className="hover:text-foreground">تشخيص البناء</Link>
           <span dir="ltr">{me.data?.email}</span>
           <Button variant="secondary" size="sm" onClick={() => signOut(qc, () => nav({ to: "/auth", replace: true }))}><LogOut className="h-4 w-4" />خروج</Button>
         </div>

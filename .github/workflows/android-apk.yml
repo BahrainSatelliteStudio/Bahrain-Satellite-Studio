@@ -54,14 +54,35 @@ jobs:
             convert logo.img -resize $((s*2))x$((s*2)) -gravity center -background none -extent $((s*9/4))x$((s*9/4)) $dir/ic_launcher_foreground.png
           done
           rm -rf android/app/src/main/res/mipmap-anydpi-v26
-      - name: Build APK
+      - name: Build APK (signed release if keystore is set)
         working-directory: android
-        run: ./gradlew assembleDebug
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > $RUNNER_TEMP/release.jks
+            ./gradlew assembleRelease
+            BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+            IN=app/build/outputs/apk/release/app-release-unsigned.apk
+            $BT/zipalign -f -p 4 $IN $RUNNER_TEMP/aligned.apk
+            $BT/apksigner sign --ks $RUNNER_TEMP/release.jks --ks-pass env:KS_PASS \
+              --ks-key-alias "$KEY_ALIAS" --key-pass env:KEY_PASS \
+              --out $GITHUB_WORKSPACE/app.apk $RUNNER_TEMP/aligned.apk
+            $BT/apksigner verify --print-certs $GITHUB_WORKSPACE/app.apk | head -3
+            rm -f $RUNNER_TEMP/release.jks
+          else
+            echo "::warning::No keystore secret — building DEBUG apk"
+            ./gradlew assembleDebug
+            cp app/build/outputs/apk/debug/app-debug.apk $GITHUB_WORKSPACE/app.apk
+          fi
       - name: Upload to panel
         if: success()
         run: |
           curl -fsS -X POST "${{ inputs.callback_url }}" -H "x-build-secret: ${{ secrets.BUILD_CALLBACK_SECRET }}" \
-            -F build_id=${{ inputs.build_id }} -F status=done -F apk=@android/app/build/outputs/apk/debug/app-debug.apk
+            -F build_id=${{ inputs.build_id }} -F status=done -F apk=@app.apk
       - name: Report failure
         if: failure()
         run: |
