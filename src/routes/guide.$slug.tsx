@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/guide/$slug")({
-  validateSearch: (s: Record<string, unknown>) => ({ name: typeof s.name === "string" ? s.name : "" }),
+  validateSearch: (s: Record<string, unknown>) => ({ name: typeof s["name"] === "string" ? s["name"] : "" }),
   head: () => ({
     meta: [
       { title: "دليل الزبون الشامل — BHSAT Studio" },
