@@ -2,9 +2,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMe, signOut } from "@/lib/me";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Plus, LogOut } from "lucide-react";
+import { Plus, LogOut, Search, Users, CheckCircle2, Ban, Eye, BookOpen, Copy, Smartphone, Stethoscope } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { createTenant } from "@/lib/iptv.functions";
 import { Button } from "@/components/ui/button";
@@ -17,23 +17,25 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
 });
 
+type Tenant = { id: string; name: string; slug: string; logo_url: string | null; enabled: boolean; latest_version: string };
 
 function Dashboard() {
   const me = useMe();
   const qc = useQueryClient();
   const nav = useNavigate();
+  const [q, setQ] = useState("");
   const tenants = useQuery({
     queryKey: ["tenants", me.data?.uid, me.data?.isAdmin],
     enabled: !!me.data,
     queryFn: async () => {
-      let q = supabase.from("tenants").select("id,name,slug,logo_url,enabled,latest_version").order("created_at", { ascending: false });
+      let qy = supabase.from("tenants").select("id,name,slug,logo_url,enabled,latest_version").order("created_at", { ascending: false });
       if (!me.data!.isAdmin) {
         const { data: m } = await supabase.from("tenant_members").select("tenant_id").eq("user_id", me.data!.uid);
-        q = q.in("id", (m ?? []).map((x) => x.tenant_id));
+        qy = qy.in("id", (m ?? []).map((x) => x.tenant_id));
       }
-      const { data, error } = await q;
+      const { data, error } = await qy;
       if (error) throw error;
-      return data;
+      return data as Tenant[];
     },
   });
 
@@ -41,12 +43,23 @@ function Dashboard() {
     if (me.data && !me.data.isAdmin && tenants.data?.length === 1) nav({ to: "/t/$tenantId", params: { tenantId: tenants.data[0]!.id }, replace: true });
   }, [me.data, tenants.data, nav]);
 
+  const list = tenants.data ?? [];
+  const filtered = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    if (!s) return list;
+    return list.filter((t) => t.name.toLowerCase().includes(s) || t.slug.toLowerCase().includes(s));
+  }, [list, q]);
+  const active = list.filter((t) => t.enabled).length;
+  const disabled = list.length - active;
+
+  const copy = (text: string, msg: string) => { navigator.clipboard.writeText(text); toast.success(msg); };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="flex items-center justify-between border-b px-6 py-4">
         <span className="text-xl font-extrabold">BHSAT <span className="text-primary">Studio</span></span>
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
-          <Link to="/diagnose" className="hover:text-foreground">تشخيص البناء</Link>
+          <Link to="/diagnose" className="flex items-center gap-1 hover:text-foreground"><Stethoscope className="h-4 w-4" />تشخيص البناء</Link>
           <span dir="ltr">{me.data?.email}</span>
           <Button variant="secondary" size="sm" onClick={() => signOut(qc, () => nav({ to: "/auth", replace: true }))}><LogOut className="h-4 w-4" />خروج</Button>
         </div>
@@ -56,20 +69,62 @@ function Dashboard() {
           <h1 className="text-2xl font-extrabold">{me.data?.isAdmin ? "الزبائن والتطبيقات" : "تطبيقاتي"}</h1>
           {me.data?.isAdmin && <NewTenant onDone={() => qc.invalidateQueries({ queryKey: ["tenants"] })} />}
         </div>
+
+        {me.data?.isAdmin && (
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Stat icon={<Users className="h-5 w-5" />} label="إجمالي الزبائن" value={list.length} />
+            <Stat icon={<CheckCircle2 className="h-5 w-5 text-primary" />} label="نشط" value={active} />
+            <Stat icon={<Ban className="h-5 w-5 text-destructive" />} label="معطّل" value={disabled} />
+          </div>
+        )}
+
+        <div className="relative max-w-sm">
+          <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ابحث بالاسم أو الرابط…" className="ps-9" />
+        </div>
+
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {tenants.data?.map((t) => (
-            <Link key={t.id} to="/t/$tenantId" params={{ tenantId: t.id }} className="flex items-center gap-4 rounded-2xl border bg-card p-5 transition hover:border-primary">
-              {t.logo_url ? <img src={t.logo_url} alt="" className="h-14 w-14 rounded-xl object-cover" /> : <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-xl font-extrabold text-primary-foreground">{t.name[0]}</div>}
-              <div className="min-w-0">
-                <p className="truncate font-extrabold">{t.name}</p>
-                <p className="text-sm text-muted-foreground" dir="ltr">/{t.slug} · v{t.latest_version}</p>
-                {!t.enabled && <span className="text-xs text-destructive">معطّل</span>}
+          {filtered.map((t) => (
+            <div key={t.id} className="group flex flex-col rounded-2xl border bg-card p-5 transition hover:border-primary">
+              <Link to="/t/$tenantId" params={{ tenantId: t.id }} className="flex items-center gap-4">
+                {t.logo_url ? <img src={t.logo_url} alt="" className="h-14 w-14 rounded-xl object-cover" /> : <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-xl font-extrabold text-primary-foreground">{t.name[0]}</div>}
+                <div className="min-w-0">
+                  <p className="truncate font-extrabold">{t.name}</p>
+                  <p className="text-sm text-muted-foreground" dir="ltr">/{t.slug} · v{t.latest_version}</p>
+                  {t.enabled
+                    ? <span className="text-xs text-primary">نشط</span>
+                    : <span className="text-xs text-destructive">معطّل</span>}
+                </div>
+              </Link>
+              <div className="mt-4 flex flex-wrap gap-2 border-t pt-3">
+                <Button asChild size="sm" variant="secondary"><Link to="/t/$tenantId" params={{ tenantId: t.id }}><Smartphone className="h-3.5 w-3.5" />إدارة</Link></Button>
+                <Button asChild size="sm" variant="outline"><a href={`/preview/${t.slug}`} target="_blank" rel="noreferrer"><Eye className="h-3.5 w-3.5" />معاينة</a></Button>
+                <Button asChild size="sm" variant="outline"><a href={`/guide/${t.slug}?name=${encodeURIComponent(t.name)}`} target="_blank" rel="noreferrer"><BookOpen className="h-3.5 w-3.5" />الدليل</a></Button>
+                <Button size="sm" variant="ghost" onClick={() => copy(`${window.location.origin}/install/${t.slug}`, "نُسخ رابط التثبيت")}><Copy className="h-3.5 w-3.5" />رابط التثبيت</Button>
               </div>
-            </Link>
+            </div>
           ))}
-          {tenants.data?.length === 0 && <p className="col-span-full rounded-2xl border bg-card p-10 text-center text-muted-foreground">{me.data?.isAdmin ? "لا يوجد زبائن بعد — أضف أول زبون." : "لا يوجد تطبيق مرتبط بحسابك."}</p>}
+          {filtered.length === 0 && (
+            <p className="col-span-full rounded-2xl border bg-card p-10 text-center text-muted-foreground">
+              {list.length === 0
+                ? (me.data?.isAdmin ? "لا يوجد زبائن بعد — أضف أول زبون." : "لا يوجد تطبيق مرتبط بحسابك.")
+                : "لا توجد نتائج مطابقة للبحث."}
+            </p>
+          )}
         </div>
       </main>
+    </div>
+  );
+}
+
+function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
+  return (
+    <div className="flex items-center gap-4 rounded-2xl border bg-card p-5">
+      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted">{icon}</div>
+      <div>
+        <p className="text-2xl font-extrabold">{value}</p>
+        <p className="text-sm text-muted-foreground">{label}</p>
+      </div>
     </div>
   );
 }
