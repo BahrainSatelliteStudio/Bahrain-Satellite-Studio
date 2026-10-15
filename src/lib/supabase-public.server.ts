@@ -20,7 +20,7 @@ export async function loadTenantConfig(slug: string) {
   const sb = publicClient();
   const { data: t } = await sb
     .from("tenants")
-    .select("id,slug,name,logo_url,primary_color,accent_color,support_whatsapp,support_telegram,support_phone,latest_version,min_version,update_url,enabled")
+    .select("id,slug,name,logo_url,primary_color,accent_color,theme,support_whatsapp,support_telegram,support_phone,latest_version,min_version,update_url,enabled")
     .eq("slug", slug)
     .eq("enabled", true)
     .maybeSingle();
