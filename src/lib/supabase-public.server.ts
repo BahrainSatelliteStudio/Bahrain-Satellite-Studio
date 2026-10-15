@@ -20,7 +20,7 @@ export async function loadTenantConfig(slug: string) {
   const sb = publicClient();
   const { data: t } = await sb
     .from("tenants")
-    .select("id,slug,name,logo_url,primary_color,accent_color,theme,support_whatsapp,support_telegram,support_phone,support_facebook,support_website,support_email,customer_notice,store_url,banner_url,colors,latest_version,min_version,update_url,enabled")
+    .select("id,slug,name,logo_url,primary_color,accent_color,theme,support_whatsapp,support_telegram,support_phone,support_facebook,support_website,support_email,customer_notice,store_url,banner_url,colors,latest_version,min_version,update_url,enabled,panel_url")
     .eq("slug", slug)
     .eq("enabled", true)
     .maybeSingle();
@@ -30,8 +30,22 @@ export async function loadTenantConfig(slug: string) {
     sb.from("announcements").select("id,title,body,image_url,kind").eq("tenant_id", t.id).eq("active", true).or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`).order("created_at", { ascending: false }),
     sb.from("builds").select("version,apk_url,finished_at").eq("tenant_id", t.id).eq("status", "done").order("created_at", { ascending: false }).limit(1).maybeSingle(),
   ]);
-  const { id: _id, enabled: _e, ...rest } = t;
-  return { ...rest, sources: sources ?? [], announcements: ann ?? [], latest_build: build ?? null };
+  const { id: _id, enabled: _e, panel_url, ...rest } = t;
+  const cloud = { ...rest, sources: sources ?? [], announcements: ann ?? [], latest_build: build ?? null };
+  // إذا كان للزبون لوحة مستقلة على سيرفره، تكون هي مصدر الإعدادات (مع الرجوع للوحة السحابية عند تعذر الوصول)
+  if (panel_url) {
+    try {
+      const ctrl = new AbortController();
+      const tm = setTimeout(() => ctrl.abort(), 4000);
+      const res = await fetch(`${panel_url.replace(/\/+$/, "")}/api/public/config`, { signal: ctrl.signal, headers: { "User-Agent": "IPTVStudio/1.0" } });
+      clearTimeout(tm);
+      if (res.ok) {
+        const panel = (await res.json()) as Record<string, unknown>;
+        return { ...cloud, ...panel, slug: cloud.slug, latest_build: cloud.latest_build, panel_url };
+      }
+    } catch { /* اللوحة المستقلة غير متاحة — نستخدم إعدادات السحابة */ }
+  }
+  return cloud;
 }
 
 export async function getSourceUrl(slug: string, sourceId: string, type: string) {

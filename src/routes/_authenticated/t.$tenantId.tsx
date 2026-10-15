@@ -173,6 +173,7 @@ function Home(c: Ctx) {
         <Button variant="secondary" onClick={() => c.go("notify")}><Bell className="h-4 w-4" />إرسال إشعار</Button>
         <Button variant="secondary" onClick={() => c.go("brand")}><Palette className="h-4 w-4" />تغيير الثيم</Button>
       </div>
+      {c.isAdmin && <PanelLink c={c} />}
       <div className={card}>
         <h2 className="text-lg font-extrabold">الإشعارات الفعّالة في التطبيق</h2>
         {live.length === 0 ? <p className="py-6 text-center text-sm text-muted-foreground">لا توجد إشعارات منشورة حاليًا.</p> :
