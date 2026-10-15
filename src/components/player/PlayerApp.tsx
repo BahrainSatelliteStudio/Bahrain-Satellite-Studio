@@ -61,7 +61,7 @@ export function PlayerApp({ cfg }: { cfg: TenantConfig }) {
   );
 }
 
-function Shell({ cfg, style, children, onLogout }: { cfg: TenantConfig; style: React.CSSProperties; children: React.ReactNode; onLogout?: () => void }) {
+function Shell({ cfg, style, children, onLogout }: { cfg: TenantConfig; style: React.CSSProperties; children: React.ReactNode; onLogout?: (() => void) | undefined }) {
   return (
     <div style={style} className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b bg-background/90 px-4 py-3 backdrop-blur">

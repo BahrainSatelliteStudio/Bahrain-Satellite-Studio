@@ -31,7 +31,7 @@ export const xtreamApi = createServerFn({ method: "POST" })
     if (data.action !== "auth") q.set("action", data.action);
     for (const [k, v] of Object.entries(data.extra ?? {})) q.set(k, v);
     const text = await fetchText(`${base}/player_api.php?${q}`);
-    return { base, json: JSON.parse(text) as unknown };
+    return { base, json: JSON.parse(text) as any };
   });
 
 export const m3uFetch = createServerFn({ method: "POST" })

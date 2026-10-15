@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMe, signOut } from "@/lib/me";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -37,7 +38,7 @@ function Dashboard() {
   });
 
   useEffect(() => {
-    if (me.data && !me.data.isAdmin && tenants.data?.length === 1) nav({ to: "/t/$tenantId", params: { tenantId: tenants.data[0].id }, replace: true });
+    if (me.data && !me.data.isAdmin && tenants.data?.length === 1) nav({ to: "/t/$tenantId", params: { tenantId: tenants.data[0]!.id }, replace: true });
   }, [me.data, tenants.data, nav]);
 
   return (
@@ -46,7 +47,7 @@ function Dashboard() {
         <span className="text-xl font-extrabold">BHSAT <span className="text-primary">Studio</span></span>
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <span dir="ltr">{me.data?.email}</span>
-          <Button variant="secondary" size="sm" onClick={() => signOut(qc, nav)}><LogOut className="h-4 w-4" />خروج</Button>
+          <Button variant="secondary" size="sm" onClick={() => signOut(qc, () => nav({ to: "/auth", replace: true }))}><LogOut className="h-4 w-4" />خروج</Button>
         </div>
       </header>
       <main className="mx-auto max-w-6xl space-y-6 p-6">
