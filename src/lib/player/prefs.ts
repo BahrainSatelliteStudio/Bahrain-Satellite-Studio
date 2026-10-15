@@ -4,9 +4,10 @@ export type AppSettings = {
   pin: string;            // رقم حماية الإعدادات (افتراضي 0000)
   theme: "auto" | "default" | "blue" | "cinema" | "bhsat"; // auto = حسب اختيار الزبون من لوحته
   lang: "ar" | "en";
+  device: "phone" | "tv"; // نوع الجهاز — يُختار عند أول تشغيل
 };
 
-const DEF_SETTINGS: AppSettings = { pin: "0000", theme: "auto", lang: "ar" };
+const DEF_SETTINGS: AppSettings = { pin: "0000", theme: "auto", lang: "ar", device: "phone" };
 
 function read<T>(key: string, fallback: T): T {
   try { const v = localStorage.getItem(key); return v ? (JSON.parse(v) as T) : fallback; } catch { return fallback; }
