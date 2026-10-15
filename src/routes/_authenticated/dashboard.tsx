@@ -195,6 +195,8 @@ function NewTenant({ autoOpen, onDone }: { autoOpen: boolean; onDone: () => void
   useEffect(() => { if (autoOpen) setOpen(true); }, [autoOpen]);
   const [f, setF] = useState({ name: "", slug: "", package_id: "", username: "", email: "", password: "" });
   const [busy, setBusy] = useState(false);
+  const [cc, setCc] = useState("+973");
+  const [phone, setPhone] = useState("");
   const [done, setDone] = useState<{ name: string; slug: string; username: string; password: string } | null>(null);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => {
