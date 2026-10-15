@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { FEATURES, PLANS, resolveFeatures, type FeatureKey, type FeatureState } from "@/lib/features";
+import { FEATURES, PLANS, resolveFeatures, type FeatureKey, type FeatureState, type PlanKey } from "@/lib/features";
 
 type Tenant = Database["public"]["Tables"]["tenants"]["Row"];
 type Source = Database["public"]["Tables"]["tenant_sources"]["Row"];
@@ -193,11 +193,11 @@ function Home(c: Ctx) {
 function PlanEditor({ c }: { c: Ctx }) {
   const save = useSave(c);
   const init = (c.t.features ?? {}) as FeatureState;
-  const [plan, setPlan] = useState(init.plan ?? "premium");
+  const [plan, setPlan] = useState<PlanKey>(((init.plan as PlanKey) in PLANS ? init.plan : "premium") as PlanKey);
   const [ov, setOv] = useState<Partial<Record<FeatureKey, boolean>>>(init.overrides ?? {});
   const [maxHosts, setMaxHosts] = useState(c.t.max_hosts);
   const eff = resolveFeatures({ plan, overrides: ov });
-  const pick = (p: string) => { setPlan(p); setOv({}); setMaxHosts(PLANS[p].maxHosts); };
+  const pick = (p: PlanKey) => { setPlan(p); setOv({}); setMaxHosts(PLANS[p].maxHosts); };
   const toggle = (k: FeatureKey, v: boolean) => setOv((o) => {
     const n = { ...o }; if (PLANS[plan].on.includes(k) === v) delete n[k]; else n[k] = v; return n;
   });
@@ -207,7 +207,7 @@ function PlanEditor({ c }: { c: Ctx }) {
       <p className="text-sm text-muted-foreground">اختر باقة جاهزة ثم خصّص أي ميزة. الأقسام المقفلة تختفي من لوحة الزبون.</p>
       <div className="flex flex-wrap gap-2">
         {Object.entries(PLANS).map(([k, p]) => (
-          <Button key={k} variant={plan === k ? "default" : "secondary"} onClick={() => pick(k)}>{p.label}</Button>
+          <Button key={k} variant={plan === k ? "default" : "secondary"} onClick={() => pick(k as PlanKey)}>{p.label}</Button>
         ))}
       </div>
       <div className="grid gap-2 sm:grid-cols-2">

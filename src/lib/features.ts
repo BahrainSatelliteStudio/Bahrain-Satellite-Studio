@@ -12,7 +12,9 @@ export const FEATURES = [
 ] as const;
 export type FeatureKey = (typeof FEATURES)[number][0];
 
-export const PLANS: Record<string, { label: string; maxHosts: number; on: FeatureKey[] }> = {
+type Plan = { label: string; maxHosts: number; on: readonly FeatureKey[] };
+export type PlanKey = "basic" | "pro" | "premium";
+export const PLANS: Record<PlanKey, Plan> = {
   basic: { label: "أساسية", maxHosts: 2, on: ["servers", "contact"] },
   pro: { label: "احترافية", maxHosts: 4, on: ["servers", "brand", "contact", "notify", "builds", "subtitles"] },
   premium: { label: "مميزة", maxHosts: 8, on: FEATURES.map((f) => f[0]) },
@@ -22,7 +24,7 @@ export type FeatureState = { plan?: string; overrides?: Partial<Record<FeatureKe
 
 export function resolveFeatures(raw: unknown): Record<FeatureKey, boolean> {
   const s = (raw ?? {}) as FeatureState;
-  const plan = s.plan && PLANS[s.plan] ? PLANS[s.plan] : PLANS.premium;
+  const plan = PLANS[(s.plan as PlanKey) in PLANS ? (s.plan as PlanKey) : "premium"];
   const out = {} as Record<FeatureKey, boolean>;
   for (const [k] of FEATURES) out[k] = s.overrides?.[k] ?? plan.on.includes(k);
   return out;
