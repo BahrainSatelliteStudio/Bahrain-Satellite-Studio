@@ -16,6 +16,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedDiagnoseRouteImport } from './routes/_authenticated/diagnose'
 import { Route as InstallSlugRouteImport } from './routes/install.$slug'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
+import { Route as PreviewSlugRouteImport } from './routes/preview.$slug'
 import { Route as AuthenticatedTTenantIdRouteImport } from './routes/_authenticated/t.$tenantId'
 import { Route as ApiPublicBuildCompleteRouteImport } from './routes/api/public/build-complete'
 import { Route as ApiPublicFileRouteImport } from './routes/api/public/file'
@@ -55,6 +56,11 @@ const PSlugRoute = PSlugRouteImport.update({
   path: '/p/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PreviewSlugRoute = PreviewSlugRouteImport.update({
+  id: '/preview/$slug',
+  path: '/preview/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedTTenantIdRoute = AuthenticatedTTenantIdRouteImport.update({
   id: '/t/$tenantId',
   path: '/t/$tenantId',
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/diagnose': typeof AuthenticatedDiagnoseRoute
   '/install/$slug': typeof InstallSlugRoute
   '/p/$slug': typeof PSlugRoute
+  '/preview/$slug': typeof PreviewSlugRoute
   '/t/$tenantId': typeof AuthenticatedTTenantIdRoute
   '/api/public/build-complete': typeof ApiPublicBuildCompleteRoute
   '/api/public/file': typeof ApiPublicFileRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/diagnose': typeof AuthenticatedDiagnoseRoute
   '/install/$slug': typeof InstallSlugRoute
   '/p/$slug': typeof PSlugRoute
+  '/preview/$slug': typeof PreviewSlugRoute
   '/t/$tenantId': typeof AuthenticatedTTenantIdRoute
   '/api/public/build-complete': typeof ApiPublicBuildCompleteRoute
   '/api/public/file': typeof ApiPublicFileRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/_authenticated/diagnose': typeof AuthenticatedDiagnoseRoute
   '/install/$slug': typeof InstallSlugRoute
   '/p/$slug': typeof PSlugRoute
+  '/preview/$slug': typeof PreviewSlugRoute
   '/_authenticated/t/$tenantId': typeof AuthenticatedTTenantIdRoute
   '/api/public/build-complete': typeof ApiPublicBuildCompleteRoute
   '/api/public/file': typeof ApiPublicFileRoute
@@ -123,6 +132,7 @@ export interface FileRouteTypes {
     | '/diagnose'
     | '/install/$slug'
     | '/p/$slug'
+    | '/preview/$slug'
     | '/t/$tenantId'
     | '/api/public/build-complete'
     | '/api/public/file'
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
     | '/diagnose'
     | '/install/$slug'
     | '/p/$slug'
+    | '/preview/$slug'
     | '/t/$tenantId'
     | '/api/public/build-complete'
     | '/api/public/file'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '/_authenticated/diagnose'
     | '/install/$slug'
     | '/p/$slug'
+    | '/preview/$slug'
     | '/_authenticated/t/$tenantId'
     | '/api/public/build-complete'
     | '/api/public/file'
@@ -160,6 +172,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   InstallSlugRoute: typeof InstallSlugRoute
   PSlugRoute: typeof PSlugRoute
+  PreviewSlugRoute: typeof PreviewSlugRoute
   ApiPublicBuildCompleteRoute: typeof ApiPublicBuildCompleteRoute
   ApiPublicFileRoute: typeof ApiPublicFileRoute
   ApiPublicAppSlugRoute: typeof ApiPublicAppSlugRoute
@@ -216,6 +229,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/preview/$slug': {
+      id: '/preview/$slug'
+      path: '/preview/$slug'
+      fullPath: '/preview/$slug'
+      preLoaderRoute: typeof PreviewSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/t/$tenantId': {
       id: '/_authenticated/t/$tenantId'
       path: '/t/$tenantId'
@@ -268,6 +288,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   InstallSlugRoute: InstallSlugRoute,
   PSlugRoute: PSlugRoute,
+  PreviewSlugRoute: PreviewSlugRoute,
   ApiPublicBuildCompleteRoute: ApiPublicBuildCompleteRoute,
   ApiPublicFileRoute: ApiPublicFileRoute,
   ApiPublicAppSlugRoute: ApiPublicAppSlugRoute,

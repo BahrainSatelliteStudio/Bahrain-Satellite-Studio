@@ -334,6 +334,7 @@ export type Database = {
           features: Json
           id: string
           latest_version: string
+          layout: Json
           logo_url: string | null
           max_hosts: number
           min_version: string
@@ -364,6 +365,7 @@ export type Database = {
           features?: Json
           id?: string
           latest_version?: string
+          layout?: Json
           logo_url?: string | null
           max_hosts?: number
           min_version?: string
@@ -394,6 +396,7 @@ export type Database = {
           features?: Json
           id?: string
           latest_version?: string
+          layout?: Json
           logo_url?: string | null
           max_hosts?: number
           min_version?: string

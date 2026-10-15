@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   ArrowRight, Trash2, Plus, ExternalLink, Hammer, LayoutDashboard, Server, Palette, Phone, Bell, Package,
-  History, DatabaseBackup, ShieldCheck, LogOut, RefreshCw, Download, Upload, Menu, X, Image as ImageIcon,
+  History, DatabaseBackup, LayoutTemplate, ArrowUp, ArrowDown, ShieldCheck, LogOut, RefreshCw, Download, Upload, Menu, X, Image as ImageIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { TEMPLATES, ICONS, resolveLayout, previewChannel, type AppLayout, type SectionCfg } from "@/lib/layout";
 import { FEATURES, PLANS, resolveFeatures, type FeatureKey, type FeatureState, type PlanKey } from "@/lib/features";
 
 type Tenant = Database["public"]["Tables"]["tenants"]["Row"];
@@ -32,7 +33,7 @@ export const Route = createFileRoute("/_authenticated/t/$tenantId")({
 });
 
 const SECTIONS = [
-  ["home", "الرئيسية", LayoutDashboard], ["servers", "السيرفرات والهوستات", Server], ["brand", "هوية التطبيق والألوان", Palette],
+  ["home", "الرئيسية", LayoutDashboard], ["servers", "السيرفرات والهوستات", Server], ["brand", "هوية التطبيق والألوان", Palette], ["layout", "تصميم وأقسام التطبيق", LayoutTemplate],
   ["contact", "روابط التواصل والدعم", Phone], ["notify", "الإشعارات الجماعية", Bell], ["builds", "الإصدارات والتحديثات", Package],
   ["changes", "سجل التغييرات", History], ["backup", "النسخ الاحتياطي", DatabaseBackup], ["security", "أمان حسابي", ShieldCheck],
 ] as const;
@@ -86,13 +87,14 @@ function Panel() {
               <h1 className="text-3xl font-extrabold">{title}</h1>
             </div>
             <div className="flex gap-2">
-              <a href={`/p/${t.slug}`} target="_blank" rel="noreferrer"><Button variant="secondary" size="sm"><ExternalLink className="h-4 w-4" />معاينة التطبيق</Button></a>
+              <a href={`/preview/${t.slug}`} target="_blank" rel="noreferrer"><Button variant="secondary" size="sm"><ExternalLink className="h-4 w-4" />معاينة مباشرة</Button></a>
               <a href={`/install/${t.slug}`} target="_blank" rel="noreferrer"><Button variant="secondary" size="sm"><ExternalLink className="h-4 w-4" />صفحة التثبيت</Button></a>
             </div>
           </div>
           {sec === "home" && <Home {...ctx} />}
           {sec === "servers" && <Servers {...ctx} />}
           {sec === "brand" && <Brand {...ctx} />}
+          {sec === "layout" && <LayoutEditor {...ctx} />}
           {sec === "contact" && <Contact {...ctx} />}
           {sec === "notify" && <Notify {...ctx} />}
           {sec === "builds" && <Builds {...ctx} />}
@@ -434,6 +436,73 @@ function Brand(c: Ctx) {
   );
 }
 
+/* ---------------- Layout ---------------- */
+const sel = "h-10 w-full rounded-md border bg-input/40 px-2 text-sm";
+function LayoutEditor(c: Ctx) {
+  const save = useSave(c);
+  const [lay, setLay] = useState<AppLayout>(() => resolveLayout(c.t.layout));
+  useEffect(() => {
+    if (typeof BroadcastChannel === "undefined") return;
+    const ch = new BroadcastChannel(previewChannel(c.t.slug)); ch.postMessage(lay); ch.close();
+  }, [lay, c.t.slug]);
+  const upd = (i: number, p: Partial<SectionCfg>) => setLay({ ...lay, sections: lay.sections.map((s, j) => (j === i ? { ...s, ...p } : s)) });
+  const move = (i: number, d: number) => { const a = [...lay.sections]; const j = i + d; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j]!, a[i]!]; setLay({ ...lay, sections: a }); };
+  return (
+    <div className="space-y-6">
+      <div className={card}>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-extrabold">قالب التطبيق</h2>
+          <a href={`/preview/${c.t.slug}`} target="_blank" rel="noreferrer"><Button variant="secondary" size="sm"><ExternalLink className="h-4 w-4" />افتح المعاينة المباشرة</Button></a>
+        </div>
+        <p className="text-sm text-muted-foreground">افتح المعاينة في نافذة ثانية — كل تعديل هنا يظهر فيها فورًا قبل الحفظ.</p>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {TEMPLATES.map(([k, label, desc]) => (
+            <button key={k} onClick={() => setLay({ ...lay, template: k })} className={`rounded-xl border p-4 text-start ${lay.template === k ? "border-primary bg-primary/10" : "hover:border-primary"}`}>
+              <p className="font-extrabold">{label}</p><p className="text-xs text-muted-foreground">{desc}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className={card}>
+        <h2 className="text-lg font-extrabold">الأقسام وترتيبها</h2>
+        {lay.sections.map((s, i) => {
+          const Icon = ICONS[s.icon]!;
+          return (
+            <div key={s.key} className={`space-y-3 rounded-xl border p-4 ${s.visible ? "" : "opacity-60"}`}>
+              <div className="flex items-center gap-2">
+                <Icon className="h-5 w-5 text-primary" /><span className="font-extrabold">{s.label}</span>
+                <div className="mr-auto flex items-center gap-1">
+                  <Button size="icon" variant="ghost" aria-label="لأعلى" onClick={() => move(i, -1)}><ArrowUp className="h-4 w-4" /></Button>
+                  <Button size="icon" variant="ghost" aria-label="لأسفل" onClick={() => move(i, 1)}><ArrowDown className="h-4 w-4" /></Button>
+                  <Switch checked={s.visible} onCheckedChange={(v) => upd(i, { visible: v })} aria-label="إظهار" />
+                </div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                <div className="space-y-1"><Label>الاسم</Label><Input value={s.label} onChange={(e) => upd(i, { label: e.target.value })} /></div>
+                <div className="space-y-1"><Label>الأيقونة</Label>
+                  <select className={sel} value={s.icon} onChange={(e) => upd(i, { icon: e.target.value })}>{Object.keys(ICONS).map((k) => <option key={k} value={k}>{k}</option>)}</select></div>
+                <div className="space-y-1"><Label>شكل العرض</Label>
+                  <select className={sel} value={s.view} onChange={(e) => upd(i, { view: e.target.value as SectionCfg["view"] })}><option value="grid">شبكة</option><option value="row">صف أفقي</option></select></div>
+                <div className="space-y-1"><Label>حجم البطاقات</Label>
+                  <select className={sel} value={s.size} onChange={(e) => upd(i, { size: e.target.value as SectionCfg["size"] })}><option value="sm">صغير</option><option value="md">متوسط</option><option value="lg">كبير</option></select></div>
+                <div className="space-y-1"><Label>عدد العناصر (0 = الكل)</Label><Input type="number" min={0} value={s.limit} onChange={(e) => upd(i, { limit: Number(e.target.value) })} /></div>
+              </div>
+              {s.key !== "continue" && s.key !== "fav" && (
+                <div className="space-y-1"><Label>فئات مخفية (اكتب أسماءها مفصولة بفاصلة)</Label>
+                  <Input value={s.hiddenCats.join("، ")} placeholder="مثال: أطفال، رعب" onChange={(e) => upd(i, { hiddenCats: e.target.value.split(/[,،]/).map((x) => x.trim()) })} /></div>
+              )}
+            </div>
+          );
+        })}
+        <div className="flex gap-2">
+          <Button onClick={() => save({ layout: { ...lay, sections: lay.sections.map((s) => ({ ...s, hiddenCats: s.hiddenCats.filter(Boolean) })) } }, "التصميم", `تحديث قالب وأقسام التطبيق (${lay.template})`)}>حفظ التصميم</Button>
+          <Button variant="secondary" onClick={() => setLay(resolveLayout({}))}>استرجاع الافتراضي</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ---------------- Contact ---------------- */
 function Contact(c: Ctx) {
   const { t } = c;
@@ -588,7 +657,7 @@ function Changes(c: Ctx) {
 }
 
 /* ---------------- Backup ---------------- */
-const TENANT_KEYS = ["name", "logo_url", "banner_url", "colors", "primary_color", "accent_color", "theme", "support_whatsapp", "support_telegram", "support_phone", "support_facebook", "support_website", "support_email", "customer_notice", "store_url", "min_version"] as const;
+const TENANT_KEYS = ["name", "logo_url", "banner_url", "colors", "primary_color", "accent_color", "theme", "support_whatsapp", "support_telegram", "support_phone", "support_facebook", "support_website", "support_email", "customer_notice", "store_url", "min_version", "layout"] as const;
 function Backup(c: Ctx) {
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
