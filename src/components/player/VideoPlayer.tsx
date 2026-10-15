@@ -44,8 +44,8 @@ export function VideoPlayer({ src, title, onClose, slug, itemId, logo }: Props) 
           if (video.readyState >= 1) seek(); else video.addEventListener("loadedmetadata", seek, { once: true });
         }
         saveRef.current = setInterval(() => {
-          if (video.duration > 0 && !video.paused) {
-            prefs.saveProgress(slug, itemId, { t: video.currentTime, d: video.duration, title, logo, at: Date.now() });
+          if (video.duration > 0 && isFinite(video.duration) && !video.paused) {
+            prefs.saveProgress(slug, itemId, { t: video.currentTime, d: video.duration, title, logo, url: src, at: Date.now() });
           }
         }, 5000);
       }
@@ -76,8 +76,8 @@ export function VideoPlayer({ src, title, onClose, slug, itemId, logo }: Props) 
       window.removeEventListener("keydown", onKey);
       if (saveRef.current) clearInterval(saveRef.current);
       // حفظ أخير عند الإغلاق
-      if (slug && itemId && video.duration > 0) {
-        prefs.saveProgress(slug, itemId, { t: video.currentTime, d: video.duration, title, logo, at: Date.now() });
+      if (slug && itemId && video.duration > 0 && isFinite(video.duration)) {
+        prefs.saveProgress(slug, itemId, { t: video.currentTime, d: video.duration, title, logo, url: src, at: Date.now() });
       }
       hls?.destroy();
       video.removeAttribute("src");

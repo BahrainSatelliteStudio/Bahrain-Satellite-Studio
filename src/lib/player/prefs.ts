@@ -1,5 +1,5 @@
 // تفضيلات المشغل المحفوظة على الجهاز (لكل زبون على حدة)
-export type Progress = { t: number; d: number; title: string; logo?: string; at: number };
+export type Progress = { t: number; d: number; title: string; logo?: string; url: string; at: number };
 export type AppSettings = {
   pin: string;            // رقم حماية الإعدادات (افتراضي 0000)
   theme: "auto" | "default" | "blue" | "cinema"; // auto = حسب اختيار الزبون من لوحته
