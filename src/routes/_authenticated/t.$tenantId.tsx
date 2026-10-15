@@ -183,6 +183,38 @@ function Home(c: Ctx) {
   );
 }
 
+/* ---------------- Panel link (admin only) ---------------- */
+function PanelLink({ c }: { c: Ctx }) {
+  const save = useSave(c);
+  const [url, setUrl] = useState(c.t.panel_url ?? "");
+  const [checking, setChecking] = useState(false);
+  const [status, setStatus] = useState<null | { ok: boolean; msg: string }>(null);
+  const check = async () => {
+    if (!url) return;
+    setChecking(true); setStatus(null);
+    try {
+      const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 6000);
+      const r = await fetch(`${url.replace(/\/+$/, "")}/api/public/config`, { signal: ctrl.signal });
+      clearTimeout(tm);
+      setStatus(r.ok ? { ok: true, msg: "اللوحة متصلة وتستجيب ✓" } : { ok: false, msg: `اللوحة ردت بخطأ ${r.status}` });
+    } catch { setStatus({ ok: false, msg: "تعذر الوصول للوحة — تأكد من الرابط وأن السيرفر شغال" }); }
+    setChecking(false);
+  };
+  return (
+    <div className={card}>
+      <h2 className="text-lg font-extrabold">لوحة الزبون المستقلة</h2>
+      <p className="text-sm text-muted-foreground">رابط اللوحة المثبتة على سيرفر الزبون. عند تعبئته يقرأ التطبيق إعداداته (الثيم، الشعار، السيرفرات، الإشعارات) من لوحة الزبون مباشرة، ويرجع للوحة السحابية إذا تعذر الوصول.</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <Input dir="ltr" className="max-w-md" placeholder="https://panel.customer.com" value={url} onChange={(e) => setUrl(e.target.value)} />
+        <Button variant="secondary" disabled={!url || checking} onClick={check}>{checking ? "جاري الفحص..." : "فحص الاتصال"}</Button>
+        <Button onClick={() => save({ panel_url: url || null }, "الربط", url ? `ربط لوحة الزبون: ${url}` : "إلغاء ربط لوحة الزبون")}>حفظ</Button>
+      </div>
+      {status && <p className={`text-sm font-bold ${status.ok ? "text-primary" : "text-destructive"}`}>{status.msg}</p>}
+      {c.t.panel_url && <p className="text-xs text-muted-foreground" dir="ltr">الحالي: {c.t.panel_url}</p>}
+    </div>
+  );
+}
+
 /* ---------------- Servers ---------------- */
 function Servers(c: Ctx) {
   const qc = useQueryClient();
