@@ -1,3 +1,4 @@
+import type React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -787,18 +788,18 @@ function Emulator({ slug, refresh }: { slug: string; refresh: number }) {
 }
 
 function Studio(c: Ctx) {
-  const steps = [
+  const steps: [string, string, ((c: Ctx) => React.ReactNode) | null][] = [
     ["brand", "الهوية والألوان", Brand],
     ["layout", "القالب والأقسام", LayoutEditor],
     ["servers", "السيرفرات", Servers],
     ["contact", "التواصل والدعم", Contact],
     ["test", "تجربة التطبيق", null],
     ["builds", "التصدير إلى APK", Builds],
-  ] as const;
+  ];
   const [i, setI] = useState(0);
   const [refresh, setRefresh] = useState(0);
   const go = (n: number) => { setI(n); setRefresh((r) => r + 1); };
-  const [, label, Comp] = steps[i];
+  const [, label, Comp] = steps[i]!;
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap gap-2">
