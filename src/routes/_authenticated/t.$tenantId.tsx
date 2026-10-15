@@ -762,18 +762,27 @@ type Dev = keyof typeof DEVICES;
 
 function Emulator({ slug, refresh }: { slug: string; refresh: number }) {
   const [dev, setDev] = useState<Dev>("phone");
+  const [landscape, setLandscape] = useState(false);
   const [box, setBox] = useState(560);
   const [k, setK] = useState(0);
-  useEffect(() => { const m = (e: MessageEvent) => { const v = e.data?.bhsatDevice; if (v === "phone" || v === "tv") setDev(v); }; window.addEventListener("message", m); return () => window.removeEventListener("message", m); }, []);
+  useEffect(() => { const m = (e: MessageEvent) => { const v = e.data?.bhsatDevice; if (v === "phone" || v === "tv") { setDev(v); setLandscape(v === "tv"); } }; window.addEventListener("message", m); return () => window.removeEventListener("message", m); }, []);
   useEffect(() => { const f = () => setBox(window.innerWidth < 1280 ? Math.min(window.innerWidth - 48, 620) : 460); f(); window.addEventListener("resize", f); return () => window.removeEventListener("resize", f); }, []);
-  const d = DEVICES[dev];
+  const base = DEVICES[dev];
+  const isTv = dev === "tv";
+  const wide = isTv || landscape;
+  const d = { ...base, w: wide ? Math.max(base.w, base.h) : Math.min(base.w, base.h), h: wide ? Math.min(base.w, base.h) : Math.max(base.w, base.h) };
   const scale = Math.min(box / (d.w + 40), 720 / (d.h + 40), 1);
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         {(Object.keys(DEVICES) as Dev[]).map((x) => { const I = DEVICES[x].icon; return (
-          <Button key={x} size="sm" variant={dev === x ? "default" : "secondary"} onClick={() => setDev(x)}><I className="h-4 w-4" />{DEVICES[x].label}</Button>
+          <Button key={x} size="sm" variant={dev === x ? "default" : "secondary"} onClick={() => { setDev(x); setLandscape(x === "tv"); }}><I className="h-4 w-4" />{DEVICES[x].label}</Button>
         ); })}
+        {!isTv && (
+          <Button size="sm" variant={landscape ? "default" : "secondary"} onClick={() => setLandscape((v) => !v)}>
+            <RotateCw className="h-4 w-4" />{landscape ? "عرضي" : "عمودي"}
+          </Button>
+        )}
         <Button size="sm" variant="secondary" onClick={() => setK((n) => n + 1)}><RefreshCw className="h-4 w-4" />إعادة تشغيل (من اختيار اللغة والجهاز)</Button>
       </div>
       <div className="flex justify-center overflow-hidden rounded-2xl bg-secondary/40 p-4" style={{ height: (d.h + 40) * scale + 32 }}>
