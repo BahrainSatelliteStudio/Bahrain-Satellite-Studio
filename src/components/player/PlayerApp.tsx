@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Tv, Film, Clapperboard, Heart, LogOut, Search, MessageCircle, Send, Phone, ChevronRight, Loader2, Settings, Play, History } from "lucide-react";
+import { Tv, Film, Clapperboard, Heart, LogOut, Search, MessageCircle, Send, Phone, ChevronRight, Loader2, Settings, Play, History, Smartphone } from "lucide-react";
 import { xtreamApi, m3uFetch, macCall } from "@/lib/iptv.functions";
 import { prefs, t as str, type AppSettings, type Lang } from "@/lib/player/prefs";
 import { VideoPlayer } from "./VideoPlayer";
