@@ -13,6 +13,8 @@ export const Route = createFileRoute("/auth")({
       { name: "description", content: "تسجيل دخول فريق إدارة Bahrain Satellite" },
       { property: "og:title", content: "الدخول — BHSAT Studio" },
       { property: "og:description", content: "تسجيل دخول فريق الإدارة" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AuthPage,

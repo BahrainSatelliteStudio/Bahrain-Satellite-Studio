@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "لوحة التحكم — BHSAT Studio" }, { name: "description", content: "إدارة تطبيقات الزبائن" }, { property: "og:title", content: "لوحة التحكم — BHSAT Studio" }, { property: "og:description", content: "إدارة تطبيقات الزبائن" }] }),
+  head: () => ({ meta: [{ title: "لوحة التحكم — BHSAT Studio" }, { name: "description", content: "إدارة تطبيقات الزبائن" }, { property: "og:title", content: "لوحة التحكم — BHSAT Studio" }, { property: "og:description", content: "إدارة تطبيقات الزبائن" }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: Dashboard,
 });
 
