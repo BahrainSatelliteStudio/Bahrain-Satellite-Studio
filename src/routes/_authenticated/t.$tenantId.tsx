@@ -83,7 +83,7 @@ async function uploadImage(tenantId: string, file: File) {
 
 function Brand({ t, isAdmin }: { t: Tenant; isAdmin: boolean }) {
   const save = useSave(t);
-  const [f, setF] = useState({ name: t.name, primary_color: t.primary_color, accent_color: t.accent_color, enabled: t.enabled });
+  const [f, setF] = useState({ name: t.name, primary_color: t.primary_color, accent_color: t.accent_color, enabled: t.enabled, theme: t.theme });
   const [busy, setBusy] = useState(false);
   return (
     <div className={card}>
@@ -104,9 +104,19 @@ function Brand({ t, isAdmin }: { t: Tenant; isAdmin: boolean }) {
         <div className="space-y-1"><Label>اللون الأساسي</Label><div className="flex gap-2"><input type="color" value={f.primary_color} onChange={(e) => setF({ ...f, primary_color: e.target.value })} className="h-10 w-14 rounded" /><Input dir="ltr" value={f.primary_color} onChange={(e) => setF({ ...f, primary_color: e.target.value })} /></div></div>
         <div className="space-y-1"><Label>اللون الثانوي</Label><div className="flex gap-2"><input type="color" value={f.accent_color} onChange={(e) => setF({ ...f, accent_color: e.target.value })} className="h-10 w-14 rounded" /><Input dir="ltr" value={f.accent_color} onChange={(e) => setF({ ...f, accent_color: e.target.value })} /></div></div>
       </div>
+      <div className="space-y-1">
+        <Label>تصميم الواجهة الافتراضي</Label>
+        <div className="grid grid-cols-3 gap-2">
+          {([["default", "عادي"], ["blue", "أزرق"], ["cinema", "سينما"]] as const).map(([v, label]) => (
+            <button type="button" key={v} onClick={() => setF({ ...f, theme: v })}
+              className={`rounded-xl border py-2.5 text-sm font-bold ${f.theme === v ? "border-primary bg-primary text-primary-foreground" : "bg-secondary"}`}>{label}</button>
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground">يقدر المستخدم تغييره من إعدادات التطبيق.</p>
+      </div>
       <p className="text-sm text-muted-foreground" dir="ltr">Package: {t.package_id} · /{t.slug}</p>
       {isAdmin && <div className="flex items-center gap-3"><Switch checked={f.enabled} onCheckedChange={(v) => setF({ ...f, enabled: v })} /><Label>التطبيق مفعّل</Label></div>}
-      <Button onClick={() => save(isAdmin ? f : { name: f.name, primary_color: f.primary_color, accent_color: f.accent_color })}>حفظ</Button>
+      <Button onClick={() => save(isAdmin ? f : { name: f.name, primary_color: f.primary_color, accent_color: f.accent_color, theme: f.theme })}>حفظ</Button>
     </div>
   );
 }
