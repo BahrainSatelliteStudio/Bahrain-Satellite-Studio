@@ -552,10 +552,15 @@ function Browser({ cfg, session, settings, layout, onSettings }: { cfg: TenantCo
       <h2 className="text-lg font-extrabold">{series?.name ?? cat?.name ?? sec.label}</h2>
       {loading ? <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
         : !showItems ? (
-          tpl === "cinema" ? (
+          tpl === "cinema" || tpl === "minimal" ? (
             <div className="flex flex-wrap gap-2">
               {shownCats.map((c) => <button data-nav key={c.id} onClick={() => openCat(c)} className="rounded-full border bg-card px-5 py-2.5 font-bold transition hover:border-primary focus:border-primary focus:outline-none">{c.name}</button>)}
               {!shownCats.length && <p className="w-full py-10 text-center text-muted-foreground">{L.noCats}</p>}
+            </div>
+          ) : tpl === "kids" ? (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+              {shownCats.map((c) => <button data-nav key={c.id} onClick={() => openCat(c)} className="rounded-3xl border-2 bg-card p-8 text-center text-lg font-extrabold transition hover:border-primary focus:border-primary focus:outline-none">{c.name}</button>)}
+              {!shownCats.length && <p className="col-span-full py-10 text-center text-muted-foreground">{L.noCats}</p>}
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
