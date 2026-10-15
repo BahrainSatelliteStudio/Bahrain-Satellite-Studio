@@ -4,7 +4,7 @@ import { useMe, signOut } from "@/lib/me";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Plus, LogOut, Search, Users, CheckCircle2, Ban, Eye, BookOpen, Copy, Smartphone, Stethoscope } from "lucide-react";
+import { Plus, LogOut, Search, Users, CheckCircle2, Ban, Eye, BookOpen, Copy, Smartphone, Stethoscope, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { createTenant } from "@/lib/iptv.functions";
 import { Button } from "@/components/ui/button";
@@ -139,6 +139,42 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
   );
 }
 
+// تحويل اسم التطبيق (عربي أو إنجليزي) إلى رابط مختصر + اسم حزمة + اسم مستخدم
+const AR: Record<string, string> = {
+  "أ": "a", "إ": "a", "آ": "a", "ا": "a", "ب": "b", "ت": "t", "ث": "th", "ج": "j", "ح": "h",
+  "خ": "kh", "د": "d", "ذ": "dh", "ر": "r", "ز": "z", "س": "s", "ش": "sh", "ص": "s", "ض": "d",
+  "ط": "t", "ظ": "z", "ع": "a", "غ": "gh", "ف": "f", "ق": "q", "ك": "k", "ل": "l", "م": "m",
+  "ن": "n", "ه": "h", "و": "w", "ي": "y", "ى": "a", "ة": "h", "ؤ": "o", "ئ": "e", "ء": "",
+};
+
+function slugify(name: string) {
+  const latin = Array.from(name.toLowerCase()).map((ch) => (AR[ch] !== undefined ? AR[ch] : ch)).join("");
+  const s = latin
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 30)
+    .replace(/-+$/g, "");
+  return s.length >= 2 ? s : "";
+}
+
+function packageFor(slug: string) {
+  const seg = slug.replace(/[^a-z0-9_]/g, "_").replace(/^[^a-z]+/, "").replace(/_+$/g, "");
+  return `me.bhsat.${seg || "app"}`;
+}
+
+function userFor(slug: string) {
+  const u = slug.replace(/[^a-z0-9]/g, "").slice(0, 30);
+  return u.length >= 3 ? u : "";
+}
+
+function genPass() {
+  const A = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let s = "";
+  for (let i = 0; i < 8; i++) s += A[Math.floor(Math.random() * A.length)];
+  return `Bhs-${s}1`;
+}
+
 function NewTenant({ autoOpen, onDone }: { autoOpen: boolean; onDone: () => void }) {
   const create = useServerFn(createTenant);
   const [open, setOpen] = useState(false);
@@ -146,17 +182,33 @@ function NewTenant({ autoOpen, onDone }: { autoOpen: boolean; onDone: () => void
   const [f, setF] = useState({ name: "", slug: "", package_id: "", username: "", email: "", password: "" });
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<{ name: string; slug: string; username: string; password: string } | null>(null);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
+    setTouched((t) => ({ ...t, [k]: true }));
     setF((p) => {
       const n = { ...p, [k]: v };
-      if (k === "slug") n.package_id = `me.bhsat.${v.replace(/[^a-z0-9]/g, "")}`;
+      if (k === "name") {
+        const s = slugify(v);
+        if (s && !touched.slug) n.slug = s;
+        if (s && !touched.package_id) n.package_id = packageFor(s);
+        if (s && !touched.username) n.username = userFor(s);
+        if (!touched.password && !n.password) n.password = genPass();
+      }
+      if (k === "slug") {
+        const s = v.toLowerCase().replace(/[^a-z0-9-]/g, "");
+        n.slug = s;
+        if (!touched.package_id) n.package_id = packageFor(s);
+        if (!touched.username) n.username = userFor(s);
+      }
+      if (k === "package_id") n.package_id = v.toLowerCase().replace(/[^a-z0-9._]/g, "");
+      if (k === "username") n.username = v.toLowerCase().replace(/[^a-z0-9._-]/g, "");
       return n;
     });
   };
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true);
-    try { await create({ data: f }); toast.success("تم إنشاء الزبون وحسابه"); setDone({ name: f.name, slug: f.slug, username: f.username, password: f.password }); setF({ name: "", slug: "", package_id: "", username: "", email: "", password: "" }); onDone(); }
+    try { await create({ data: f }); toast.success("تم إنشاء الزبون وحسابه"); setDone({ name: f.name, slug: f.slug, username: f.username, password: f.password }); setF({ name: "", slug: "", package_id: "", username: "", email: "", password: "" }); setTouched({}); onDone(); }
     catch (err) { toast.error(err instanceof Error ? err.message : "خطأ"); }
     setBusy(false);
   }
@@ -197,7 +249,12 @@ function NewTenant({ autoOpen, onDone }: { autoOpen: boolean; onDone: () => void
           <div className="space-y-1"><Label>الرابط المختصر (إنجليزي صغير)</Label><Input dir="ltr" required pattern="[a-z0-9][a-z0-9\-]{1,30}" value={f.slug} onChange={set("slug")} placeholder="mytv" /></div>
           <div className="space-y-1"><Label>اسم الحزمة (لا يتغير لاحقًا)</Label><Input dir="ltr" required value={f.package_id} onChange={set("package_id")} /></div>
           <div className="space-y-1"><Label>اسم مستخدم الزبون (إنجليزي صغير)</Label><Input dir="ltr" required pattern="[a-z0-9._\-]{3,30}" value={f.username} onChange={set("username")} placeholder="mytv" /></div>
-          <div className="space-y-1"><Label>كلمة مرور الزبون</Label><Input dir="ltr" minLength={8} required value={f.password} onChange={set("password")} /></div>
+          <div className="space-y-1"><Label>كلمة مرور الزبون</Label>
+            <div className="flex gap-2">
+              <Input dir="ltr" minLength={8} required value={f.password} onChange={set("password")} />
+              <Button type="button" size="icon" variant="outline" title="كلمة مرور جديدة" onClick={() => { setTouched((t) => ({ ...t, password: true })); setF((p) => ({ ...p, password: genPass() })); }}><RefreshCw className="h-4 w-4" /></Button>
+            </div>
+          </div>
           <div className="space-y-1"><Label>بريد الزبون (اختياري — للتواصل)</Label><Input dir="ltr" type="email" value={f.email} onChange={set("email")} /></div>
           <Button className="w-full" disabled={busy}>إنشاء</Button>
         </form>
