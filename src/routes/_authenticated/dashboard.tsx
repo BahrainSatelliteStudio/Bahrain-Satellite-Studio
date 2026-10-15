@@ -51,6 +51,16 @@ function Dashboard() {
   }, [list, q]);
   const active = list.filter((t) => t.enabled).length;
   const disabled = list.length - active;
+  const [autoNew, setAutoNew] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem("bhsat_open_new") === "1") {
+        sessionStorage.removeItem("bhsat_open_new");
+        setAutoNew(true);
+      }
+    } catch { /* تجاهل */ }
+  }, []);
 
   const copy = (text: string, msg: string) => { navigator.clipboard.writeText(text); toast.success(msg); };
 
@@ -67,7 +77,7 @@ function Dashboard() {
       <main className="mx-auto max-w-6xl space-y-6 p-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-extrabold">{me.data?.isAdmin ? "الزبائن والتطبيقات" : "تطبيقاتي"}</h1>
-          {me.data?.isAdmin && <NewTenant onDone={() => qc.invalidateQueries({ queryKey: ["tenants"] })} />}
+          {me.data?.isAdmin && <NewTenant autoOpen={autoNew} onDone={() => qc.invalidateQueries({ queryKey: ["tenants"] })} />}
         </div>
 
         {me.data?.isAdmin && (
@@ -129,9 +139,10 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
   );
 }
 
-function NewTenant({ onDone }: { onDone: () => void }) {
+function NewTenant({ autoOpen, onDone }: { autoOpen: boolean; onDone: () => void }) {
   const create = useServerFn(createTenant);
   const [open, setOpen] = useState(false);
+  useEffect(() => { if (autoOpen) setOpen(true); }, [autoOpen]);
   const [f, setF] = useState({ name: "", slug: "", package_id: "", email: "", password: "" });
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<{ name: string; slug: string } | null>(null);

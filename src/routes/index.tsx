@@ -32,7 +32,11 @@ function Home() {
       <section className="mx-auto max-w-4xl px-4 pb-12 pt-16 text-center">
         <h1 className="text-4xl font-extrabold leading-tight md:text-6xl">مشغل IPTV <span className="text-primary">باسمك</span></h1>
         <p className="mx-auto mt-5 max-w-2xl text-lg text-muted-foreground">صمّم تطبيق مشغل لكل زبون باسمه وشعاره، وخلّه يتحكم بالسيرفرات والإعلانات وأرقام الدعم من لوحة خاصة فيه.</p>
-        <Link to="/auth" className="mt-8 inline-block rounded-2xl bg-primary px-8 py-4 text-lg font-extrabold text-primary-foreground">ابدأ الآن</Link>
+        <Link
+          to="/dashboard"
+          onClick={() => { try { sessionStorage.setItem("bhsat_open_new", "1"); } catch { /* تجاهل */ } }}
+          className="mt-8 inline-block rounded-2xl bg-primary px-8 py-4 text-lg font-extrabold text-primary-foreground"
+        >ابدأ الآن</Link>
       </section>
       <section className="mx-auto grid max-w-6xl gap-4 px-4 pb-20 sm:grid-cols-2 lg:grid-cols-4">
         {features.map((f) => (
