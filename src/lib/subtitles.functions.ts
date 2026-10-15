@@ -4,7 +4,7 @@ const API = "https://api.opensubtitles.com/api/v1";
 const UA = "LovablePlayer v1.0";
 
 function apiKey() {
-  const key = process.env.OPENSUBTITLES_API_KEY;
+  const key = process.env["OPENSUBTITLES_API_KEY"];
   if (!key) throw new Error("ميزة الترجمة من الإنترنت غير مفعّلة بعد — أضف مفتاح OpenSubtitles في إعدادات المشروع");
   return key;
 }
@@ -13,7 +13,7 @@ export type SubResult = { fileId: number; name: string; lang: string; downloads:
 
 // البحث عن ترجمات في OpenSubtitles
 export const searchSubtitles = createServerFn({ method: "POST" })
-  .inputValidator((d: { query: string; lang?: string; season?: number; episode?: number; year?: number }) => d)
+  .inputValidator((d: { query: string; lang?: string | undefined; season?: number | undefined; episode?: number | undefined; year?: number | undefined }) => d)
   .handler(async ({ data }): Promise<SubResult[]> => {
     const key = apiKey();
     const params = new URLSearchParams({ query: data.query, languages: data.lang === "en" ? "en" : "ar" });
