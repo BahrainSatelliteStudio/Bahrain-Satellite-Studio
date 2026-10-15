@@ -28,14 +28,16 @@ function AuthPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
+    const login = email.trim().toLowerCase();
+    const em = login.includes("@") ? login : `${login.replace(/[^a-z0-9._-]/g, "")}@bhsat.local`;
     if (mode === "in") {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({ email: em, password });
       if (error) toast.error("بيانات الدخول غير صحيحة");
       else nav({ to: "/dashboard" });
     } else {
-      const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + "/dashboard" } });
+      const { error } = await supabase.auth.signUp({ email: em, password, options: { emailRedirectTo: window.location.origin + "/dashboard" } });
       if (error) toast.error(error.message);
-      else toast.success("تم إنشاء الحساب — افتح بريدك لتأكيده ثم سجّل الدخول");
+      else { toast.success("تم إنشاء الحساب"); nav({ to: "/dashboard" }); };
     }
     setBusy(false);
   }
@@ -47,7 +49,7 @@ function AuthPage() {
           <h1 className="text-2xl font-extrabold">لوحة التحكم</h1>
           <p className="text-sm text-muted-foreground">{mode === "in" ? "سجّل دخولك للوحة التحكم" : "أول حساب يُنشأ يصبح المسؤول"}</p>
         </div>
-        <div className="space-y-1"><Label>البريد الإلكتروني</Label><Input type="email" dir="ltr" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+        <div className="space-y-1"><Label>اسم المستخدم أو البريد</Label><Input type="text" autoComplete="username" dir="ltr" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
         <div className="space-y-1"><Label>كلمة المرور</Label><Input type="password" dir="ltr" minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} /></div>
         <Button className="w-full" disabled={busy}>{mode === "in" ? "دخول" : "إنشاء حساب"}</Button>
         <button type="button" className="w-full text-sm text-muted-foreground hover:text-foreground" onClick={() => setMode(mode === "in" ? "up" : "in")}>
