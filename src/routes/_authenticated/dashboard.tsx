@@ -51,6 +51,16 @@ function Dashboard() {
   }, [list, q]);
   const active = list.filter((t) => t.enabled).length;
   const disabled = list.length - active;
+  const [autoNew, setAutoNew] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem("bhsat_open_new") === "1") {
+        sessionStorage.removeItem("bhsat_open_new");
+        setAutoNew(true);
+      }
+    } catch { /* تجاهل */ }
+  }, []);
 
   const copy = (text: string, msg: string) => { navigator.clipboard.writeText(text); toast.success(msg); };
 
