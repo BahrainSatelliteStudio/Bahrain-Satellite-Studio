@@ -338,6 +338,7 @@ export type Database = {
           min_version: string
           name: string
           package_id: string
+          panel_url: string | null
           plan_name: string
           primary_color: string
           slug: string
@@ -366,6 +367,7 @@ export type Database = {
           min_version?: string
           name: string
           package_id: string
+          panel_url?: string | null
           plan_name?: string
           primary_color?: string
           slug: string
@@ -394,6 +396,7 @@ export type Database = {
           min_version?: string
           name?: string
           package_id?: string
+          panel_url?: string | null
           plan_name?: string
           primary_color?: string
           slug?: string
