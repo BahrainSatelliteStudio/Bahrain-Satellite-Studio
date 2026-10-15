@@ -1,0 +1,46 @@
+# لوحة تحكم التطبيق — دليل التثبيت
+
+اللوحة تعمل على سيرفرك أنت، بدون الحاجة للإنترنت أثناء التثبيت، وكل البيانات محفوظة في مجلد `data`.
+
+## 1) Ubuntu / Debian (الأسهل)
+```bash
+unzip bhsat-panel.zip && cd bhsat-panel
+sudo bash installers/install-linux.sh
+```
+- يثبت Node.js من داخل الحزمة إذا لم يكن موجودًا (بدون إنترنت).
+- يشتغل تلقائيًا مع تشغيل السيرفر. الأوامر: `systemctl restart bhsat-panel`
+- البيانات: `/opt/bhsat-panel/data`
+
+## 2) Docker
+```bash
+cd bhsat-panel && bash installers/install-docker.sh
+```
+- إذا وُجد ملف `runtime/bhsat-panel-image.tar` يُثبت بدون إنترنت، وإلا يبني الصورة (يحتاج إنترنت مرة واحدة).
+- البيانات في `bhsat-panel/data`.
+
+## 3) Windows Server
+- فك الضغط، اضغط يمين على `installers\install-windows.bat` ← **Run as administrator**.
+- يضيف المهمة "BHSAT Panel" لتشتغل تلقائيًا مع ويندوز، ويفتح المنفذ في الجدار الناري.
+- البيانات: `C:\bhsat-panel\data`
+
+## 4) cPanel / استضافة عادية
+1. ارفع محتويات المجلد إلى مجلد مثل `~/bhsat-panel` (بدون مجلد runtime).
+2. cPanel ← **Setup Node.js App** ← Create Application:
+   - Node.js version: 18 أو أحدث
+   - Application root: `bhsat-panel`
+   - Application URL: الدومين أو الدومين الفرعي
+   - Application startup file: `app.js`
+3. اضغط **Start**. بيانات أول دخول تجدها في `bhsat-panel/data/initial-login.txt` من مدير الملفات.
+
+## أول دخول
+- اسم المستخدم وكلمة المرور تُنشأ تلقائيًا وتظهر بعد التثبيت وفي `data/initial-login.txt`.
+- غيّرها من **أمان حسابي**، والملف يُحذف تلقائيًا.
+
+## ربط التطبيق (APK)
+في الرئيسية يظهر رابط مثل `http://IP:8090/api/public/config` — هذا الرابط يُعطى لنا عند بناء التطبيق.
+يفضّل وضع دومين وشهادة HTTPS أمام اللوحة (مثل Nginx أو Cloudflare).
+
+## النسخ الاحتياطي
+- نسخة يومية تلقائية في `data/backups` (آخر 14 يوم).
+- من صفحة **النسخ الاحتياطي** حمّل نسخة مشفرة بكلمة حماية واحفظها خارج السيرفر.
+- للنقل لسيرفر جديد: ثبّت اللوحة ثم استعد النسخة المشفرة.
