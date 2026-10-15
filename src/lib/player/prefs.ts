@@ -1,5 +1,5 @@
 // تفضيلات المشغل المحفوظة على الجهاز (لكل زبون على حدة)
-export type Progress = { t: number; d: number; title: string; logo?: string; url: string; at: number };
+export type Progress = { t: number; d: number; title: string; logo?: string | undefined; url: string; at: number };
 export type AppSettings = {
   pin: string;            // رقم حماية الإعدادات (افتراضي 0000)
   theme: "auto" | "default" | "blue" | "cinema"; // auto = حسب اختيار الزبون من لوحته
@@ -22,8 +22,8 @@ export const prefs = {
     const all = prefs.progress(slug);
     // احفظ فقط إذا شاهد أكثر من 10 ثوانٍ ولم يكمل 95%
     if (p.t > 10 && p.d > 0 && p.t / p.d < 0.95) { all[id] = p; } else { delete all[id]; }
-    const keys = Object.keys(all).sort((a, b) => all[b].at - all[a].at).slice(0, 60); // حد أقصى 60 عنصرًا
-    write(`iptv:${slug}:progress`, Object.fromEntries(keys.map((k) => [k, all[k]])));
+    const keys = Object.keys(all).sort((a, b) => (all[b]?.at ?? 0) - (all[a]?.at ?? 0)).slice(0, 60); // حد أقصى 60 عنصرًا
+    write(`iptv:${slug}:progress`, Object.fromEntries(keys.flatMap((k) => (all[k] ? [[k, all[k]]] : []))));
   },
   clearProgress: (slug: string, id?: string) => {
     if (!id) return write(`iptv:${slug}:progress`, {});

@@ -22,7 +22,7 @@ type Session =
 type Kind = "live" | "movie" | "series";
 type Cat = { id: string; name: string };
 type Item = { id: string; name: string; logo?: string; url?: string; cmd?: string; kind: Kind | "episode" };
-type Playing = { src: string; title: string; itemId?: string; logo?: string };
+type Playing = { src: string; title: string; itemId?: string | undefined; logo?: string | undefined };
 
 const cmpVer = (a: string, b: string) => {
   const pa = a.split(".").map(Number), pb = b.split(".").map(Number);

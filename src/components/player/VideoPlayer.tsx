@@ -6,9 +6,9 @@ type Props = {
   title: string;
   onClose: () => void;
   // حفظ موضع المشاهدة (اختياري — للأفلام والحلقات)
-  slug?: string;
-  itemId?: string;
-  logo?: string;
+  slug?: string | undefined;
+  itemId?: string | undefined;
+  logo?: string | undefined;
 };
 
 export function VideoPlayer({ src, title, onClose, slug, itemId, logo }: Props) {
