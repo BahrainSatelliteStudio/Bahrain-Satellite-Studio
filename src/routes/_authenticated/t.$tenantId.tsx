@@ -764,7 +764,8 @@ function Emulator({ slug, refresh }: { slug: string; refresh: number }) {
   const [dev, setDev] = useState<Dev>("phone");
   const [box, setBox] = useState(560);
   const [k, setK] = useState(0);
-  useEffect(() => { const f = () => setBox(Math.min(window.innerWidth < 1024 ? window.innerWidth - 48 : 620, 620)); f(); window.addEventListener("resize", f); return () => window.removeEventListener("resize", f); }, []);
+  useEffect(() => { const m = (e: MessageEvent) => { const v = e.data?.bhsatDevice; if (v === "phone" || v === "tv") setDev(v); }; window.addEventListener("message", m); return () => window.removeEventListener("message", m); }, []);
+  useEffect(() => { const f = () => setBox(window.innerWidth < 1280 ? Math.min(window.innerWidth - 48, 620) : 460); f(); window.addEventListener("resize", f); return () => window.removeEventListener("resize", f); }, []);
   const d = DEVICES[dev];
   const scale = Math.min(box / (d.w + 40), 720 / (d.h + 40), 1);
   return (
@@ -773,12 +774,12 @@ function Emulator({ slug, refresh }: { slug: string; refresh: number }) {
         {(Object.keys(DEVICES) as Dev[]).map((x) => { const I = DEVICES[x].icon; return (
           <Button key={x} size="sm" variant={dev === x ? "default" : "secondary"} onClick={() => setDev(x)}><I className="h-4 w-4" />{DEVICES[x].label}</Button>
         ); })}
-        <Button size="sm" variant="secondary" onClick={() => setK((n) => n + 1)}><RefreshCw className="h-4 w-4" />إعادة تشغيل</Button>
+        <Button size="sm" variant="secondary" onClick={() => setK((n) => n + 1)}><RefreshCw className="h-4 w-4" />إعادة تشغيل (من اختيار اللغة والجهاز)</Button>
       </div>
       <div className="flex justify-center overflow-hidden rounded-2xl bg-secondary/40 p-4" style={{ height: (d.h + 40) * scale + 32 }}>
         <div style={{ width: d.w + 40, height: d.h + 40, transform: `scale(${scale})`, transformOrigin: "top center" }}>
           <div className={`h-full w-full overflow-hidden border-foreground/80 bg-background shadow-2xl ${d.frame}`}>
-            <iframe key={`${dev}-${k}-${refresh}`} title="محاكاة التطبيق" src={`/preview/${slug}`} className="h-full w-full border-0" />
+            <iframe key={`${k}-${refresh}`} title="محاكاة التطبيق" src={`/preview/${slug}?setup=1`} className="h-full w-full border-0" />
           </div>
         </div>
       </div>
@@ -809,7 +810,7 @@ function Studio(c: Ctx) {
           </button>
         ))}
       </div>
-      <div className="grid gap-6 lg:grid-cols-[1fr_640px]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_500px]">
         <div className="min-w-0 space-y-4">
           <h2 className="text-xl font-extrabold">الخطوة {i + 1}: {label}</h2>
           {Comp ? <Comp {...c} /> : (
@@ -822,7 +823,7 @@ function Studio(c: Ctx) {
             {i < steps.length - 1 && <Button onClick={() => go(i + 1)}>التالي<ChevronLeft className="h-4 w-4" /></Button>}
           </div>
         </div>
-        <div className="lg:sticky lg:top-4 lg:self-start"><Emulator slug={c.t.slug} refresh={refresh} /></div>
+        <div className="xl:sticky xl:top-4 xl:self-start"><Emulator slug={c.t.slug} refresh={refresh} /></div>
       </div>
     </div>
   );

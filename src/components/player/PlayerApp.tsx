@@ -95,7 +95,7 @@ export function PlayerApp({ cfg, preview = false }: { cfg: TenantConfig; preview
     else try { const s = localStorage.getItem(key); if (s) setSession(JSON.parse(s)); } catch {}
     const v = new URLSearchParams(location.search).get("v") || sessionStorage.getItem("appver");
     if (v) { sessionStorage.setItem("appver", v); setAppVer(v); }
-    setLangChosen(preview || !!localStorage.getItem(`${key}:langChosen`));
+    setLangChosen(preview ? new URLSearchParams(location.search).get("setup") !== "1" : !!localStorage.getItem(`${key}:langChosen`));
     setReady(true);
   }, [key]);
 
@@ -119,12 +119,12 @@ export function PlayerApp({ cfg, preview = false }: { cfg: TenantConfig; preview
             <>
               <p className="text-muted-foreground">اختر نوع جهازك · Choose your device</p>
               <div className="grid grid-cols-2 gap-3">
-                <button data-nav autoFocus onClick={() => { setSettings({ ...settings, device: "phone" }); setSetupStep("lang"); }}
+                <button data-nav autoFocus onClick={() => { setSettings({ ...settings, device: "phone" }); setSetupStep("lang"); if (preview) window.parent.postMessage({ bhsatDevice: "phone" }, "*"); }}
                   className="space-y-2 rounded-2xl border bg-card py-6 font-extrabold focus:outline-none">
                   <Smartphone className="mx-auto h-10 w-10 text-primary" />
                   <div>جوال<br /><span className="text-xs font-normal text-muted-foreground">Phone</span></div>
                 </button>
-                <button data-nav onClick={() => { setSettings({ ...settings, device: "tv" }); setSetupStep("lang"); }}
+                <button data-nav onClick={() => { setSettings({ ...settings, device: "tv" }); setSetupStep("lang"); if (preview) window.parent.postMessage({ bhsatDevice: "tv" }, "*"); }}
                   className="space-y-2 rounded-2xl border bg-card py-6 font-extrabold focus:outline-none">
                   <Tv className="mx-auto h-10 w-10 text-primary" />
                   <div>تلفاز<br /><span className="text-xs font-normal text-muted-foreground">TV</span></div>
