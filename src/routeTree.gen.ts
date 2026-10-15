@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDiagnoseRouteImport } from './routes/_authenticated/diagnose'
+import { Route as GuideSlugRouteImport } from './routes/guide.$slug'
 import { Route as InstallSlugRouteImport } from './routes/install.$slug'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as PreviewSlugRouteImport } from './routes/preview.$slug'
@@ -45,6 +46,11 @@ const AuthenticatedDiagnoseRoute = AuthenticatedDiagnoseRouteImport.update({
   id: '/diagnose',
   path: '/diagnose',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const GuideSlugRoute = GuideSlugRouteImport.update({
+  id: '/guide/$slug',
+  path: '/guide/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const InstallSlugRoute = InstallSlugRouteImport.update({
   id: '/install/$slug',
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/diagnose': typeof AuthenticatedDiagnoseRoute
+  '/guide/$slug': typeof GuideSlugRoute
   '/install/$slug': typeof InstallSlugRoute
   '/p/$slug': typeof PSlugRoute
   '/preview/$slug': typeof PreviewSlugRoute
@@ -100,6 +107,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/diagnose': typeof AuthenticatedDiagnoseRoute
+  '/guide/$slug': typeof GuideSlugRoute
   '/install/$slug': typeof InstallSlugRoute
   '/p/$slug': typeof PSlugRoute
   '/preview/$slug': typeof PreviewSlugRoute
@@ -115,6 +123,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/diagnose': typeof AuthenticatedDiagnoseRoute
+  '/guide/$slug': typeof GuideSlugRoute
   '/install/$slug': typeof InstallSlugRoute
   '/p/$slug': typeof PSlugRoute
   '/preview/$slug': typeof PreviewSlugRoute
@@ -130,6 +139,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/diagnose'
+    | '/guide/$slug'
     | '/install/$slug'
     | '/p/$slug'
     | '/preview/$slug'
@@ -143,6 +153,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/diagnose'
+    | '/guide/$slug'
     | '/install/$slug'
     | '/p/$slug'
     | '/preview/$slug'
@@ -157,6 +168,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/dashboard'
     | '/_authenticated/diagnose'
+    | '/guide/$slug'
     | '/install/$slug'
     | '/p/$slug'
     | '/preview/$slug'
@@ -170,6 +182,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  GuideSlugRoute: typeof GuideSlugRoute
   InstallSlugRoute: typeof InstallSlugRoute
   PSlugRoute: typeof PSlugRoute
   PreviewSlugRoute: typeof PreviewSlugRoute
@@ -214,6 +227,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/diagnose'
       preLoaderRoute: typeof AuthenticatedDiagnoseRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/guide/$slug': {
+      id: '/guide/$slug'
+      path: '/guide/$slug'
+      fullPath: '/guide/$slug'
+      preLoaderRoute: typeof GuideSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/install/$slug': {
       id: '/install/$slug'
@@ -286,6 +306,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  GuideSlugRoute: GuideSlugRoute,
   InstallSlugRoute: InstallSlugRoute,
   PSlugRoute: PSlugRoute,
   PreviewSlugRoute: PreviewSlugRoute,
