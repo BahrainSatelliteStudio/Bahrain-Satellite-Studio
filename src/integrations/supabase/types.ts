@@ -331,6 +331,7 @@ export type Database = {
           created_at: string
           customer_notice: string | null
           enabled: boolean
+          features: Json
           id: string
           latest_version: string
           logo_url: string | null
@@ -360,6 +361,7 @@ export type Database = {
           created_at?: string
           customer_notice?: string | null
           enabled?: boolean
+          features?: Json
           id?: string
           latest_version?: string
           logo_url?: string | null
@@ -389,6 +391,7 @@ export type Database = {
           created_at?: string
           customer_notice?: string | null
           enabled?: boolean
+          features?: Json
           id?: string
           latest_version?: string
           logo_url?: string | null
