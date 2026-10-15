@@ -269,13 +269,13 @@ function ServerCard({ c, s, idx, onChange }: { c: Ctx; s: Source; idx: number; o
 }
 
 /* ---------------- Brand ---------------- */
-const PRESETS: Record<string, { label: string; theme: string; c: Colors }> = {
+const PRESETS = {
   bhsat: { label: "Bahrain Satellite", theme: "bhsat", c: { primary: "#FBBD23", secondary: "#303540", accent: "#DCA518", background: "#14181F", surface: "#20242C", text: "#F8F8F6", button: "#20242C" } },
   purple: { label: "Dark Purple VIP", theme: "default", c: { primary: "#8B5CF6", secondary: "#2E2545", accent: "#C084FC", background: "#120E1C", surface: "#1E1830", text: "#F5F3FF", button: "#2E2545" } },
   neon: { label: "Cyber Neon", theme: "default", c: { primary: "#22C55E", secondary: "#1F2937", accent: "#06B6D4", background: "#0A0F0D", surface: "#141C18", text: "#ECFDF5", button: "#1F2937" } },
   gold: { label: "Classic Gold", theme: "cinema", c: { primary: "#F59E0B", secondary: "#3A2A12", accent: "#FCD34D", background: "#140F08", surface: "#221A10", text: "#FFFBEB", button: "#3A2A12" } },
   ocean: { label: "Ocean Blue", theme: "blue", c: { primary: "#0EA5E9", secondary: "#1E3A5F", accent: "#38BDF8", background: "#0B1220", surface: "#132036", text: "#F0F9FF", button: "#1E3A5F" } },
-};
+} satisfies Record<string, { label: string; theme: string; c: Colors }>;
 const COLOR_FIELDS: [keyof Colors, string][] = [["primary", "اللون الأساسي"], ["secondary", "اللون الثانوي"], ["accent", "اللون المميز"], ["background", "الخلفية"], ["surface", "البطاقات"], ["text", "النص"], ["button", "الأزرار"]];
 
 function mix(hex: string, amt: number) {
@@ -336,7 +336,7 @@ function Brand(c: Ctx) {
           <Input dir="ltr" className="w-32" placeholder="#14181F" id="g2" defaultValue={col.background} />
           <Button variant="secondary" onClick={() => {
             const a = (document.getElementById("g1") as HTMLInputElement).value.trim(), b = (document.getElementById("g2") as HTMLInputElement).value.trim();
-            if (!valid(a) || !valid(b)) return toast.error("اكتب كود لون صحيح مثل #FBBD23");
+            if (!valid(a) || !valid(b)) { toast.error("اكتب كود لون صحيح مثل #FBBD23"); return; }
             setCol({ primary: a.toUpperCase(), accent: mix(a, -0.12), background: b.toUpperCase(), surface: mix(b, 0.06), secondary: mix(b, 0.14), button: mix(b, 0.06), text: "#F8F8F6" }); setTheme("bhsat");
           }}>توليد</Button>
         </div>
@@ -536,7 +536,7 @@ function Backup(c: Ctx) {
       const j = JSON.parse(await file.text());
       if (!j.settings || !Array.isArray(j.sources)) throw new Error("ملف غير صالح");
       const settings = Object.fromEntries(TENANT_KEYS.filter((k) => k in j.settings).map((k) => [k, j.settings[k]]));
-      const { error } = await supabase.from("tenants").update(settings).eq("id", c.t.id); if (error) throw error;
+      const { error } = await supabase.from("tenants").update(settings as Partial<Tenant>).eq("id", c.t.id); if (error) throw error;
       await supabase.from("tenant_sources").delete().eq("tenant_id", c.t.id);
       if (j.sources.length) { const r = await supabase.from("tenant_sources").insert(j.sources.map((s: Record<string, unknown>) => ({ ...s, tenant_id: c.t.id }))); if (r.error) throw r.error; }
       await logChange(c, "النسخ الاحتياطي", `استعادة من ${file.name}`);
@@ -568,7 +568,7 @@ function Backup(c: Ctx) {
 function Security(c: Ctx) {
   const [cur, setCur] = useState(""); const [pw, setPw] = useState(""); const [pw2, setPw2] = useState("");
   const [busy, setBusy] = useState(false);
-  const display = c.email.endsWith("@bhsat.local") ? c.email.replace("@bhsat.local", "") : c.email;
+  const display = c.email.endsWith("@users.bhsat.me") ? c.email.replace("@users.bhsat.me", "") : c.email;
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-3">
@@ -578,8 +578,8 @@ function Security(c: Ctx) {
       </div>
       <form className={card} onSubmit={async (e) => {
         e.preventDefault();
-        if (pw.length < 10) return toast.error("كلمة المرور 10 أحرف على الأقل");
-        if (pw !== pw2) return toast.error("كلمتا المرور غير متطابقتين");
+        if (pw.length < 10) { toast.error("كلمة المرور 10 أحرف على الأقل"); return; }
+        if (pw !== pw2) { toast.error("كلمتا المرور غير متطابقتين"); return; }
         setBusy(true);
         const { error: e1 } = await supabase.auth.signInWithPassword({ email: c.email, password: cur });
         if (e1) { toast.error("كلمة المرور الحالية غير صحيحة"); setBusy(false); return; }
