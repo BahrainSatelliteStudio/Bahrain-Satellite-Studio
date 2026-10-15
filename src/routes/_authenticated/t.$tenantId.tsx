@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   ArrowRight, Trash2, Plus, ExternalLink, Hammer, LayoutDashboard, Server, Palette, Phone, Bell, Package,
-  History, DatabaseBackup, LayoutTemplate, ArrowUp, ArrowDown, ShieldCheck, LogOut, RefreshCw, Download, Upload, Menu, X, Image as ImageIcon,
+  History, DatabaseBackup, LayoutTemplate, ArrowUp, ArrowDown, ShieldCheck, LogOut, RefreshCw, Download, Upload, Menu, X, Image as ImageIcon, Smartphone, Tablet, Tv, Wand2, Check, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -33,7 +33,7 @@ export const Route = createFileRoute("/_authenticated/t/$tenantId")({
 });
 
 const SECTIONS = [
-  ["home", "الرئيسية", LayoutDashboard], ["servers", "السيرفرات والهوستات", Server], ["brand", "هوية التطبيق والألوان", Palette], ["layout", "تصميم وأقسام التطبيق", LayoutTemplate],
+  ["home", "الرئيسية", LayoutDashboard], ["studio", "استوديو التطبيق والمحاكاة", Wand2], ["servers", "السيرفرات والهوستات", Server], ["brand", "هوية التطبيق والألوان", Palette], ["layout", "تصميم وأقسام التطبيق", LayoutTemplate],
   ["contact", "روابط التواصل والدعم", Phone], ["notify", "الإشعارات الجماعية", Bell], ["builds", "الإصدارات والتحديثات", Package],
   ["changes", "سجل التغييرات", History], ["backup", "النسخ الاحتياطي", DatabaseBackup], ["security", "أمان حسابي", ShieldCheck],
 ] as const;
@@ -79,7 +79,7 @@ function Panel() {
         </div>
       </aside>
       <main className="flex-1 p-4 sm:p-8">
-        <div className="mx-auto max-w-5xl">
+        <div className={`mx-auto ${sec === "studio" ? "max-w-7xl" : "max-w-5xl"}`}>
           <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
             <div>
               <button className="mb-2 rounded-lg bg-secondary p-2 lg:hidden" onClick={() => setOpen(true)} aria-label="القائمة"><Menu className="h-5 w-5" /></button>
@@ -92,6 +92,7 @@ function Panel() {
             </div>
           </div>
           {sec === "home" && <Home {...ctx} />}
+          {sec === "studio" && <Studio {...ctx} />}
           {sec === "servers" && <Servers {...ctx} />}
           {sec === "brand" && <Brand {...ctx} />}
           {sec === "layout" && <LayoutEditor {...ctx} />}
@@ -745,6 +746,82 @@ function Security(c: Ctx) {
         <h2 className="text-lg font-extrabold">تسجيل الخروج من كل الأجهزة</h2>
         <p className="text-sm text-muted-foreground">إذا تشك أن أحد دخل حسابك، اخرج من كل الأجهزة ثم غيّر كلمة المرور.</p>
         <Button variant="secondary" onClick={async () => { await supabase.auth.signOut({ scope: "global" }); location.href = "/auth"; }}>خروج من كل الأجهزة</Button>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- Studio: wizard + device emulator ---------------- */
+const DEVICES = {
+  phone: { label: "جوال", icon: Smartphone, w: 390, h: 800, frame: "rounded-[2.5rem] border-[10px]" },
+  tablet: { label: "تابلت", icon: Tablet, w: 820, h: 1100, frame: "rounded-[2rem] border-[14px]" },
+  tv: { label: "تلفاز", icon: Tv, w: 1600, h: 900, frame: "rounded-lg border-[12px] border-b-[22px]" },
+} as const;
+type Dev = keyof typeof DEVICES;
+
+function Emulator({ slug, refresh }: { slug: string; refresh: number }) {
+  const [dev, setDev] = useState<Dev>("phone");
+  const [box, setBox] = useState(560);
+  const [k, setK] = useState(0);
+  useEffect(() => { const f = () => setBox(Math.min(window.innerWidth < 1024 ? window.innerWidth - 48 : 620, 620)); f(); window.addEventListener("resize", f); return () => window.removeEventListener("resize", f); }, []);
+  const d = DEVICES[dev];
+  const scale = Math.min(box / (d.w + 40), 720 / (d.h + 40), 1);
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
+        {(Object.keys(DEVICES) as Dev[]).map((x) => { const I = DEVICES[x].icon; return (
+          <Button key={x} size="sm" variant={dev === x ? "default" : "secondary"} onClick={() => setDev(x)}><I className="h-4 w-4" />{DEVICES[x].label}</Button>
+        ); })}
+        <Button size="sm" variant="secondary" onClick={() => setK((n) => n + 1)}><RefreshCw className="h-4 w-4" />إعادة تشغيل</Button>
+      </div>
+      <div className="flex justify-center overflow-hidden rounded-2xl bg-secondary/40 p-4" style={{ height: (d.h + 40) * scale + 32 }}>
+        <div style={{ width: d.w + 40, height: d.h + 40, transform: `scale(${scale})`, transformOrigin: "top center" }}>
+          <div className={`h-full w-full overflow-hidden border-foreground/80 bg-background shadow-2xl ${d.frame}`}>
+            <iframe key={`${dev}-${k}-${refresh}`} title="محاكاة التطبيق" src={`/preview/${slug}`} className="h-full w-full border-0" />
+          </div>
+        </div>
+      </div>
+      <p className="text-center text-xs text-muted-foreground">تقدر تتنقل وتفتح الأقسام وتشغّل المحتوى داخل الجهاز كأنه التطبيق الحقيقي</p>
+    </div>
+  );
+}
+
+function Studio(c: Ctx) {
+  const steps = [
+    ["brand", "الهوية والألوان", Brand],
+    ["layout", "القالب والأقسام", LayoutEditor],
+    ["servers", "السيرفرات", Servers],
+    ["contact", "التواصل والدعم", Contact],
+    ["test", "تجربة التطبيق", null],
+    ["builds", "التصدير إلى APK", Builds],
+  ] as const;
+  const [i, setI] = useState(0);
+  const [refresh, setRefresh] = useState(0);
+  const go = (n: number) => { setI(n); setRefresh((r) => r + 1); };
+  const [, label, Comp] = steps[i];
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap gap-2">
+        {steps.map(([k, l], n) => (
+          <button key={k} onClick={() => go(n)} className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-bold ${n === i ? "bg-primary text-primary-foreground" : n < i ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground"}`}>
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-background/30 text-xs">{n < i ? <Check className="h-3 w-3" /> : n + 1}</span>{l}
+          </button>
+        ))}
+      </div>
+      <div className="grid gap-6 lg:grid-cols-[1fr_640px]">
+        <div className="min-w-0 space-y-4">
+          <h2 className="text-xl font-extrabold">الخطوة {i + 1}: {label}</h2>
+          {Comp ? <Comp {...c} /> : (
+            <div className={card}>
+              <p className="text-sm text-muted-foreground">جرّب التطبيق داخل الجهاز: افتح الأقسام، شغّل قناة أو فيلم، جرّب المفضلة والإعدادات، وبدّل بين الجوال والتابلت والتلفاز. إذا كل شي تمام انتقل للتصدير.</p>
+            </div>
+          )}
+          <div className="flex justify-between">
+            <Button variant="secondary" disabled={i === 0} onClick={() => go(i - 1)}><ChevronRight className="h-4 w-4" />السابق</Button>
+            {i < steps.length - 1 && <Button onClick={() => go(i + 1)}>التالي<ChevronLeft className="h-4 w-4" /></Button>}
+          </div>
+        </div>
+        <div className="lg:sticky lg:top-4 lg:self-start"><Emulator slug={c.t.slug} refresh={refresh} /></div>
       </div>
     </div>
   );
