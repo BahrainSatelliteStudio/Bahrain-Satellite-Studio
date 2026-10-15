@@ -30,7 +30,7 @@ function PreviewPage() {
   const cfg = Route.useLoaderData();
   return (
     <div>
-      <div className="sticky top-0 z-50 bg-primary py-1.5 text-center text-xs font-bold text-primary-foreground">معاينة مباشرة — بيانات تجريبية، تتحدث فورًا مع تعديلاتك في اللوحة</div>
+      <div className="sticky top-0 z-50 bg-secondary py-1.5 text-center text-xs font-bold text-foreground">معاينة مباشرة — بيانات تجريبية، تتحدث فورًا مع تعديلاتك في اللوحة</div>
       <PlayerApp cfg={cfg} preview />
     </div>
   );
