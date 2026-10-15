@@ -14,16 +14,143 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      app_settings: {
+        Row: {
+          announcement: string | null
+          app_name: string
+          config_version: number
+          id: number
+          logo_url: string | null
+          store_url: string
+          support_phone: string | null
+          support_telegram: string | null
+          support_whatsapp: string | null
+          updated_at: string
+        }
+        Insert: {
+          announcement?: string | null
+          app_name?: string
+          config_version?: number
+          id?: number
+          logo_url?: string | null
+          store_url?: string
+          support_phone?: string | null
+          support_telegram?: string | null
+          support_whatsapp?: string | null
+          updated_at?: string
+        }
+        Update: {
+          announcement?: string | null
+          app_name?: string
+          config_version?: number
+          id?: number
+          logo_url?: string | null
+          store_url?: string
+          support_phone?: string | null
+          support_telegram?: string | null
+          support_whatsapp?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      hosts: {
+        Row: {
+          created_at: string
+          id: string
+          is_primary: boolean
+          server_id: string
+          sort_order: number
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          server_id: string
+          sort_order?: number
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          server_id?: string
+          sort_order?: number
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hosts_server_id_fkey"
+            columns: ["server_id"]
+            isOneToOne: false
+            referencedRelation: "servers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      servers: {
+        Row: {
+          activation_api_url: string | null
+          code: string
+          created_at: string
+          enabled: boolean
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          activation_api_url?: string | null
+          code: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          activation_api_url?: string | null
+          code?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +277,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
