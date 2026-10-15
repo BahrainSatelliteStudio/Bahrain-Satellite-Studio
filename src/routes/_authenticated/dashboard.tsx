@@ -143,9 +143,9 @@ function NewTenant({ autoOpen, onDone }: { autoOpen: boolean; onDone: () => void
   const create = useServerFn(createTenant);
   const [open, setOpen] = useState(false);
   useEffect(() => { if (autoOpen) setOpen(true); }, [autoOpen]);
-  const [f, setF] = useState({ name: "", slug: "", package_id: "", email: "", password: "" });
+  const [f, setF] = useState({ name: "", slug: "", package_id: "", username: "", email: "", password: "" });
   const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState<{ name: string; slug: string } | null>(null);
+  const [done, setDone] = useState<{ name: string; slug: string; username: string; password: string } | null>(null);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
     setF((p) => {
@@ -156,7 +156,7 @@ function NewTenant({ autoOpen, onDone }: { autoOpen: boolean; onDone: () => void
   };
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true);
-    try { await create({ data: f }); toast.success("تم إنشاء الزبون وحسابه"); setDone({ name: f.name, slug: f.slug }); setF({ name: "", slug: "", package_id: "", email: "", password: "" }); onDone(); }
+    try { await create({ data: f }); toast.success("تم إنشاء الزبون وحسابه"); setDone({ name: f.name, slug: f.slug, username: f.username, password: f.password }); setF({ name: "", slug: "", package_id: "", username: "", email: "", password: "" }); onDone(); }
     catch (err) { toast.error(err instanceof Error ? err.message : "خطأ"); }
     setBusy(false);
   }
