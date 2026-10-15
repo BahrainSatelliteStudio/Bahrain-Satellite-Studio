@@ -657,7 +657,7 @@ function Changes(c: Ctx) {
 }
 
 /* ---------------- Backup ---------------- */
-const TENANT_KEYS = ["name", "logo_url", "banner_url", "colors", "primary_color", "accent_color", "theme", "support_whatsapp", "support_telegram", "support_phone", "support_facebook", "support_website", "support_email", "customer_notice", "store_url", "min_version"] as const;
+const TENANT_KEYS = ["name", "logo_url", "banner_url", "colors", "primary_color", "accent_color", "theme", "support_whatsapp", "support_telegram", "support_phone", "support_facebook", "support_website", "support_email", "customer_notice", "store_url", "min_version", "layout"] as const;
 function Backup(c: Ctx) {
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
