@@ -6,8 +6,8 @@ export const Route = createFileRoute("/api/public/config")({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
-        const sb = createClient(process.env.SUPABASE_URL!, key, {
+        const key = process.env['SUPABASE_PUBLISHABLE_KEY']!;
+        const sb = createClient(process.env['SUPABASE_URL']!, key, {
           auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
           global: {
             fetch: (input, init) => {

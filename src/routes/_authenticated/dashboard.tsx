@@ -78,9 +78,9 @@ function ServersTab() {
   const [code, setCode] = useState(""); const [name, setName] = useState("");
 
   async function add() {
-    if (!code || !name) return toast.error("أدخل الكود والاسم");
+    if (!code || !name) { toast.error("أدخل الكود والاسم"); return; }
     const { error } = await supabase.from("servers").insert({ code, name, sort_order: q.data?.length ?? 0 });
-    if (error) return toast.error(error.message.includes("unique") ? "الكود مستخدم" : error.message);
+    if (error) { toast.error(error.message.includes("unique") ? "الكود مستخدم" : error.message); return; }
     setCode(""); setName(""); refresh();
   }
 
@@ -152,7 +152,7 @@ function IdentityTab() {
   );
   async function save() {
     const { error } = await supabase.from("app_settings").update({ ...f!, config_version: f!.config_version + 1, updated_at: new Date().toISOString() }).eq("id", 1);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("تم النشر — سيقرأ التطبيق الإعدادات الجديدة"); qc.invalidateQueries({ queryKey: ["settings"] });
   }
   return (
