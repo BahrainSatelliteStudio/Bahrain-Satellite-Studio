@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          active: boolean
+          body: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          tenant_id: string
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          body?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          tenant_id: string
+          title: string
+        }
+        Update: {
+          active?: boolean
+          body?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          tenant_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcements_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_settings: {
         Row: {
           announcement: string | null
@@ -52,6 +90,47 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      builds: {
+        Row: {
+          apk_url: string | null
+          created_at: string
+          error: string | null
+          finished_at: string | null
+          id: string
+          status: string
+          tenant_id: string
+          version: string
+        }
+        Insert: {
+          apk_url?: string | null
+          created_at?: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          status?: string
+          tenant_id: string
+          version: string
+        }
+        Update: {
+          apk_url?: string | null
+          created_at?: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          status?: string
+          tenant_id?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "builds_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       hosts: {
         Row: {
@@ -118,6 +197,127 @@ export type Database = {
         }
         Relationships: []
       }
+      tenant_members: {
+        Row: {
+          id: string
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_members_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_sources: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          name: string
+          sort_order: number
+          tenant_id: string
+          type: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          name: string
+          sort_order?: number
+          tenant_id: string
+          type: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          name?: string
+          sort_order?: number
+          tenant_id?: string
+          type?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_sources_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          accent_color: string
+          created_at: string
+          enabled: boolean
+          id: string
+          latest_version: string
+          logo_url: string | null
+          min_version: string
+          name: string
+          package_id: string
+          primary_color: string
+          slug: string
+          support_phone: string | null
+          support_telegram: string | null
+          support_whatsapp: string | null
+          update_url: string | null
+        }
+        Insert: {
+          accent_color?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          latest_version?: string
+          logo_url?: string | null
+          min_version?: string
+          name: string
+          package_id: string
+          primary_color?: string
+          slug: string
+          support_phone?: string | null
+          support_telegram?: string | null
+          support_whatsapp?: string | null
+          update_url?: string | null
+        }
+        Update: {
+          accent_color?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          latest_version?: string
+          logo_url?: string | null
+          min_version?: string
+          name?: string
+          package_id?: string
+          primary_color?: string
+          slug?: string
+          support_phone?: string | null
+          support_telegram?: string | null
+          support_whatsapp?: string | null
+          update_url?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -148,6 +348,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_tenant_member: { Args: { _tenant_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
