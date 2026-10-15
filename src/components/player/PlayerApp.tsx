@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Tv, Film, Clapperboard, Heart, LogOut, Search, MessageCircle, Send, Phone, ChevronRight, Loader2 } from "lucide-react";
+import { Tv, Film, Clapperboard, Heart, LogOut, Search, MessageCircle, Send, Phone, ChevronRight, Loader2, Settings, Play, History } from "lucide-react";
 import { xtreamApi, m3uFetch, macCall } from "@/lib/iptv.functions";
+import { prefs, t as str, type AppSettings, type Lang } from "@/lib/player/prefs";
 import { VideoPlayer } from "./VideoPlayer";
 
 export type TenantConfig = {
   slug: string; name: string; logo_url: string | null; primary_color: string; accent_color: string;
+  theme: "default" | "blue" | "cinema";
   support_whatsapp: string | null; support_telegram: string | null; support_phone: string | null;
   latest_version: string; min_version: string; update_url: string | null;
   sources: { id: string; type: string; name: string }[];
@@ -20,6 +22,7 @@ type Session =
 type Kind = "live" | "movie" | "series";
 type Cat = { id: string; name: string };
 type Item = { id: string; name: string; logo?: string; url?: string; cmd?: string; kind: Kind | "episode" };
+type Playing = { src: string; title: string; itemId?: string; logo?: string };
 
 const cmpVer = (a: string, b: string) => {
   const pa = a.split(".").map(Number), pb = b.split(".").map(Number);
@@ -27,56 +30,222 @@ const cmpVer = (a: string, b: string) => {
   return 0;
 };
 
+// تنقل الريموت/الكيبورد بين العناصر [data-nav]
+function useTvNav() {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const dirs: Record<string, [number, number]> = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
+      const d = dirs[e.key];
+      if (!d) return;
+      const cur = document.activeElement as HTMLElement | null;
+      if (cur && (cur.tagName === "INPUT" || cur.tagName === "TEXTAREA" || cur.tagName === "SELECT" || cur.tagName === "VIDEO")) return;
+      const els = Array.from(document.querySelectorAll<HTMLElement>("[data-nav]")).filter((el) => el.offsetParent !== null);
+      if (!els.length) return;
+      if (!cur || !els.includes(cur)) { e.preventDefault(); els[0]?.focus(); return; }
+      const c = cur.getBoundingClientRect(); const cx = c.left + c.width / 2, cy = c.top + c.height / 2;
+      let best: HTMLElement | null = null; let bestScore = Infinity;
+      for (const el of els) {
+        if (el === cur) continue;
+        const r = el.getBoundingClientRect(); const x = r.left + r.width / 2, y = r.top + r.height / 2;
+        const dx = x - cx, dy = y - cy;
+        if (d[0] !== 0 && Math.sign(dx) !== d[0]) continue;
+        if (d[1] !== 0 && Math.sign(dy) !== d[1]) continue;
+        const primary = d[0] !== 0 ? Math.abs(dx) : Math.abs(dy);
+        const secondary = d[0] !== 0 ? Math.abs(dy) : Math.abs(dx);
+        if (primary < 4) continue;
+        const score = primary + secondary * 2.5;
+        if (score < bestScore) { bestScore = score; best = el; }
+      }
+      if (best) { e.preventDefault(); best.focus(); best.scrollIntoView({ block: "nearest", inline: "nearest" }); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+}
+
 export function PlayerApp({ cfg }: { cfg: TenantConfig }) {
   const key = `iptv:${cfg.slug}`;
   const [session, setSession] = useState<Session | null>(null);
   const [ready, setReady] = useState(false);
   const [appVer, setAppVer] = useState<string | null>(null);
+  const [settings, setSettings] = useState<AppSettings>(() => prefs.settings(cfg.slug));
+  const [langChosen, setLangChosen] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
+  useTvNav();
 
   useEffect(() => {
     try { const s = localStorage.getItem(key); if (s) setSession(JSON.parse(s)); } catch {}
     const v = new URLSearchParams(location.search).get("v") || sessionStorage.getItem("appver");
     if (v) { sessionStorage.setItem("appver", v); setAppVer(v); }
+    setLangChosen(!!localStorage.getItem(`${key}:langChosen`));
     setReady(true);
   }, [key]);
 
+  const L = str(settings.lang);
+  const theme = settings.theme === "auto" ? cfg.theme : settings.theme;
   const style = { "--primary": cfg.primary_color, "--ring": cfg.primary_color, "--accent": cfg.accent_color, "--primary-foreground": "oklch(0.99 0 0)" } as React.CSSProperties;
+  const themeClass = theme === "blue" ? "theme-blue" : theme === "cinema" ? "theme-cinema" : "";
 
-  if (appVer && cmpVer(appVer, cfg.min_version) < 0) {
+  const saveSettings = (s: AppSettings) => { setSettings(s); prefs.saveSettings(cfg.slug, s); };
+
+  if (!ready) return <Shell cfg={cfg} style={style} themeClass={themeClass} lang={settings.lang}><div /></Shell>;
+
+  // شاشة اختيار اللغة عند أول تشغيل
+  if (!langChosen) {
     return (
-      <Shell cfg={cfg} style={style}>
-        <div className="mx-auto mt-16 max-w-md space-y-4 rounded-2xl border bg-card p-6 text-center">
-          <h2 className="text-xl font-extrabold">يتوفر تحديث إجباري</h2>
-          <p className="text-muted-foreground">نسختك {appVer} — أحدث نسخة {cfg.latest_version}. حمّل التحديث للمتابعة.</p>
-          {cfg.update_url && <a href={cfg.update_url} className="block rounded-xl bg-primary py-3 font-bold text-primary-foreground">تحميل التحديث</a>}
+      <Shell cfg={cfg} style={style} themeClass={themeClass} lang={settings.lang}>
+        <div className="mx-auto mt-20 max-w-sm space-y-4 text-center">
+          {cfg.logo_url && <img src={cfg.logo_url} alt="" className="mx-auto h-24 w-24 rounded-3xl object-cover" />}
+          <h1 className="text-2xl font-extrabold">{cfg.name}</h1>
+          <p className="text-muted-foreground">اختر اللغة · Choose your language</p>
+          <div className="grid gap-3">
+            {(["ar", "en"] as Lang[]).map((l) => (
+              <button key={l} data-nav autoFocus={l === "ar"} onClick={() => { saveSettings({ ...settings, lang: l }); localStorage.setItem(`${key}:langChosen`, "1"); setLangChosen(true); }}
+                className="rounded-2xl border bg-card py-4 text-lg font-extrabold focus:outline-none">
+                {l === "ar" ? "العربية" : "English"}
+              </button>
+            ))}
+          </div>
         </div>
       </Shell>
     );
   }
-  if (!ready) return <Shell cfg={cfg} style={style}><div /></Shell>;
+
+  if (appVer && cmpVer(appVer, cfg.min_version) < 0) {
+    return (
+      <Shell cfg={cfg} style={style} themeClass={themeClass} lang={settings.lang}>
+        <div className="mx-auto mt-16 max-w-md space-y-4 rounded-2xl border bg-card p-6 text-center">
+          <h2 className="text-xl font-extrabold">يتوفر تحديث إجباري</h2>
+          <p className="text-muted-foreground">نسختك {appVer} — أحدث نسخة {cfg.latest_version}. حمّل التحديث للمتابعة.</p>
+          {cfg.update_url && <a data-nav href={cfg.update_url} className="block rounded-xl bg-primary py-3 font-bold text-primary-foreground">تحميل التحديث</a>}
+        </div>
+      </Shell>
+    );
+  }
+
   return (
-    <Shell cfg={cfg} style={style} onLogout={session ? () => { localStorage.removeItem(key); setSession(null); } : undefined}>
-      {session ? <Browser cfg={cfg} session={session} /> : <Login cfg={cfg} onDone={(s) => { localStorage.setItem(key, JSON.stringify(s)); setSession(s); }} />}
+    <Shell cfg={cfg} style={style} themeClass={themeClass} lang={settings.lang}
+      onSettings={() => setShowSettings(true)}
+      onLogout={session ? () => { localStorage.removeItem(key); setSession(null); } : undefined}>
+      {showSettings && <SettingsDialog cfg={cfg} settings={settings} onSave={saveSettings} onClose={() => setShowSettings(false)} />}
+      {session
+        ? <Browser cfg={cfg} session={session} settings={settings} />
+        : <Login cfg={cfg} onDone={(s) => { localStorage.setItem(key, JSON.stringify(s)); setSession(s); }} />}
     </Shell>
   );
 }
 
-function Shell({ cfg, style, children, onLogout }: { cfg: TenantConfig; style: React.CSSProperties; children: React.ReactNode; onLogout?: (() => void) | undefined }) {
+function Shell({ cfg, style, themeClass, lang, children, onLogout, onSettings }: {
+  cfg: TenantConfig; style: React.CSSProperties; themeClass: string; lang: Lang;
+  children: React.ReactNode; onLogout?: (() => void) | undefined; onSettings?: (() => void) | undefined;
+}) {
   return (
-    <div style={style} className="min-h-screen bg-background text-foreground">
+    <div style={style} dir={lang === "ar" ? "rtl" : "ltr"} className={`min-h-screen bg-background text-foreground ${themeClass}`}>
       <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b bg-background/90 px-4 py-3 backdrop-blur">
         <div className="flex items-center gap-3">
           {cfg.logo_url ? <img src={cfg.logo_url} alt={cfg.name} className="h-10 w-10 rounded-xl object-cover" /> : <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-extrabold text-primary-foreground">{cfg.name[0]}</div>}
           <span className="text-lg font-extrabold">{cfg.name}</span>
         </div>
         <div className="flex items-center gap-2">
-          {cfg.support_whatsapp && <a aria-label="واتساب" href={`https://wa.me/${cfg.support_whatsapp.replace(/\D/g, "")}`} className="rounded-lg bg-secondary p-2"><MessageCircle className="h-5 w-5" /></a>}
-          {cfg.support_telegram && <a aria-label="تلغرام" href={`https://t.me/${cfg.support_telegram.replace(/^@/, "")}`} className="rounded-lg bg-secondary p-2"><Send className="h-5 w-5" /></a>}
-          {cfg.support_phone && <a aria-label="اتصال" href={`tel:${cfg.support_phone}`} className="rounded-lg bg-secondary p-2"><Phone className="h-5 w-5" /></a>}
-          {onLogout && <button aria-label="خروج" onClick={onLogout} className="rounded-lg bg-secondary p-2"><LogOut className="h-5 w-5" /></button>}
+          {cfg.support_whatsapp && <a data-nav aria-label="واتساب" href={`https://wa.me/${cfg.support_whatsapp.replace(/\D/g, "")}`} className="rounded-lg bg-secondary p-2"><MessageCircle className="h-5 w-5" /></a>}
+          {cfg.support_telegram && <a data-nav aria-label="تلغرام" href={`https://t.me/${cfg.support_telegram.replace(/^@/, "")}`} className="rounded-lg bg-secondary p-2"><Send className="h-5 w-5" /></a>}
+          {cfg.support_phone && <a data-nav aria-label="اتصال" href={`tel:${cfg.support_phone}`} className="rounded-lg bg-secondary p-2"><Phone className="h-5 w-5" /></a>}
+          {onSettings && <button data-nav aria-label="الإعدادات" onClick={onSettings} className="rounded-lg bg-secondary p-2"><Settings className="h-5 w-5" /></button>}
+          {onLogout && <button data-nav aria-label="خروج" onClick={onLogout} className="rounded-lg bg-secondary p-2"><LogOut className="h-5 w-5" /></button>}
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-4 pb-16 pt-4">{children}</main>
+    </div>
+  );
+}
+
+// ===== الإعدادات المحمية برقم PIN =====
+function SettingsDialog({ cfg, settings, onSave, onClose }: { cfg: TenantConfig; settings: AppSettings; onSave: (s: AppSettings) => void; onClose: () => void }) {
+  const [unlocked, setUnlocked] = useState(false);
+  const [pin, setPin] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+  const L = str(settings.lang);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" || e.key === "Backspace" && !(document.activeElement as HTMLElement)?.matches("input")) onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const tryPin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pin === settings.pin) setUnlocked(true);
+    else { toast.error(L.pinWrong); setPin(""); }
+  };
+
+  const downloadBackup = () => {
+    const blob = new Blob([prefs.backup(cfg.slug)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${cfg.slug}-backup.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  const restoreBackup = async (f: File) => {
+    try { prefs.restore(cfg.slug, await f.text()); onSave(prefs.settings(cfg.slug)); toast.success(L.saved); }
+    catch { toast.error("ملف النسخة غير صالح"); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-background/80 p-4 backdrop-blur" onClick={onClose}>
+      <div className="w-full max-w-md space-y-4 rounded-2xl border bg-card p-6" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-extrabold">{L.settings}</h2>
+          <button data-nav onClick={onClose} className="rounded-lg bg-secondary px-3 py-1.5 text-sm font-bold">✕</button>
+        </div>
+        {!unlocked ? (
+          <form onSubmit={tryPin} className="space-y-3">
+            <p className="text-sm text-muted-foreground">{L.pinTitle}</p>
+            <input autoFocus dir="ltr" inputMode="numeric" maxLength={4} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+              className="w-full rounded-xl border bg-input/40 px-4 py-3 text-center text-2xl tracking-[0.5em] outline-none focus:ring-2 focus:ring-ring" placeholder="••••" />
+            <button data-nav className="w-full rounded-xl bg-primary py-3 font-extrabold text-primary-foreground">{L.open}</button>
+          </form>
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-sm font-bold">{L.theme}</label>
+              <div className="grid grid-cols-4 gap-2">
+                {(["auto", "default", "blue", "cinema"] as const).map((th) => (
+                  <button key={th} data-nav onClick={() => onSave({ ...settings, theme: th })}
+                    className={`rounded-xl border py-2 text-xs font-bold ${settings.theme === th ? "border-primary bg-primary text-primary-foreground" : "bg-secondary"}`}>
+                    {{ auto: L.themeAuto, default: L.themeDefault, blue: L.themeBlue, cinema: L.themeCinema }[th]}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-bold">{L.lang}</label>
+              <div className="grid grid-cols-2 gap-2">
+                {(["ar", "en"] as Lang[]).map((l) => (
+                  <button key={l} data-nav onClick={() => onSave({ ...settings, lang: l })}
+                    className={`rounded-xl border py-2 text-sm font-bold ${settings.lang === l ? "border-primary bg-primary text-primary-foreground" : "bg-secondary"}`}>
+                    {l === "ar" ? "العربية" : "English"}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); if (/^\d{4}$/.test(newPin)) { onSave({ ...settings, pin: newPin }); setNewPin(""); toast.success(L.saved); } }}>
+              <input dir="ltr" inputMode="numeric" maxLength={4} placeholder={L.newPin} value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ""))}
+                className="flex-1 rounded-xl border bg-input/40 px-4 py-2 outline-none focus:ring-2 focus:ring-ring" />
+              <button data-nav className="rounded-xl bg-secondary px-4 font-bold">{L.changePin}</button>
+            </form>
+            <div className="grid grid-cols-2 gap-2">
+              <button data-nav onClick={() => { localStorage.removeItem(`iptv:${cfg.slug}:fav`); toast.success(L.saved); }} className="rounded-xl bg-secondary py-2.5 text-sm font-bold">{L.clearFavs}</button>
+              <button data-nav onClick={() => { prefs.clearProgress(cfg.slug); toast.success(L.saved); }} className="rounded-xl bg-secondary py-2.5 text-sm font-bold">{L.clearHistory}</button>
+              <button data-nav onClick={downloadBackup} className="rounded-xl bg-secondary py-2.5 text-sm font-bold">{L.backup}</button>
+              <button data-nav onClick={() => fileRef.current?.click()} className="rounded-xl bg-secondary py-2.5 text-sm font-bold">{L.restore}</button>
+              <input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) restoreBackup(f); e.target.value = ""; }} />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -121,7 +290,7 @@ function Login({ cfg, onDone }: { cfg: TenantConfig; onDone: (s: Session) => voi
         <h1 className="text-center text-2xl font-extrabold">تسجيل الدخول</h1>
         {types.length > 1 && (
           <div className="grid grid-flow-col gap-2 rounded-xl bg-secondary p-1">
-            {types.map((t) => <button type="button" key={t} onClick={() => setType(t)} className={`rounded-lg py-2 text-sm font-bold ${t === type ? "bg-primary text-primary-foreground" : ""}`}>{labels[t]}</button>)}
+            {types.map((t) => <button data-nav type="button" key={t} onClick={() => setType(t)} className={`rounded-lg py-2 text-sm font-bold ${t === type ? "bg-primary text-primary-foreground" : ""}`}>{labels[t]}</button>)}
           </div>
         )}
         {list.length > 1 && <select className={field} value={sourceId} onChange={(e) => setSourceId(e.target.value)}>{list.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select>}
@@ -131,7 +300,7 @@ function Login({ cfg, onDone }: { cfg: TenantConfig; onDone: (s: Session) => voi
         </>}
         {type === "mac" && <input className={field} dir="ltr" placeholder="00:1A:79:XX:XX:XX" required pattern="([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}" value={mac} onChange={(e) => setMac(e.target.value)} />}
         {type === "m3u" && <p className="text-sm text-muted-foreground">سيتم تحميل القنوات من {list.find((s) => s.id === sourceId)?.name}.</p>}
-        <button disabled={busy} className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-extrabold text-primary-foreground disabled:opacity-60">{busy && <Loader2 className="h-4 w-4 animate-spin" />}دخول</button>
+        <button data-nav disabled={busy} className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-extrabold text-primary-foreground disabled:opacity-60">{busy && <Loader2 className="h-4 w-4 animate-spin" />}دخول</button>
       </form>
     </div>
   );
@@ -151,11 +320,12 @@ function Announcements({ cfg }: { cfg: TenantConfig }) {
   );
 }
 
-function Browser({ cfg, session }: { cfg: TenantConfig; session: Session }) {
+function Browser({ cfg, session, settings }: { cfg: TenantConfig; session: Session; settings: AppSettings }) {
   const xt = useServerFn(xtreamApi); const m3 = useServerFn(m3uFetch); const mc = useServerFn(macCall);
+  const L = str(settings.lang);
   const tabs: { k: Kind | "fav"; label: string; icon: typeof Tv }[] = session.type === "xtream"
-    ? [{ k: "live", label: "مباشر", icon: Tv }, { k: "movie", label: "أفلام", icon: Film }, { k: "series", label: "مسلسلات", icon: Clapperboard }, { k: "fav", label: "المفضلة", icon: Heart }]
-    : [{ k: "live", label: "القنوات", icon: Tv }, { k: "fav", label: "المفضلة", icon: Heart }];
+    ? [{ k: "live", label: L.live, icon: Tv }, { k: "movie", label: L.movies, icon: Film }, { k: "series", label: L.series, icon: Clapperboard }, { k: "fav", label: L.fav, icon: Heart }]
+    : [{ k: "live", label: L.channels, icon: Tv }, { k: "fav", label: L.fav, icon: Heart }];
   const [tab, setTab] = useState<Kind | "fav">("live");
   const [cats, setCats] = useState<Cat[]>([]);
   const [cat, setCat] = useState<Cat | null>(null);
@@ -163,11 +333,13 @@ function Browser({ cfg, session }: { cfg: TenantConfig; session: Session }) {
   const [series, setSeries] = useState<Item | null>(null);
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState("");
-  const [playing, setPlaying] = useState<{ src: string; title: string } | null>(null);
+  const [playing, setPlaying] = useState<Playing | null>(null);
   const [m3uAll, setM3uAll] = useState<{ name: string; group: string; logo: string; url: string }[] | null>(null);
   const favKey = `iptv:${cfg.slug}:fav`;
   const [favs, setFavs] = useState<Item[]>([]);
+  const [history, setHistory] = useState(() => prefs.progress(cfg.slug));
   useEffect(() => { try { setFavs(JSON.parse(localStorage.getItem(favKey) || "[]")); } catch {} }, [favKey]);
+  useEffect(() => { if (!playing) setHistory(prefs.progress(cfg.slug)); }, [playing, cfg.slug]);
   const toggleFav = (it: Item) => {
     const next = favs.some((f) => f.id === it.id && f.kind === it.kind) ? favs.filter((f) => !(f.id === it.id && f.kind === it.kind)) : [...favs, it];
     setFavs(next); localStorage.setItem(favKey, JSON.stringify(next));
@@ -193,6 +365,7 @@ function Browser({ cfg, session }: { cfg: TenantConfig; session: Session }) {
         setCats((r ?? []).map((g: any) => ({ id: String(g.id), name: g.title })));
       }
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
   function openCat(c: Cat) {
@@ -229,7 +402,8 @@ function Browser({ cfg, session }: { cfg: TenantConfig; session: Session }) {
 
   async function play(it: Item) {
     if (it.kind === "series") return openSeries(it);
-    if (it.url) return setPlaying({ src: it.url, title: it.name });
+    const itemId = it.kind === "live" ? undefined : `${it.kind}:${it.id}`;
+    if (it.url) return setPlaying({ src: it.url, title: it.name, itemId, logo: it.logo });
     if (it.cmd && session.type === "mac") run(async () => {
       const r: any = await mc({ data: { slug: cfg.slug, sourceId: session.sourceId, mac: session.mac, token: session.token, op: "link", cmd: it.cmd } });
       setPlaying({ src: r.url, title: it.name });
@@ -242,42 +416,63 @@ function Browser({ cfg, session }: { cfg: TenantConfig; session: Session }) {
   }, [items, favs, tab, q]);
   const shownCats = q && !cat ? cats.filter((c) => c.name?.toLowerCase().includes(q.toLowerCase())) : cats;
   const showItems = tab === "fav" || cat;
+  const historyList = Object.entries(history).sort((a, b) => b[1].at - a[1].at).slice(0, 12);
 
   return (
     <div className="space-y-4">
-      {playing && <VideoPlayer src={playing.src} title={playing.title} onClose={() => setPlaying(null)} />}
+      {playing && <VideoPlayer src={playing.src} title={playing.title} slug={cfg.slug} itemId={playing.itemId} logo={playing.logo} onClose={() => setPlaying(null)} />}
       <Announcements cfg={cfg} />
       <nav className="flex gap-2 overflow-x-auto">
-        {tabs.map((t) => <button key={t.k} onClick={() => setTab(t.k)} className={`flex shrink-0 items-center gap-2 rounded-xl px-5 py-3 font-bold transition ${tab === t.k ? "bg-primary text-primary-foreground" : "bg-secondary"}`}><t.icon className="h-5 w-5" />{t.label}</button>)}
+        {tabs.map((tb) => <button data-nav key={tb.k} onClick={() => setTab(tb.k)} className={`flex shrink-0 items-center gap-2 rounded-xl px-5 py-3 font-bold transition ${tab === tb.k ? "bg-primary text-primary-foreground" : "bg-secondary"}`}><tb.icon className="h-5 w-5" />{tb.label}</button>)}
       </nav>
       <div className="flex items-center gap-2">
-        {(cat || series) && <button onClick={() => (series ? (setSeries(null), cat && openCat(cat)) : (setCat(null), setItems([])))} className="flex items-center gap-1 rounded-xl bg-secondary px-3 py-3 text-sm font-bold"><ChevronRight className="h-4 w-4" />رجوع</button>}
-        <div className="relative flex-1"><Search className="absolute start-3 top-3.5 h-5 w-5 text-muted-foreground" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="بحث..." className={`${field} ps-11`} /></div>
+        {(cat || series) && <button data-nav onClick={() => (series ? (setSeries(null), cat && openCat(cat)) : (setCat(null), setItems([])))} className="flex items-center gap-1 rounded-xl bg-secondary px-3 py-3 text-sm font-bold"><ChevronRight className="h-4 w-4" />{L.back}</button>}
+        <div className="relative flex-1"><Search className="absolute start-3 top-3.5 h-5 w-5 text-muted-foreground" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder={L.search} className={`${field} ps-11`} /></div>
       </div>
+
+      {/* أكمل المشاهدة */}
+      {!showItems && !q && historyList.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="flex items-center gap-2 text-lg font-extrabold"><History className="h-5 w-5 text-primary" />{L.continueWatching}</h2>
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {historyList.map(([id, p]) => (
+              <button data-nav key={id} onClick={() => setPlaying({ src: p.url, title: p.title, itemId: id, logo: p.logo })}
+                className="group relative w-40 shrink-0 overflow-hidden rounded-2xl border bg-card text-start focus:outline-none">
+                <div className="flex aspect-video items-center justify-center bg-secondary">
+                  {p.logo ? <img src={p.logo} alt="" loading="lazy" className="h-full w-full object-cover" onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} /> : <Play className="h-8 w-8 text-muted-foreground" />}
+                </div>
+                <p className="line-clamp-1 p-2 text-xs font-bold">{p.title}</p>
+                <div className="h-1 bg-secondary"><div className="h-full bg-primary" style={{ width: `${Math.min(100, (p.t / p.d) * 100)}%` }} /></div>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
       {(cat || series) && <h2 className="text-lg font-extrabold">{series?.name ?? cat?.name}</h2>}
       {loading ? <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
         : !showItems ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            {shownCats.map((c) => <button key={c.id} onClick={() => openCat(c)} className="rounded-2xl border bg-card p-4 text-start font-bold transition hover:border-primary focus:border-primary focus:outline-none">{c.name}</button>)}
-            {!shownCats.length && <p className="col-span-full py-10 text-center text-muted-foreground">لا توجد أقسام</p>}
+            {shownCats.map((c) => <button data-nav key={c.id} onClick={() => openCat(c)} className="rounded-2xl border bg-card p-4 text-start font-bold transition hover:border-primary focus:border-primary focus:outline-none">{c.name}</button>)}
+            {!shownCats.length && <p className="col-span-full py-10 text-center text-muted-foreground">{L.noCats}</p>}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+          <div className="poster-grid grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
             {shown.slice(0, 600).map((it) => {
               const fav = favs.some((f) => f.id === it.id && f.kind === it.kind);
               return (
                 <div key={it.kind + it.id} className="group relative overflow-hidden rounded-2xl border bg-card transition hover:border-primary focus-within:border-primary">
-                  <button onClick={() => play(it)} className="block w-full text-start focus:outline-none">
+                  <button data-nav onClick={() => play(it)} className="block w-full text-start focus:outline-none">
                     <div className={`flex items-center justify-center bg-secondary ${it.kind === "live" ? "aspect-video" : "aspect-[2/3]"}`}>
                       {it.logo ? <img src={it.logo} alt="" loading="lazy" className="h-full w-full object-contain" onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} /> : <Tv className="h-8 w-8 text-muted-foreground" />}
                     </div>
                     <p className="line-clamp-2 p-2 text-sm font-bold">{it.name}</p>
                   </button>
-                  {it.kind !== "episode" && <button aria-label="مفضلة" onClick={() => toggleFav(it)} className="absolute end-2 top-2 rounded-full bg-background/80 p-1.5"><Heart className={`h-4 w-4 ${fav ? "fill-primary text-primary" : ""}`} /></button>}
+                  {it.kind !== "episode" && <button data-nav aria-label="مفضلة" onClick={() => toggleFav(it)} className="absolute end-2 top-2 rounded-full bg-background/80 p-1.5"><Heart className={`h-4 w-4 ${fav ? "fill-primary text-primary" : ""}`} /></button>}
                 </div>
               );
             })}
-            {!shown.length && <p className="col-span-full py-10 text-center text-muted-foreground">لا يوجد محتوى</p>}
+            {!shown.length && <p className="col-span-full py-10 text-center text-muted-foreground">{L.noContent}</p>}
           </div>
         )}
     </div>
