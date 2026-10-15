@@ -29,7 +29,7 @@ function AuthPage() {
     e.preventDefault();
     setBusy(true);
     const login = email.trim().toLowerCase();
-    const em = login.includes("@") ? login : `${login.replace(/[^a-z0-9._-]/g, "")}@bhsat.local`;
+    const em = login.includes("@") ? login : `${login.replace(/[^a-z0-9._-]/g, "")}@users.bhsat.me`;
     if (mode === "in") {
       const { error } = await supabase.auth.signInWithPassword({ email: em, password });
       if (error) toast.error("بيانات الدخول غير صحيحة");
