@@ -485,6 +485,9 @@ function Browser({ cfg, session, settings, layout, onSettings }: { cfg: TenantCo
   const nav = (
     <nav aria-label="أقسام التطبيق" className={tpl === "sidebar" ? "flex shrink-0 flex-col gap-1 md:sticky md:top-4 md:w-60 md:self-start max-md:flex-row max-md:overflow-x-auto"
       : tpl === "cinema" ? "fixed inset-x-0 bottom-0 z-30 flex justify-around border-t bg-card/95 px-2 py-2 backdrop-blur"
+      : tpl === "kids" ? "grid grid-cols-2 gap-3 sm:grid-cols-3"
+      : tpl === "minimal" ? "flex flex-wrap justify-center gap-2"
+      : tpl === "sports" ? "flex gap-2 overflow-x-auto border-b pb-3"
       : "flex gap-2 overflow-x-auto"}>
       {tpl === "sidebar" && <div className="mb-5 hidden min-h-24 items-center justify-center gap-3 md:flex">{cfg.logo_url && <img src={cfg.logo_url} alt={cfg.name} className="max-h-24 max-w-full object-contain" />}{!cfg.logo_url && <h1 className="text-center text-2xl font-extrabold text-primary">{cfg.name}</h1>}</div>}
       <Button data-nav variant="ghost" onClick={() => setScreen("home")} className={`h-auto shrink-0 justify-start gap-3 rounded-lg border px-4 py-4 ${screen === "home" ? "border-primary text-primary" : "border-border"}`}><House />الرئيسية</Button>
@@ -492,6 +495,12 @@ function Browser({ cfg, session, settings, layout, onSettings }: { cfg: TenantCo
         const Icon = ICONS[tb.icon] ?? Tv; const on = screen === "browse" && tab === tb.key;
         return tpl === "cinema"
           ? <Button variant="ghost" data-nav key={tb.key} onClick={() => { setTab(tb.key); setScreen("browse"); }} className={`h-auto flex-1 flex-col gap-1 py-1.5 text-xs font-bold ${on ? "text-primary" : "text-muted-foreground"}`}><Icon />{tb.label}</Button>
+          : tpl === "kids"
+          ? <Button variant="ghost" data-nav key={tb.key} onClick={() => { setTab(tb.key); setScreen("browse"); }} className={`h-auto flex-col gap-2 rounded-3xl border-2 py-6 text-base font-extrabold ${on ? "border-primary bg-primary/15 text-primary" : "border-border bg-card"}`}><Icon className="h-8 w-8" />{tb.label}</Button>
+          : tpl === "minimal"
+          ? <Button variant="ghost" data-nav key={tb.key} onClick={() => { setTab(tb.key); setScreen("browse"); }} className={`h-auto gap-2 rounded-full border px-5 py-2.5 text-sm font-bold ${on ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}><Icon className="h-4 w-4" />{tb.label}</Button>
+          : tpl === "sports"
+          ? <Button variant="ghost" data-nav key={tb.key} onClick={() => { setTab(tb.key); setScreen("browse"); }} className={`h-auto shrink-0 gap-2 rounded-none border-b-4 px-5 py-3 text-base font-extrabold ${on ? "border-primary text-primary" : "border-transparent text-muted-foreground"}`}><Icon />{tb.label}</Button>
           : <Button variant="ghost" data-nav key={tb.key} onClick={() => { setTab(tb.key); setScreen("browse"); }} className={`h-auto shrink-0 justify-start gap-3 rounded-lg border px-4 py-4 font-bold ${on ? "border-primary bg-primary/10 text-primary" : "border-border bg-card"}`}><Icon />{tb.label}</Button>;
       })}
       {contSec?.visible && <Button data-nav variant="ghost" onClick={() => setScreen("continue")} className={`h-auto shrink-0 justify-start gap-3 rounded-lg border px-4 py-4 ${screen === "continue" ? "border-primary text-primary" : "border-border"}`}><History />{contSec.label}</Button>}
@@ -543,10 +552,15 @@ function Browser({ cfg, session, settings, layout, onSettings }: { cfg: TenantCo
       <h2 className="text-lg font-extrabold">{series?.name ?? cat?.name ?? sec.label}</h2>
       {loading ? <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
         : !showItems ? (
-          tpl === "cinema" ? (
+          tpl === "cinema" || tpl === "minimal" ? (
             <div className="flex flex-wrap gap-2">
               {shownCats.map((c) => <button data-nav key={c.id} onClick={() => openCat(c)} className="rounded-full border bg-card px-5 py-2.5 font-bold transition hover:border-primary focus:border-primary focus:outline-none">{c.name}</button>)}
               {!shownCats.length && <p className="w-full py-10 text-center text-muted-foreground">{L.noCats}</p>}
+            </div>
+          ) : tpl === "kids" ? (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+              {shownCats.map((c) => <button data-nav key={c.id} onClick={() => openCat(c)} className="rounded-3xl border-2 bg-card p-8 text-center text-lg font-extrabold transition hover:border-primary focus:border-primary focus:outline-none">{c.name}</button>)}
+              {!shownCats.length && <p className="col-span-full py-10 text-center text-muted-foreground">{L.noCats}</p>}
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
