@@ -70,6 +70,7 @@ export function PlayerApp({ cfg }: { cfg: TenantConfig }) {
   const [appVer, setAppVer] = useState<string | null>(null);
   const [settings, setSettings] = useState<AppSettings>(() => prefs.settings(cfg.slug));
   const [langChosen, setLangChosen] = useState(true);
+  const [setupStep, setSetupStep] = useState<"device" | "lang">("device");
   const [showSettings, setShowSettings] = useState(false);
   useTvNav();
 
@@ -90,22 +91,43 @@ export function PlayerApp({ cfg }: { cfg: TenantConfig }) {
 
   if (!ready) return <Shell cfg={cfg} style={style} themeClass={themeClass} lang={settings.lang}><div /></Shell>;
 
-  // شاشة اختيار اللغة عند أول تشغيل
+  // شاشة الإعداد الأولى: نوع الجهاز ثم اللغة
   if (!langChosen) {
     return (
       <Shell cfg={cfg} style={style} themeClass={themeClass} lang={settings.lang}>
         <div className="mx-auto mt-20 max-w-sm space-y-4 text-center">
           {cfg.logo_url && <img src={cfg.logo_url} alt="" className="mx-auto h-24 w-24 rounded-3xl object-cover" />}
           <h1 className="text-2xl font-extrabold">{cfg.name}</h1>
-          <p className="text-muted-foreground">اختر اللغة · Choose your language</p>
-          <div className="grid gap-3">
-            {(["ar", "en"] as Lang[]).map((l) => (
-              <button key={l} data-nav autoFocus={l === "ar"} onClick={() => { saveSettings({ ...settings, lang: l }); localStorage.setItem(`${key}:langChosen`, "1"); setLangChosen(true); }}
-                className="rounded-2xl border bg-card py-4 text-lg font-extrabold focus:outline-none">
-                {l === "ar" ? "العربية" : "English"}
-              </button>
-            ))}
-          </div>
+          {setupStep === "device" ? (
+            <>
+              <p className="text-muted-foreground">اختر نوع جهازك · Choose your device</p>
+              <div className="grid grid-cols-2 gap-3">
+                <button data-nav autoFocus onClick={() => { setSettings({ ...settings, device: "phone" }); setSetupStep("lang"); }}
+                  className="space-y-2 rounded-2xl border bg-card py-6 font-extrabold focus:outline-none">
+                  <Smartphone className="mx-auto h-10 w-10 text-primary" />
+                  <div>جوال<br /><span className="text-xs font-normal text-muted-foreground">Phone</span></div>
+                </button>
+                <button data-nav onClick={() => { setSettings({ ...settings, device: "tv" }); setSetupStep("lang"); }}
+                  className="space-y-2 rounded-2xl border bg-card py-6 font-extrabold focus:outline-none">
+                  <Tv className="mx-auto h-10 w-10 text-primary" />
+                  <div>تلفاز<br /><span className="text-xs font-normal text-muted-foreground">TV</span></div>
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-muted-foreground">اختر اللغة · Choose your language</p>
+              <div className="grid gap-3">
+                {(["ar", "en"] as Lang[]).map((l) => (
+                  <button key={l} data-nav autoFocus={l === "ar"} onClick={() => { saveSettings({ ...settings, lang: l }); localStorage.setItem(`${key}:langChosen`, "1"); setLangChosen(true); }}
+                    className="rounded-2xl border bg-card py-4 text-lg font-extrabold focus:outline-none">
+                    {l === "ar" ? "العربية" : "English"}
+                  </button>
+                ))}
+              </div>
+              <button data-nav onClick={() => setSetupStep("device")} className="text-sm text-muted-foreground underline">رجوع · Back</button>
+            </>
+          )}
         </div>
       </Shell>
     );
