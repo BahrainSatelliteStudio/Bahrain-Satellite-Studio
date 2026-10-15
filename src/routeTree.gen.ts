@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as InstallSlugRouteImport } from './routes/install.$slug'
+import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as ApiPublicBuildCompleteRouteImport } from './routes/api/public/build-complete'
 import { Route as ApiPublicFileRouteImport } from './routes/api/public/file'
 import { Route as ApiPublicAppSlugRouteImport } from './routes/api/public/app.$slug'
@@ -36,6 +38,16 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const InstallSlugRoute = InstallSlugRouteImport.update({
+  id: '/install/$slug',
+  path: '/install/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PSlugRoute = PSlugRouteImport.update({
+  id: '/p/$slug',
+  path: '/p/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicBuildCompleteRoute = ApiPublicBuildCompleteRouteImport.update({
   id: '/api/public/build-complete',
   path: '/api/public/build-complete',
@@ -56,6 +68,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/install/$slug': typeof InstallSlugRoute
+  '/p/$slug': typeof PSlugRoute
   '/api/public/build-complete': typeof ApiPublicBuildCompleteRoute
   '/api/public/file': typeof ApiPublicFileRoute
   '/api/public/app/$slug': typeof ApiPublicAppSlugRoute
@@ -64,6 +78,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/install/$slug': typeof InstallSlugRoute
+  '/p/$slug': typeof PSlugRoute
   '/api/public/build-complete': typeof ApiPublicBuildCompleteRoute
   '/api/public/file': typeof ApiPublicFileRoute
   '/api/public/app/$slug': typeof ApiPublicAppSlugRoute
@@ -74,6 +90,8 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/install/$slug': typeof InstallSlugRoute
+  '/p/$slug': typeof PSlugRoute
   '/api/public/build-complete': typeof ApiPublicBuildCompleteRoute
   '/api/public/file': typeof ApiPublicFileRoute
   '/api/public/app/$slug': typeof ApiPublicAppSlugRoute
@@ -84,6 +102,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/install/$slug'
+    | '/p/$slug'
     | '/api/public/build-complete'
     | '/api/public/file'
     | '/api/public/app/$slug'
@@ -92,6 +112,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/install/$slug'
+    | '/p/$slug'
     | '/api/public/build-complete'
     | '/api/public/file'
     | '/api/public/app/$slug'
@@ -101,6 +123,8 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/dashboard'
+    | '/install/$slug'
+    | '/p/$slug'
     | '/api/public/build-complete'
     | '/api/public/file'
     | '/api/public/app/$slug'
@@ -110,6 +134,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  InstallSlugRoute: typeof InstallSlugRoute
+  PSlugRoute: typeof PSlugRoute
   ApiPublicBuildCompleteRoute: typeof ApiPublicBuildCompleteRoute
   ApiPublicFileRoute: typeof ApiPublicFileRoute
   ApiPublicAppSlugRoute: typeof ApiPublicAppSlugRoute
@@ -144,6 +170,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/install/$slug': {
+      id: '/install/$slug'
+      path: '/install/$slug'
+      fullPath: '/install/$slug'
+      preLoaderRoute: typeof InstallSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/p/$slug': {
+      id: '/p/$slug'
+      path: '/p/$slug'
+      fullPath: '/p/$slug'
+      preLoaderRoute: typeof PSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/build-complete': {
       id: '/api/public/build-complete'
@@ -184,6 +224,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  InstallSlugRoute: InstallSlugRoute,
+  PSlugRoute: PSlugRoute,
   ApiPublicBuildCompleteRoute: ApiPublicBuildCompleteRoute,
   ApiPublicFileRoute: ApiPublicFileRoute,
   ApiPublicAppSlugRoute: ApiPublicAppSlugRoute,

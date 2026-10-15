@@ -16,21 +16,6 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
 });
 
-export function useMe() {
-  return useQuery({
-    queryKey: ["me"],
-    queryFn: async () => {
-      const { data: u } = await supabase.auth.getUser();
-      const uid = u.user!.id;
-      const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: uid, _role: "admin" });
-      return { uid, email: u.user!.email, isAdmin: !!isAdmin };
-    },
-  });
-}
-
-export async function signOut(qc: ReturnType<typeof useQueryClient>, nav: ReturnType<typeof useNavigate>) {
-  await qc.cancelQueries(); qc.clear(); await supabase.auth.signOut(); nav({ to: "/auth", replace: true });
-}
 
 function Dashboard() {
   const me = useMe();
