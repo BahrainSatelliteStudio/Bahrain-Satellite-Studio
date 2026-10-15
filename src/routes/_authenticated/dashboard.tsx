@@ -205,8 +205,9 @@ function NewTenant({ autoOpen, onDone }: { autoOpen: boolean; onDone: () => void
       if (k === "name") {
         const s = slugify(v);
         if (s && !touched.slug) n.slug = s;
-        if (s && !touched.package_id) n.package_id = packageFor(s);
-        if (s && !touched.username) n.username = userFor(s);
+        const base = touched.slug ? n.slug : s;
+        if (base && !touched.package_id) n.package_id = packageFor(base);
+        if (base && !touched.username) n.username = userFor(base);
         if (!touched.password && !n.password) n.password = genPass();
       }
       if (k === "slug") {
