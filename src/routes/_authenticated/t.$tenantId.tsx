@@ -766,7 +766,8 @@ function Emulator({ slug, refresh }: { slug: string; refresh: number }) {
   const [box, setBox] = useState(560);
   const [k, setK] = useState(0);
   useEffect(() => { const m = (e: MessageEvent) => { const v = e.data?.bhsatDevice; if (v === "phone" || v === "tv") { setDev(v); setLandscape(v === "tv"); } }; window.addEventListener("message", m); return () => window.removeEventListener("message", m); }, []);
-  useEffect(() => { const f = () => setBox(window.innerWidth < 1280 ? Math.min(window.innerWidth - 48, 620) : 460); f(); window.addEventListener("resize", f); return () => window.removeEventListener("resize", f); }, []);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { const el = wrapRef.current; if (!el) return; const f = () => setBox(Math.max(240, el.clientWidth - 32)); f(); const ro = new ResizeObserver(f); ro.observe(el); return () => ro.disconnect(); }, []);
   const base = DEVICES[dev];
   const isTv = dev === "tv";
   const wide = isTv || landscape;
@@ -785,11 +786,13 @@ function Emulator({ slug, refresh }: { slug: string; refresh: number }) {
         )}
         <Button size="sm" variant="secondary" onClick={() => setK((n) => n + 1)}><RefreshCw className="h-4 w-4" />إعادة تشغيل (من اختيار اللغة والجهاز)</Button>
       </div>
-      <div className="flex justify-center overflow-hidden rounded-2xl bg-secondary/40 p-4" style={{ height: (d.h + 40) * scale + 32 }}>
-        <div style={{ width: d.w + 40, height: d.h + 40, transform: `scale(${scale})`, transformOrigin: "top center" }}>
+      <div ref={wrapRef} className="flex justify-center overflow-hidden rounded-2xl bg-secondary/40 p-4">
+        <div className="relative shrink-0" style={{ width: (d.w + 40) * scale, height: (d.h + 40) * scale }}>
+        <div className="absolute left-0 top-0" style={{ width: d.w + 40, height: d.h + 40, transform: `scale(${scale})`, transformOrigin: "top left" }}>
           <div className={`h-full w-full overflow-hidden border-foreground/80 bg-background shadow-2xl ${d.frame}`}>
             <iframe key={`${k}-${refresh}`} title="محاكاة التطبيق" src={`/preview/${slug}?setup=1`} className="h-full w-full border-0" />
           </div>
+        </div>
         </div>
       </div>
       <p className="text-center text-xs text-muted-foreground">تقدر تتنقل وتفتح الأقسام وتشغّل المحتوى داخل الجهاز كأنه التطبيق الحقيقي</p>
