@@ -143,6 +143,17 @@ export const githubStatus = createServerFn({ method: "GET" })
     return readStatus();
   });
 
+export const setupSigningKey = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const repo = (process.env["GITHUB_REPO"] ?? "").trim();
+    if (!repo) throw new Error("لم يتم ربط GitHub بعد");
+    const { gh } = await import("./github.server");
+    const { setupSigning } = await import("./signing.server");
+    return setupSigning(gh, repo, "Bahrain Satellite Studio");
+  });
+
 export const triggerBuild = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ tenantId: z.string().uuid(), version: z.string().regex(/^\d+\.\d+\.\d+$/), siteUrl: z.string().url() }).parse(d))
@@ -152,6 +163,7 @@ export const triggerBuild = createServerFn({ method: "POST" })
     if (!repo) throw new Error("لم يتم ربط GitHub بعد — اربط اتصال GitHub من إعدادات المشروع");
     const { data: t } = await context.supabase.from("tenants").select("*").eq("id", data.tenantId).single();
     if (!t) throw new Error("الزبون غير موجود");
+    if (!t.logo_url) throw new Error("ارفع شعار التطبيق أولًا — هو أيقونة التطبيق ومطلوب للبناء");
     const { data: b, error } = await context.supabase.from("builds").insert({ tenant_id: t.id, version: data.version, status: "building" }).select("id").single();
     if (error) throw new Error(error.message);
     const origin = new URL(data.siteUrl).origin;

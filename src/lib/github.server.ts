@@ -6,7 +6,7 @@ export const WORKFLOW = "android-apk.yml";
 
 type Gh = { status: number; ok: boolean; json: any; text: string };
 
-async function gh(method: "GET" | "POST", path: string, body?: unknown): Promise<Gh> {
+export async function gh(method: "GET" | "POST" | "PUT", path: string, body?: unknown): Promise<Gh> {
   const lovableKey = process.env["LOVABLE_API_KEY"];
   const connKey = process.env["GITHUB_API_KEY"];
   const pat = process.env["GITHUB_TOKEN"];
@@ -93,6 +93,10 @@ export async function dispatchBuild(repo: string, inputs: Record<string, string>
   if (!r.ok) throw new Error(r.status === 404 ? `المستودع «${repo}» غير موجود أو غير مرئي لهذا الحساب` : `تعذّر فتح المستودع (${r.status})`);
   const branch = String(r.json?.default_branch ?? "main");
   const wf = await gh("GET", `/repos/${repo}/actions/workflows/${WORKFLOW}`);
+  const sec = await gh("GET", `/repos/${repo}/actions/secrets?per_page=50`);
+  const names: string[] = sec.ok ? (sec.json?.secrets ?? []).map((x: any) => String(x.name)) : [];
+  const { SIGN_KEYS } = await import("./signing.server");
+  if (!SIGN_KEYS.every((k) => names.includes(k))) throw new Error("مفتاح التوقيع غير مُعد — أنشئه من لوحة التحكم (شريط GitHub) قبل البناء");
   if (!wf.ok) throw new Error(`لا يوجد ملف البناء (${WORKFLOW}) في فرع «${branch}» — يلزم رفع الكود أولًا`);
   const d = await gh("POST", `/repos/${repo}/actions/workflows/${WORKFLOW}/dispatches`, { ref: branch, inputs });
   if (!d.ok) throw new Error(d.status === 403 ? "الاتصال لا يملك صلاحية تشغيل البناء (Actions)" : `رفض GitHub تشغيل البناء (${d.status})`);
