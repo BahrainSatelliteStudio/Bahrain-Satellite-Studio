@@ -71,6 +71,13 @@
       "when": 1792101158154,
       "tag": "0009_tenant_owner_contact",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792142339776,
+      "tag": "0010_homepage_settings",
+      "breakpoints": true
     }
   ]
 }
