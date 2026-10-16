@@ -168,6 +168,13 @@ export const triggerBuild = createServerFn({ method: "POST" })
     const { data: t } = await context.supabase.from("tenants").select("*").eq("id", data.tenantId).single();
     if (!t) throw new Error("الزبون غير موجود");
     if (!t.logo_url) throw new Error("ارفع شعار التطبيق أولًا — هو أيقونة التطبيق ومطلوب للبناء");
+    {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: fs } = await supabaseAdmin.from("firebase_settings").select("google_services").eq("id", "main").maybeSingle();
+      const gs = (fs as any)?.google_services;
+      const pkgs: string[] = gs ? (gs.client ?? []).map((c: any) => c?.client_info?.android_client_info?.package_name).filter(Boolean) : [];
+      if (!pkgs.includes(t.package_id)) throw new Error(`اسم التطبيق ${t.package_id} غير مسجّل في Firebase — أضفه في Firebase كتطبيق أندرويد، ثم نزّل google-services.json الجديد وارفعه من صفحة «الإشعارات (Firebase)»، وبعدها ابنِ التطبيق`);
+    }
     const { data: b, error } = await context.supabase.from("builds").insert({ tenant_id: t.id, version: data.version, status: "building" }).select("id").single();
     if (error) throw new Error(error.message);
     const origin = new URL(data.siteUrl).origin;

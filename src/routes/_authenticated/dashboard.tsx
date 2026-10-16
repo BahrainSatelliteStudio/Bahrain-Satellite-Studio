@@ -253,6 +253,20 @@ function NewTenant({ onDone }: { onDone: () => void }) {
               <p className="font-mono text-sm">pass: {done.password}</p>
             </div>
             <Button variant="outline" className="w-full" onClick={() => { navigator.clipboard.writeText(`بيانات دخول لوحة التحكم:\nاسم المستخدم: ${done.username}\nكلمة المرور: ${done.password}\nرابط الدخول: ${window.location.origin}/auth`); toast.success("نُسخت بيانات الدخول"); }}>نسخ بيانات الدخول للزبون</Button>
+            <div className="rounded-lg border border-primary/50 bg-primary/10 p-3 space-y-1">
+              <p className="font-bold text-primary">⚠️ خطوة إلزامية قبل بناء التطبيق: تسجيله في Firebase</p>
+              <p>اسم التطبيق: <span className="font-mono" dir="ltr">{done.packageId}</span>
+                <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(done.packageId); toast.success("نُسخ اسم التطبيق"); }}>نسخ</Button></p>
+              <ol className="list-decimal pr-5 space-y-1">
+                <li>افتح console.firebase.google.com ← مشروع Bahrain Satellite Studio.</li>
+                <li>الترس ⚙️ ← Project settings ← Add app ← أيقونة أندرويد.</li>
+                <li>الصق اسم التطبيق أعلاه في Android package name ← Register app.</li>
+                <li>نزّل ملف google-services.json الجديد (يحتوي كل التطبيقات).</li>
+                <li>ارفعه من صفحة «الإشعارات (Firebase)» في لوحتك.</li>
+              </ol>
+              <p className="text-xs text-muted-foreground">بدون هذه الخطوة يرفض النظام بناء تطبيق الزبون.</p>
+              <Button asChild size="sm" variant="outline"><a href="/firebase">فتح صفحة الإشعارات (Firebase)</a></Button>
+            </div>
             <p className="text-muted-foreground">الدليل يشرح التطبيق ولوحة التحكم وطريقة تثبيتها على Windows وMac/Linux وVPS وDocker وWindows Server وcPanel.</p>
             <div className="flex flex-wrap gap-2">
               <Button asChild><a href={`/guide/${done.slug}?name=${encodeURIComponent(done.name)}`} target="_blank" rel="noreferrer">فتح دليل الزبون</a></Button>
