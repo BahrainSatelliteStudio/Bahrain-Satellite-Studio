@@ -235,7 +235,7 @@ function NewTenant({ onDone }: { onDone: () => void }) {
         if (up.error) toast.error("أُنشئ الزبون لكن فشل رفع الشعار — ارفعه من صفحة الزبون");
         else await supabase.from("tenants").update({ logo_url: `/api/public/file?b=branding&p=${encodeURIComponent(path)}` }).eq("id", r.id);
       }
-      setLogo(null); setPhone(""); toast.success("تم إنشاء الزبون وحسابه"); setDone({ name: f.name, slug: f.slug, username: f.username, password: f.password }); setF({ name: "", slug: "", package_id: "", username: "", email: "", password: "" }); setTouched({}); onDone(); }
+      setLogo(null); setPhone(""); toast.success("تم إنشاء الزبون وحسابه"); setDone({ name: f.name, slug: f.slug, username: f.username, password: f.password, packageId: f.package_id }); setF({ name: "", slug: "", package_id: "", username: "", email: "", password: "" }); setTouched({}); onDone(); }
     catch (err) { toast.error(err instanceof Error ? err.message : "خطأ"); }
     setBusy(false);
   }
