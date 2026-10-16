@@ -40,7 +40,12 @@ jobs:
           IFS=. read -r A B C <<< "$VER"
           CODE=$((A*10000 + B*100 + C))
           sed -i "s/versionCode .*/versionCode $CODE/; s/versionName .*/versionName \"$VER\"/" android/app/build.gradle
-          sed -i 's/<application/<application android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml
+          sed -i 's/<application/<application android:usesCleartextTraffic="true" android:allowBackup="false" android:fullBackupContent="false" android:dataExtractionRules="@xml\/data_rules"/' android/app/src/main/AndroidManifest.xml
+          mkdir -p android/app/src/main/res/xml
+          printf '<?xml version="1.0" encoding="utf-8"?>\n<data-extraction-rules><cloud-backup><exclude domain="root"/><exclude domain="sharedpref"/><exclude domain="database"/></cloud-backup><device-transfer><exclude domain="root"/><exclude domain="sharedpref"/><exclude domain="database"/></device-transfer></data-extraction-rules>\n' > android/app/src/main/res/xml/data_rules.xml
+          sed -i 's/minifyEnabled false/minifyEnabled true\n            shrinkResources true/' android/app/build.gradle
+          sed -i 's/android:debuggable="true"//' android/app/src/main/AndroidManifest.xml
+          : android/app/src/main/AndroidManifest.xml
           sed -i 's#<category android:name="android.intent.category.LAUNCHER" />#<category android:name="android.intent.category.LAUNCHER" /><category android:name="android.intent.category.LEANBACK_LAUNCHER" />#' android/app/src/main/AndroidManifest.xml
       - name: App icon
         if: ${{ inputs.logo_url != '' }}
@@ -55,7 +60,7 @@ jobs:
             convert logo.img -resize $((s*2))x$((s*2)) -gravity center -background none -extent $((s*9/4))x$((s*9/4)) $dir/ic_launcher_foreground.png
           done
           rm -rf android/app/src/main/res/mipmap-anydpi-v26
-      - name: Build APK (signed release if keystore is set)
+      - name: Build signed release APK (required)
         working-directory: android
         env:
           KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -63,21 +68,21 @@ jobs:
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          if [ -n "$KS_B64" ]; then
+          if [ -z "$KS_B64" ] || [ -z "$KS_PASS" ] || [ -z "$KEY_ALIAS" ]; then
+            echo "::error::Signing keystore secrets are missing — release signing is mandatory"; exit 1
+          fi
+          if true; then
             echo "$KS_B64" | base64 -d > $RUNNER_TEMP/release.jks
             ./gradlew assembleRelease
             BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
             IN=app/build/outputs/apk/release/app-release-unsigned.apk
             $BT/zipalign -f -p 4 $IN $RUNNER_TEMP/aligned.apk
-            $BT/apksigner sign --ks $RUNNER_TEMP/release.jks --ks-pass env:KS_PASS \
+            $BT/apksigner sign --ks $RUNNER_TEMP/release.jks --ks-type PKCS12 --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true --ks-pass env:KS_PASS \
               --ks-key-alias "$KEY_ALIAS" --key-pass env:KEY_PASS \
               --out $GITHUB_WORKSPACE/app.apk $RUNNER_TEMP/aligned.apk
-            $BT/apksigner verify --print-certs $GITHUB_WORKSPACE/app.apk | head -3
+            $BT/apksigner verify --verbose --print-certs $GITHUB_WORKSPACE/app.apk | head -8
+            sha256sum $GITHUB_WORKSPACE/app.apk
             rm -f $RUNNER_TEMP/release.jks
-          else
-            echo "::warning::No keystore secret — building DEBUG apk"
-            ./gradlew assembleDebug
-            cp app/build/outputs/apk/debug/app-debug.apk $GITHUB_WORKSPACE/app.apk
           fi
       - name: Upload to panel
         if: success()

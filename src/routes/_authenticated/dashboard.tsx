@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Plus, LogOut, Search, Users, CheckCircle2, Ban, Eye, BookOpen, Copy, Smartphone, Stethoscope, RefreshCw, Github, CircleCheck, CircleAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { createTenant, githubStatus } from "@/lib/iptv.functions";
+import { createTenant, githubStatus, setupSigningKey } from "@/lib/iptv.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -234,7 +234,9 @@ function NewTenant({ autoOpen, onDone }: { autoOpen: boolean; onDone: () => void
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true);
     try {
-      if (logo && logo.size > 3 * 1024 * 1024) throw new Error("الحد الأقصى للشعار 3MB");
+      if (!logo) throw new Error("شعار التطبيق مطلوب");
+      if (!signed) throw new Error("أنشئ مفتاح التوقيع أولًا");
+      if (logo.size > 3 * 1024 * 1024) throw new Error("الحد الأقصى للشعار 3MB");
       const r = await create({ data: { ...f, phone: `${cc} ${phone}` } });
       if (logo) {
         const path = `${r.id}/${Date.now()}-${logo.name.replace(/[^\w.\-]/g, "")}`;
@@ -283,30 +285,18 @@ function NewTenant({ autoOpen, onDone }: { autoOpen: boolean; onDone: () => void
           <p className="-mt-2 text-xs text-muted-foreground">الحقول التالية تُعبَّأ تلقائيًا من الاسم — تعدّل أيًّا منها لو تبي.</p>
           <div className="space-y-1"><Label>الرابط المختصر (إنجليزي صغير)</Label><Input dir="ltr" required pattern="[a-z0-9][a-z0-9\-]{1,30}" value={f.slug} onChange={set("slug")} placeholder="mytv" /></div>
           <div className="space-y-1"><Label>اسم الحزمة (لا يتغير لاحقًا)</Label><Input dir="ltr" required value={f.package_id} onChange={set("package_id")} /></div>
-          <div className="space-y-1"><Label>شعار التطبيق <span className="text-xs font-normal text-muted-foreground">(اختياري لكن مهم — يصبح أيقونة التطبيق على الجهاز)</span></Label>
+          <div className="space-y-1"><Label>شعار التطبيق <span className="text-xs font-normal text-muted-foreground">(إلزامي — يصبح أيقونة التطبيق على الجهاز)</span></Label>
             <div className="flex items-center gap-3">
               {logoPreview ? <img src={logoPreview} alt="الشعار" className="h-14 w-14 rounded-xl bg-secondary object-contain p-1" /> : <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-secondary text-xs text-muted-foreground">لا يوجد</div>}
-              <Input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => setLogo(e.target.files?.[0] ?? null)} />
+              <Input type="file" required accept="image/png,image/jpeg,image/webp" onChange={(e) => setLogo(e.target.files?.[0] ?? null)} />
             </div>
             <p className="text-xs text-muted-foreground">يفضّل PNG مربع 512×512 بخلفية شفافة، حتى 3MB.</p>
           </div>
           <div className={`rounded-lg border p-3 text-sm leading-7 ${signed ? "border-primary/40 bg-primary/5" : "bg-muted/40"}`}>
-            <p className="font-bold">توقيع التطبيق <span className="text-xs font-normal text-muted-foreground">(اختياري لكن موصى به)</span></p>
+            <p className="font-bold">توقيع التطبيق <span className="text-xs font-normal text-muted-foreground">(إلزامي)</span></p>
             {gs.isLoading ? <p className="text-muted-foreground">جارٍ فحص مفتاح التوقيع…</p> : signed ? (
-              <p className="text-primary">✅ مفتاح التوقيع جاهز — سيُبنى التطبيق كنسخة Release موقّعة رسميًا وتعمل تحديثاته بلا مشاكل.</p>
-            ) : (
-              <details>
-                <summary className="cursor-pointer text-muted-foreground">⚠️ لا يوجد مفتاح توقيع — سيُبنى كنسخة تجريبية (Debug). اضغط لطريقة الإعداد</summary>
-                <ol className="list-decimal pr-5 text-xs leading-6">
-                  <li>أنشئ المفتاح مرة واحدة على حاسبك (احتفظ به للأبد — ضياعه يمنع تحديث التطبيقات):<pre dir="ltr" className="mt-1 overflow-x-auto rounded bg-background p-2">keytool -genkey -v -keystore release.jks -alias bhsat -keyalg RSA -keysize 2048 -validity 10000{"\n"}base64 -w0 release.jks &gt; release.b64</pre></li>
-                  <li>في GitHub: المستودع ← Settings ← Secrets and variables ← Actions ← New secret، وأضف:
-                    <ul dir="ltr" className="font-mono">{SIGN_KEYS.map((k) => <li key={k}>{gs.data?.secrets?.includes(k) ? "✅" : "⬜"} {k}</li>)}</ul>
-                  </li>
-                  <li>اضغط «إعادة الفحص» بعد الإضافة.</li>
-                </ol>
-                <Button type="button" size="sm" variant="ghost" onClick={() => gs.refetch()} disabled={gs.isFetching}>إعادة الفحص</Button>
-              </details>
-            )}
+              <p className="text-primary">✅ مفتاح التوقيع جاهز — كل التطبيقات تُبنى نسخة Release موقّعة ومحمية.</p>
+            ) : <SigningSetup onDone={() => gs.refetch()} />}
           </div>
           <div className="rounded-lg border border-primary/40 bg-primary/5 p-3 space-y-3">
           <p className="text-sm font-bold">بيانات لوحة التحكم والتواصل مع الزبون <span className="text-xs font-normal text-muted-foreground">(إلزامية — لا تظهر في التطبيق)</span></p>
@@ -373,6 +363,40 @@ function GithubStrip() {
             : "لا يوجد مستودع متاح لهذا الحساب بعد."}
         </p>
       )}
+    </div>
+  );
+}
+
+function SigningSetup({ onDone }: { onDone: () => void }) {
+  const run = useServerFn(setupSigningKey);
+  const [busy, setBusy] = useState(false);
+  const [res, setRes] = useState<{ keystoreB64: string; password: string; alias: string; sha256: string } | null>(null);
+  const download = (r: NonNullable<typeof res>) => {
+    const bin = Uint8Array.from(atob(r.keystoreB64), (c) => c.charCodeAt(0));
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([bin], { type: "application/x-pkcs12" }));
+    a.download = "bahrain-satellite-release.p12"; a.click();
+  };
+  if (res) return (
+    <div className="space-y-2">
+      <p className="text-primary">✅ تم إنشاء مفتاح التوقيع وحفظه مشفّرًا في GitHub.</p>
+      <p className="text-xs text-destructive">احفظ نسخة احتياطية الآن (تظهر مرة واحدة فقط) — ضياع المفتاح يمنع تحديث كل التطبيقات.</p>
+      <div dir="ltr" className="rounded bg-background p-2 font-mono text-xs break-all">alias: {res.alias}<br />password: {res.password}<br />SHA-256: {res.sha256}</div>
+      <div className="flex gap-2">
+        <Button type="button" size="sm" onClick={() => download(res)}>تحميل ملف المفتاح</Button>
+        <Button type="button" size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(`alias: ${res.alias}\npassword: ${res.password}\nSHA-256: ${res.sha256}`); toast.success("نُسخت بيانات المفتاح"); }}>نسخ البيانات</Button>
+      </div>
+    </div>
+  );
+  return (
+    <div className="space-y-2">
+      <p className="text-muted-foreground">لا يوجد مفتاح توقيع. ننشئ مفتاحًا احترافيًا (RSA 4096 — صالح 30 سنة) ونحفظه مشفّرًا في GitHub تلقائيًا. يُنشأ مرة واحدة ويُستخدم لكل التطبيقات.</p>
+      <Button type="button" size="sm" disabled={busy} onClick={async () => {
+        setBusy(true);
+        try { const r = await run({}); setRes(r); download(r); onDone(); toast.success("تم إنشاء مفتاح التوقيع"); }
+        catch (e) { toast.error(e instanceof Error ? e.message : "فشل إنشاء المفتاح"); }
+        setBusy(false);
+      }}>{busy ? "جارٍ الإنشاء…" : "إنشاء مفتاح التوقيع الآن"}</Button>
     </div>
   );
 }
