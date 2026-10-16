@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDiagnoseRouteImport } from './routes/_authenticated/diagnose'
+import { Route as AuthenticatedFirebaseRouteImport } from './routes/_authenticated/firebase'
 import { Route as AuthenticatedSiteSettingsRouteImport } from './routes/_authenticated/site-settings'
 import { Route as GuideSlugRouteImport } from './routes/guide.$slug'
 import { Route as InstallSlugRouteImport } from './routes/install.$slug'
@@ -46,6 +47,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
 const AuthenticatedDiagnoseRoute = AuthenticatedDiagnoseRouteImport.update({
   id: '/diagnose',
   path: '/diagnose',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFirebaseRoute = AuthenticatedFirebaseRouteImport.update({
+  id: '/firebase',
+  path: '/firebase',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSiteSettingsRoute =
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/diagnose': typeof AuthenticatedDiagnoseRoute
+  '/firebase': typeof AuthenticatedFirebaseRoute
   '/site-settings': typeof AuthenticatedSiteSettingsRoute
   '/guide/$slug': typeof GuideSlugRoute
   '/install/$slug': typeof InstallSlugRoute
@@ -115,6 +122,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/diagnose': typeof AuthenticatedDiagnoseRoute
+  '/firebase': typeof AuthenticatedFirebaseRoute
   '/site-settings': typeof AuthenticatedSiteSettingsRoute
   '/guide/$slug': typeof GuideSlugRoute
   '/install/$slug': typeof InstallSlugRoute
@@ -132,6 +140,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/diagnose': typeof AuthenticatedDiagnoseRoute
+  '/_authenticated/firebase': typeof AuthenticatedFirebaseRoute
   '/_authenticated/site-settings': typeof AuthenticatedSiteSettingsRoute
   '/guide/$slug': typeof GuideSlugRoute
   '/install/$slug': typeof InstallSlugRoute
@@ -149,6 +158,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/diagnose'
+    | '/firebase'
     | '/site-settings'
     | '/guide/$slug'
     | '/install/$slug'
@@ -164,6 +174,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/diagnose'
+    | '/firebase'
     | '/site-settings'
     | '/guide/$slug'
     | '/install/$slug'
@@ -180,6 +191,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/dashboard'
     | '/_authenticated/diagnose'
+    | '/_authenticated/firebase'
     | '/_authenticated/site-settings'
     | '/guide/$slug'
     | '/install/$slug'
@@ -239,6 +251,13 @@ declare module '@tanstack/react-router' {
       path: '/diagnose'
       fullPath: '/diagnose'
       preLoaderRoute: typeof AuthenticatedDiagnoseRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/firebase': {
+      id: '/_authenticated/firebase'
+      path: '/firebase'
+      fullPath: '/firebase'
+      preLoaderRoute: typeof AuthenticatedFirebaseRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/site-settings': {
@@ -310,6 +329,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDiagnoseRoute: typeof AuthenticatedDiagnoseRoute
+  AuthenticatedFirebaseRoute: typeof AuthenticatedFirebaseRoute
   AuthenticatedSiteSettingsRoute: typeof AuthenticatedSiteSettingsRoute
   AuthenticatedTTenantIdRoute: typeof AuthenticatedTTenantIdRoute
 }
@@ -317,6 +337,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDiagnoseRoute: AuthenticatedDiagnoseRoute,
+  AuthenticatedFirebaseRoute: AuthenticatedFirebaseRoute,
   AuthenticatedSiteSettingsRoute: AuthenticatedSiteSettingsRoute,
   AuthenticatedTTenantIdRoute: AuthenticatedTTenantIdRoute,
 }

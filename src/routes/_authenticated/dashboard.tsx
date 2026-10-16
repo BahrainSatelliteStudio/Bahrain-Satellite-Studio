@@ -60,6 +60,7 @@ function Dashboard() {
         <span className="text-xl font-extrabold">BHSAT <span className="text-primary">Studio</span></span>
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           {me.data?.isAdmin && <Button asChild variant="outline" size="sm"><Link to="/site-settings">إدارة الصفحة الرئيسية</Link></Button>}
+          {me.data?.isAdmin && <Button asChild variant="outline" size="sm"><Link to="/firebase">الإشعارات (Firebase)</Link></Button>}
           {me.data?.isAdmin && <Link to="/diagnose" className="flex items-center gap-1 hover:text-foreground"><Stethoscope className="h-4 w-4" />تشخيص البناء</Link>}
           <span dir="ltr">{me.data?.email}</span>
           <Button variant="secondary" size="sm" onClick={() => signOut(qc, () => nav({ to: "/auth", replace: true }))}><LogOut className="h-4 w-4" />خروج</Button>
