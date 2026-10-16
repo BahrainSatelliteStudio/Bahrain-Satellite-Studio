@@ -60,7 +60,7 @@ export async function setupSigning(gh: GhFn, repo: string, org: string) {
     ANDROID_KEYSTORE_BASE64: ks.keystoreB64, ANDROID_KEYSTORE_PASSWORD: ks.pass, ANDROID_KEY_ALIAS: ks.alias, ANDROID_KEY_PASSWORD: ks.pass,
   };
   for (const k of SIGN_KEYS) {
-    const r = await gh("PUT", `/repos/${repo}/actions/secrets/${k}`, { encrypted_value: seal(values[k], pk.json.key), key_id: pk.json.key_id });
+    const r = await gh("PUT", `/repos/${repo}/actions/secrets/${k}`, { encrypted_value: seal(values[k] ?? "", pk.json.key), key_id: pk.json.key_id });
     if (!r.ok) throw new Error(`رفض GitHub حفظ ${k} (${r.status}) — الاتصال يحتاج صلاحية إدارة الأسرار`);
   }
   return { keystoreB64: ks.keystoreB64, password: ks.pass, alias: ks.alias, sha256: ks.sha256 };
