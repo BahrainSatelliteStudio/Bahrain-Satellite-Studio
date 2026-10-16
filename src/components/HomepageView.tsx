@@ -14,12 +14,12 @@ export function HomepageView({ config: c, preview = false }: { config: Homepage;
         {c.logo && <img src={c.logo} alt={c.brand} className="h-12 w-12 shrink-0 object-contain" />}
         <span className="break-words text-xl font-extrabold">{c.brand} <span className="text-primary">{c.brandAccent}</span></span>
       </div>
-      {c.showAdmin && (preview ? <Button>{c.adminLabel}</Button> : <Button asChild><Link to="/dashboard">{c.adminLabel}</Link></Button>)}
+      {c.showAdmin && (preview ? <Button>{c.adminLabel}</Button> : <Button asChild><Link to="/auth">{c.adminLabel}</Link></Button>)}
     </header>
     <section className={`mx-auto max-w-4xl px-4 pb-12 pt-16 ${c.align === "center" ? "text-center" : "text-start"}`}>
       <h1 className={`${size} break-words font-extrabold leading-tight`}>{c.title} <span className="text-primary">{c.titleAccent}</span></h1>
       <p className={`mt-5 max-w-2xl whitespace-pre-line break-words text-lg text-muted-foreground ${c.align === "center" ? "mx-auto" : ""}`}>{c.description}</p>
-      {c.showCta && (preview ? <Button size="lg" className="mt-8">{c.ctaLabel}</Button> : <Button asChild size="lg" className="mt-8"><Link to="/dashboard" onClick={() => { try { sessionStorage.setItem("bhsat_open_new", "1"); } catch { /* Storage unavailable */ } }}>{c.ctaLabel}</Link></Button>)}
+      {c.showCta && (preview ? <Button size="lg" className="mt-8">{c.ctaLabel}</Button> : <Button asChild size="lg" className="mt-8"><Link to="/dashboard">{c.ctaLabel}</Link></Button>)}
     </section>
     {c.showFeatures && <section className={`mx-auto grid max-w-6xl gap-4 px-4 pb-20 ${cols}`}>
       {c.features.filter((f) => f.visible).map((f) => { const Icon = homeIcons[f.icon]; return <article key={f.id} className="rounded-lg border bg-card p-6 text-card-foreground"><Icon className="h-8 w-8 text-accent" /><h2 className="mt-4 break-words text-lg font-extrabold">{f.title}</h2><p className="mt-1 whitespace-pre-line break-words text-sm text-muted-foreground">{f.description}</p></article>; })}

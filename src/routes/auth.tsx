@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -22,25 +22,19 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const nav = useNavigate();
-  const [mode, setMode] = useState<"in" | "up">("in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  useEffect(() => { supabase.auth.getUser().then(({ data }) => { if (data.user) nav({ to: "/dashboard", replace: true }); }); }, [nav]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     const login = email.trim().toLowerCase();
     const em = login.includes("@") ? login : `${login.replace(/[^a-z0-9._-]/g, "")}@users.bhsat.me`;
-    if (mode === "in") {
-      const { error } = await supabase.auth.signInWithPassword({ email: em, password });
-      if (error) toast.error("بيانات الدخول غير صحيحة");
-      else nav({ to: "/dashboard" });
-    } else {
-      const { error } = await supabase.auth.signUp({ email: em, password, options: { emailRedirectTo: window.location.origin + "/dashboard" } });
-      if (error) toast.error(error.message);
-      else { toast.success("تم إنشاء الحساب"); nav({ to: "/dashboard" }); };
-    }
+    const { error } = await supabase.auth.signInWithPassword({ email: em, password });
+    if (error) toast.error("بيانات الدخول غير صحيحة");
+    else nav({ to: "/dashboard" });
     setBusy(false);
   }
 
@@ -49,14 +43,12 @@ function AuthPage() {
       <form onSubmit={submit} className="w-full max-w-sm space-y-4 rounded-2xl border bg-card p-6 shadow-xl">
         <div className="text-center">
           <h1 className="text-2xl font-extrabold">لوحة التحكم</h1>
-          <p className="text-sm text-muted-foreground">{mode === "in" ? "سجّل دخولك للوحة التحكم" : "أول حساب يُنشأ يصبح المسؤول"}</p>
+          <p className="text-sm text-muted-foreground">دخول المسؤول والزبائن بالحسابات التي ينشئها المسؤول</p>
         </div>
         <div className="space-y-1"><Label>اسم المستخدم أو البريد</Label><Input type="text" autoComplete="username" dir="ltr" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
         <div className="space-y-1"><Label>كلمة المرور</Label><Input type="password" dir="ltr" minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} /></div>
-        <Button className="w-full" disabled={busy}>{mode === "in" ? "دخول" : "إنشاء حساب"}</Button>
-        <button type="button" className="w-full text-sm text-muted-foreground hover:text-foreground" onClick={() => setMode(mode === "in" ? "up" : "in")}>
-          {mode === "in" ? "ليس لديك حساب؟ أنشئ حسابًا" : "لديك حساب؟ سجّل الدخول"}
-        </button>
+        <Button className="w-full" disabled={busy}>دخول</Button>
+        <p className="text-center text-xs text-muted-foreground">ما عندك حساب؟ تواصل مع الإدارة.</p>
       </form>
     </div>
   );

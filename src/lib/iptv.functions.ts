@@ -124,14 +124,18 @@ export const createTenant = createServerFn({ method: "POST" })
     const authEmail = `${data.username}@users.bhsat.me`;
     const { data: t, error } = await supabaseAdmin.from("tenants").insert({ name: data.name, slug: data.slug, package_id: data.package_id, owner_email: data.email, owner_phone: data.phone }).select("id").single();
     if (error) throw new Error(error.message.includes("duplicate") ? "الرابط أو اسم الحزمة مستخدم مسبقًا" : error.message);
-    let userId: string | undefined;
     const created = await supabaseAdmin.auth.admin.createUser({ email: authEmail, password: data.password, email_confirm: true });
     if (created.error) {
-      const { data: list } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
-      userId = list.users.find((u) => u.email?.toLowerCase() === authEmail)?.id;
-      if (!userId) { await supabaseAdmin.from("tenants").delete().eq("id", t.id); throw new Error(created.error.message.includes("already") ? "اسم المستخدم مستخدم مسبقًا" : created.error.message); }
-    } else userId = created.data.user.id;
-    await supabaseAdmin.from("tenant_members").insert({ tenant_id: t.id, user_id: userId });
+      await supabaseAdmin.from("tenants").delete().eq("id", t.id);
+      throw new Error(created.error.message.includes("already") ? "اسم المستخدم مستخدم مسبقًا — اختر اسمًا مختلفًا" : created.error.message);
+    }
+    const userId = created.data.user.id;
+    const { error: memberError } = await supabaseAdmin.from("tenant_members").insert({ tenant_id: t.id, user_id: userId });
+    if (memberError) {
+      await supabaseAdmin.from("tenants").delete().eq("id", t.id);
+      await supabaseAdmin.auth.admin.deleteUser(userId);
+      throw new Error("تعذر ربط حساب الزبون بالتطبيق؛ لم يتم إكمال الإنشاء");
+    }
     return { id: t.id };
   });
 
@@ -188,8 +192,10 @@ export const checkHost = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { sourceId: string }) => z.object({ sourceId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: s, error } = await context.supabase.from("tenant_sources").select("id,url,backup_urls").eq("id", data.sourceId).single();
+    const { data: s, error } = await context.supabase.from("tenant_sources").select("id,tenant_id,url,backup_urls").eq("id", data.sourceId).single();
     if (error || !s) throw new Error("السيرفر غير موجود");
+    const { data: member, error: accessError } = await context.supabase.rpc("is_tenant_member", { _tenant_id: s.tenant_id });
+    if (accessError || !member) throw new Error("لا تملك صلاحية فحص هذا السيرفر");
     const urls = [s.url, ...(s.backup_urls ?? [])];
     const results = await Promise.all(urls.map(async (u) => {
       const t0 = Date.now();

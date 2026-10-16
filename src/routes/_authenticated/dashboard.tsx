@@ -51,16 +51,6 @@ function Dashboard() {
   }, [list, q]);
   const active = list.filter((t) => t.enabled).length;
   const disabled = list.length - active;
-  const [autoNew, setAutoNew] = useState(false);
-
-  useEffect(() => {
-    try {
-      if (sessionStorage.getItem("bhsat_open_new") === "1") {
-        sessionStorage.removeItem("bhsat_open_new");
-        setAutoNew(true);
-      }
-    } catch { /* تجاهل */ }
-  }, []);
 
   const copy = (text: string, msg: string) => { navigator.clipboard.writeText(text); toast.success(msg); };
 
@@ -70,7 +60,7 @@ function Dashboard() {
         <span className="text-xl font-extrabold">BHSAT <span className="text-primary">Studio</span></span>
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           {me.data?.isAdmin && <Button asChild variant="outline" size="sm"><Link to="/site-settings">إدارة الصفحة الرئيسية</Link></Button>}
-          <Link to="/diagnose" className="flex items-center gap-1 hover:text-foreground"><Stethoscope className="h-4 w-4" />تشخيص البناء</Link>
+          {me.data?.isAdmin && <Link to="/diagnose" className="flex items-center gap-1 hover:text-foreground"><Stethoscope className="h-4 w-4" />تشخيص البناء</Link>}
           <span dir="ltr">{me.data?.email}</span>
           <Button variant="secondary" size="sm" onClick={() => signOut(qc, () => nav({ to: "/auth", replace: true }))}><LogOut className="h-4 w-4" />خروج</Button>
         </div>
@@ -78,7 +68,7 @@ function Dashboard() {
       <main className="mx-auto max-w-6xl space-y-6 p-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-extrabold">{me.data?.isAdmin ? "الزبائن والتطبيقات" : "تطبيقاتي"}</h1>
-          {me.data?.isAdmin && <NewTenant autoOpen={autoNew} onDone={() => qc.invalidateQueries({ queryKey: ["tenants"] })} />}
+          {me.data?.isAdmin && <NewTenant onDone={() => qc.invalidateQueries({ queryKey: ["tenants"] })} />}
         </div>
 
         {me.data?.isAdmin && (
@@ -192,10 +182,9 @@ function genPass() {
   return `Bhs-${s}1`;
 }
 
-function NewTenant({ autoOpen, onDone }: { autoOpen: boolean; onDone: () => void }) {
+function NewTenant({ onDone }: { onDone: () => void }) {
   const create = useServerFn(createTenant);
   const [open, setOpen] = useState(false);
-  useEffect(() => { if (autoOpen) setOpen(true); }, [autoOpen]);
   const [f, setF] = useState({ name: "", slug: "", package_id: "", username: "", email: "", password: "" });
   const [busy, setBusy] = useState(false);
   const [cc, setCc] = useState("+973");

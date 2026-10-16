@@ -5,6 +5,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { diagnoseBuildLog } from "@/lib/diagnose.functions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useMe } from "@/lib/me";
 
 export const Route = createFileRoute("/_authenticated/diagnose")({
   head: () => ({
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/_authenticated/diagnose")({
 });
 
 function DiagnosePage() {
+  const me = useMe();
   const run = useServerFn(diagnoseBuildLog);
   const [log, setLog] = useState("");
   const [busy, setBusy] = useState(false);
@@ -33,6 +35,8 @@ function DiagnosePage() {
     setBusy(false);
   }
 
+  if (me.isPending) return <main className="p-8">جاري التحميل...</main>;
+  if (!me.data?.isAdmin) return <main className="p-8"><h1 className="text-2xl font-bold">هذه الصفحة للمسؤول فقط</h1><Button asChild className="mt-4"><Link to="/dashboard">العودة إلى تطبيقاتي</Link></Button></main>;
   return (
     <div className="min-h-screen bg-background">
       <header className="flex items-center justify-between border-b px-6 py-4">
