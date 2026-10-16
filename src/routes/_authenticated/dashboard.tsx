@@ -304,3 +304,35 @@ const COUNTRIES: [string, string][] = [
   ["🇬🇧 بريطانيا", "+44"], ["🇩🇪 ألمانيا", "+49"], ["🇫🇷 فرنسا", "+33"], ["🇳🇱 هولندا", "+31"],
   ["🇸🇪 السويد", "+46"], ["🇺🇸 أمريكا/كندا", "+1"], ["🇦🇺 أستراليا", "+61"], ["🇮🇳 الهند", "+91"], ["🇵🇰 باكستان", "+92"],
 ];
+
+// حالة اتصال GitHub المستخدمة في بناء APK
+function GithubStrip() {
+  const getStatus = useServerFn(githubStatus);
+  const q = useQuery({ queryKey: ["github-status"], queryFn: () => getStatus({}), staleTime: 30_000 });
+  const s = q.data;
+  const ready = Boolean(s?.connected && s.repoFound && s.workflowFound);
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-2xl border bg-card px-5 py-3 text-sm">
+      <Github className="h-4 w-4 shrink-0" />
+      <b>اتصال GitHub:</b>
+      {!s ? (
+        <span className="text-muted-foreground">جارٍ الفحص…</span>
+      ) : s.error ? (
+        <span className="flex items-center gap-1 text-destructive"><CircleAlert className="h-4 w-4" />{s.error}</span>
+      ) : ready ? (
+        <span className="flex items-center gap-1 text-primary"><CircleCheck className="h-4 w-4" />جاهز للبناء — {s.account}</span>
+      ) : (
+        <span className="flex items-center gap-1 text-destructive"><CircleAlert className="h-4 w-4" />غير مكتمل</span>
+      )}
+      {s?.repo && <span className="text-muted-foreground" dir="ltr">{s.repo}</span>}
+      <Button size="sm" variant="ghost" onClick={() => q.refetch()} disabled={q.isFetching}><RefreshCw className="h-3.5 w-3.5" />فحص</Button>
+      {s && !s.repoFound && (
+        <p className="w-full text-xs leading-6 text-muted-foreground">
+          {s.repos.length
+            ? <>المستودعات التي يراها هذا الحساب: <span dir="ltr">{s.repos.map((r) => r.name).join("، ")}</span></>
+            : "لا يوجد مستودع متاح لهذا الحساب بعد."}
+        </p>
+      )}
+    </div>
+  );
+}
