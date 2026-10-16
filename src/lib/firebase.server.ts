@@ -37,3 +37,15 @@ export async function sendToTopic(sa: ServiceAccount, topic: string, title: stri
   if (!res.ok) throw new Error(`فشل الإرسال [${res.status}]: ${await res.text()}`);
   return true;
 }
+
+export async function subscribeToTopics(sa: ServiceAccount, token: string, topics: string[]) {
+  const access = await getAccessToken(sa);
+  for (const topic of topics) {
+    const res = await fetch("https://iid.googleapis.com/iid/v1:batchAdd", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${access}`, access_token_auth: "true", "Content-Type": "application/json" },
+      body: JSON.stringify({ to: `/topics/${topic}`, registration_tokens: [token] }),
+    });
+    if (!res.ok) throw new Error(`subscribe failed [${res.status}]: ${await res.text()}`);
+  }
+}
