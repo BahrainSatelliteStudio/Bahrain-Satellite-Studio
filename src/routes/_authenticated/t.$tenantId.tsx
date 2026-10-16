@@ -47,7 +47,15 @@ function Panel() {
   const nav = Route.useNavigate();
   const [sec, setSec] = useState<Sec>("home");
   const [open, setOpen] = useState(false);
-  const tq = useQuery({ queryKey: ["tenant", tenantId], queryFn: async () => { const { data, error } = await supabase.from("tenants").select("*").eq("id", tenantId).single(); if (error) throw error; return data; } });
+  const access = useQuery({ queryKey: ["tenant-access", tenantId, me.data?.uid], enabled: !!me.data, queryFn: async () => {
+    if (me.data?.isAdmin) return true;
+    const { data, error } = await supabase.from("tenant_members").select("id").eq("tenant_id", tenantId).eq("user_id", me.data?.uid ?? "").limit(1);
+    if (error) throw error;
+    return !!data?.length;
+  } });
+  const tq = useQuery({ queryKey: ["tenant", tenantId, me.data?.uid], enabled: access.data === true, queryFn: async () => { const { data, error } = await supabase.from("tenants").select("*").eq("id", tenantId).single(); if (error) throw error; return data; } });
+  if (access.data === false || access.error || me.error) return <main className="theme-bhsat min-h-screen bg-background p-10 text-center"><h1 className="text-2xl font-bold">لا تملك صلاحية الدخول إلى هذا التطبيق</h1><Button asChild variant="outline" className="mt-4"><Link to="/dashboard">العودة إلى تطبيقاتي</Link></Button></main>;
+  if (tq.error) return <main className="theme-bhsat min-h-screen bg-background p-10 text-center">تعذر تحميل التطبيق.</main>;
   if (!tq.data) return <div className="theme-bhsat min-h-screen bg-background p-10 text-center text-muted-foreground">جاري التحميل...</div>;
   const t = tq.data;
   const ctx = { t, isAdmin: !!me.data?.isAdmin, email: me.data?.email ?? "", uid: me.data?.uid ?? "", go: setSec };
@@ -55,7 +63,7 @@ function Panel() {
   const allowed = (k: string) => ctx.isAdmin || !(k in feats) || feats[k as FeatureKey];
   const visible = SECTIONS.filter((s) => allowed(s[0]));
   if (!allowed(sec)) { setTimeout(() => setSec("home")); }
-  const title = SECTIONS.find((s) => s[0] === sec)![1];
+  const title = SECTIONS.find((s) => s[0] === sec)?.[1] ?? "الرئيسية";
   return (
     <div dir="rtl" className="theme-bhsat min-h-screen bg-background text-foreground lg:flex">
       <aside className={`fixed inset-y-0 right-0 z-40 w-72 border-l bg-card p-5 transition-transform lg:static lg:translate-x-0 ${open ? "translate-x-0" : "translate-x-full"}`}>
@@ -76,7 +84,7 @@ function Panel() {
           <p className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-primary" />{ctx.isAdmin ? "المسؤول" : "المالك"} · {ctx.email}</p>
           <p>إصدار اللوحة 1.0.0</p>
           {ctx.isAdmin && <Link to="/dashboard" className="flex items-center gap-2 font-bold text-foreground"><ArrowRight className="h-4 w-4" />كل الزبائن</Link>}
-          <button className="flex items-center gap-2 font-bold text-foreground" onClick={() => signOut(qc, () => nav({ to: "/auth" }))}><LogOut className="h-4 w-4" />تسجيل الخروج</button>
+          <button className="flex items-center gap-2 font-bold text-foreground" onClick={() => signOut(qc, () => nav({ to: "/auth", replace: true }))}><LogOut className="h-4 w-4" />تسجيل الخروج</button>
         </div>
       </aside>
       <main className="flex-1 p-4 sm:p-8">
