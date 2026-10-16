@@ -11,6 +11,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { triggerBuild, checkHost } from "@/lib/iptv.functions";
+import { sendPush } from "@/lib/firebase.functions";
 import { useMe, signOut } from "@/lib/me";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -541,6 +542,8 @@ function Notify(c: Ctx) {
   const [n, setN] = useState({ title: "", body: "", kind: "info", days: "7" });
   const [img, setImg] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
+  const [push, setPush] = useState(true);
+  const sendPushFn = useServerFn(sendPush);
   const refresh = () => qc.invalidateQueries({ queryKey: ["ann", c.t.id] });
   const kinds: Record<string, string> = { info: "معلومة", maintenance: "صيانة", offer: "عرض", urgent: "عاجل" };
   return (
@@ -553,6 +556,10 @@ function Notify(c: Ctx) {
           const { error } = await supabase.from("announcements").insert({ tenant_id: c.t.id, title: n.title, body: n.body, kind: n.kind, image_url, expires_at });
           if (error) throw error;
           await logChange(c, "الإشعارات", `إرسال: ${n.title}`);
+          if (c.isAdmin && push && n.body.trim()) {
+            try { await sendPushFn({ data: { target: `tenant-${c.t.id}`, title: n.title.slice(0, 100), body: n.body.slice(0, 500) } }); toast.success("وصل إشعار للجوالات أيضًا"); }
+            catch (pe) { toast.error("إشعار الجوال: " + (pe instanceof Error ? pe.message : "فشل")); }
+          }
           setN({ ...n, title: "", body: "" }); setImg(null); refresh(); toast.success("تم الإرسال لكل المشتركين");
         } catch (err) { toast.error(err instanceof Error ? err.message : "خطأ"); }
         setBusy(false);
@@ -565,6 +572,8 @@ function Notify(c: Ctx) {
         </div>
         <Textarea rows={4} placeholder="نص الرسالة" value={n.body} onChange={(e) => setN({ ...n, body: e.target.value })} />
         <div className="space-y-1"><Label>صورة (اختيارية)</Label><Input type="file" accept="image/*" onChange={(e) => setImg(e.target.files?.[0] ?? null)} /></div>
+        {c.isAdmin && <div className="flex items-center gap-3"><Switch checked={push} onCheckedChange={setPush} /><Label>إرسال إشعار للجوالات أيضًا (Firebase)</Label>
+          <Link to="/firebase" className="text-xs text-primary underline">إعدادات Firebase</Link></div>}
         <Button disabled={busy}><Bell className="h-4 w-4" />إرسال للجميع</Button>
       </form>
       <div className="overflow-x-auto rounded-2xl border bg-card">
