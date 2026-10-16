@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ArrowRight, Upload, CheckCircle2, Send } from "lucide-react";
 import { useMe } from "@/lib/me";
-import { getFirebaseStatus, saveFirebaseAccount, setFirebaseEnabled, testFirebase, sendPush } from "@/lib/firebase.functions";
+import { getFirebaseStatus, saveFirebaseAccount, saveGoogleServices, setFirebaseEnabled, testFirebase, sendPush } from "@/lib/firebase.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,6 +27,7 @@ function FirebasePage() {
   const read = useServerFn(getFirebaseStatus);
   const q = useQuery({ queryKey: ["firebase"], queryFn: () => read(), enabled: !!me.data?.isAdmin });
   const save = useServerFn(saveFirebaseAccount);
+  const saveGs = useServerFn(saveGoogleServices);
   const toggle = useServerFn(setFirebaseEnabled);
   const test = useServerFn(testFirebase);
   const send = useServerFn(sendPush);
@@ -72,6 +73,18 @@ function FirebasePage() {
         </div>
         {s && <div className="flex items-center gap-3"><Switch checked={s.enabled} onCheckedChange={(v) => run("tg", () => toggle({ data: { enabled: v } }), v ? "تم تشغيل الإشعارات" : "تم إيقاف الإشعارات")} /><Label>الإشعارات {s.enabled ? "شغّالة" : "موقوفة"}</Label></div>}
       </section>
+
+      {s && <section className="space-y-3 rounded-xl border bg-card p-5">
+        <h2 className="text-lg font-semibold">ملف التطبيق google-services.json</h2>
+        {s.packages ? <div className="flex items-start gap-2 text-sm"><CheckCircle2 className="h-5 w-5 text-primary" />
+          <span>مرفوع — التطبيقات المسجّلة: <b dir="ltr">{s.packages.join("، ")}</b></span></div>
+          : <p className="text-sm text-muted-foreground">حمّله من Firebase ← Project settings ← General ← تطبيق أندرويد.</p>}
+        <Button asChild variant={s.packages ? "outline" : "default"} disabled={busy === "gs"}>
+          <label className="cursor-pointer"><Upload className="ml-1 h-4 w-4" />{s.packages ? "تغيير الملف" : "رفع google-services.json"}
+            <input type="file" accept=".json,application/json" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; if (f) { const json = await f.text(); await run("gs", () => saveGs({ data: { json } }), "تم حفظ ملف التطبيق"); } }} /></label>
+        </Button>
+        <p className="text-xs text-muted-foreground">كل زبون له اسم حزمة خاص (مثل me.bhsat.اسم-الزبون) — سجّله في Firebase كتطبيق أندرويد ثم ارفع الملف الجديد هنا.</p>
+      </section>}
 
       {s && <section className="space-y-4 rounded-xl border bg-card p-5">
         <h2 className="text-lg font-semibold">٢- إرسال إشعار</h2>

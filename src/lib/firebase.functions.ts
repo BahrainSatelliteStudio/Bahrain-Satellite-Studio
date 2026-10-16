@@ -19,7 +19,10 @@ export const getFirebaseStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const admin = await assertAdmin(context);
-    const { data } = await admin.from("firebase_settings").select("project_id, client_email, enabled, updated_at").eq("id", "main").maybeSingle();
+    const { data: raw } = await admin.from("firebase_settings").select("project_id, client_email, enabled, updated_at, google_services").eq("id", "main").maybeSingle();
+    const gs = (raw as any)?.google_services;
+    const data = raw ? { project_id: raw.project_id, client_email: raw.client_email, enabled: raw.enabled, updated_at: raw.updated_at,
+      packages: gs ? ((gs.client ?? []).map((c: any) => c?.client_info?.android_client_info?.package_name).filter(Boolean) as string[]) : null } : null;
     const { data: history } = await admin.from("push_notifications").select("id, target, title, body, status, error, created_at").order("created_at", { ascending: false }).limit(20);
     const { data: tenants } = await admin.from("tenants").select("id, name").order("name");
     return { settings: data ?? null, history: history ?? [], tenants: (tenants ?? []) as { id: string; name: string }[] };
@@ -47,6 +50,23 @@ export const saveFirebaseAccount = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     return { project_id: sa.project_id };
+  });
+
+export const saveGoogleServices = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { json: string }) => z.object({ json: z.string().min(10).max(50000) }).parse(input))
+  .handler(async ({ data, context }) => {
+    const admin = await assertAdmin(context);
+    let p: any;
+    try { p = JSON.parse(data.json); } catch { throw new Error("الملف ليس بصيغة JSON صحيحة"); }
+    const pkgs: string[] = (p?.client ?? []).map((c: any) => c?.client_info?.android_client_info?.package_name).filter(Boolean);
+    if (!p?.project_info?.project_id || !pkgs.length) throw new Error("هذا ليس ملف google-services.json");
+    const { data: row } = await admin.from("firebase_settings").select("project_id").eq("id", "main").maybeSingle();
+    if (!row) throw new Error("ارفع ملف حساب الخدمة أولًا");
+    if (row.project_id !== p.project_info.project_id) throw new Error("الملف من مشروع Firebase مختلف عن حساب الخدمة");
+    const { error } = await admin.from("firebase_settings").update({ google_services: p }).eq("id", "main");
+    if (error) throw new Error(error.message);
+    return { packages: pkgs };
   });
 
 export const setFirebaseEnabled = createServerFn({ method: "POST" })
