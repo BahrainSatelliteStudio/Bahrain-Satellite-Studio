@@ -85,6 +85,13 @@
       "when": 1792143127136,
       "tag": "0011_protect_tenant_owner_contact",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792148371865,
+      "tag": "0012_firebase_settings",
+      "breakpoints": true
     }
   ]
 }

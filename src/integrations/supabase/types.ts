@@ -138,6 +138,33 @@ export type Database = {
           },
         ]
       }
+      firebase_settings: {
+        Row: {
+          client_email: string
+          enabled: boolean
+          id: string
+          project_id: string
+          service_account: Json
+          updated_at: string
+        }
+        Insert: {
+          client_email: string
+          enabled?: boolean
+          id?: string
+          project_id: string
+          service_account: Json
+          updated_at?: string
+        }
+        Update: {
+          client_email?: string
+          enabled?: boolean
+          id?: string
+          project_id?: string
+          service_account?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       homepage_settings: {
         Row: {
           content: Json
@@ -190,6 +217,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      push_notifications: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          error: string | null
+          id: string
+          status: string
+          target: string
+          title: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          id?: string
+          status: string
+          target: string
+          title: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          id?: string
+          status?: string
+          target?: string
+          title?: string
+        }
+        Relationships: []
       }
       servers: {
         Row: {
