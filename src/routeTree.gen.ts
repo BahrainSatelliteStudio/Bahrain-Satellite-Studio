@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDiagnoseRouteImport } from './routes/_authenticated/diagnose'
+import { Route as AuthenticatedSiteSettingsRouteImport } from './routes/_authenticated/site-settings'
 import { Route as GuideSlugRouteImport } from './routes/guide.$slug'
 import { Route as InstallSlugRouteImport } from './routes/install.$slug'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
@@ -47,6 +48,12 @@ const AuthenticatedDiagnoseRoute = AuthenticatedDiagnoseRouteImport.update({
   path: '/diagnose',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSiteSettingsRoute =
+  AuthenticatedSiteSettingsRouteImport.update({
+    id: '/site-settings',
+    path: '/site-settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const GuideSlugRoute = GuideSlugRouteImport.update({
   id: '/guide/$slug',
   path: '/guide/$slug',
@@ -93,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/diagnose': typeof AuthenticatedDiagnoseRoute
+  '/site-settings': typeof AuthenticatedSiteSettingsRoute
   '/guide/$slug': typeof GuideSlugRoute
   '/install/$slug': typeof InstallSlugRoute
   '/p/$slug': typeof PSlugRoute
@@ -107,6 +115,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/diagnose': typeof AuthenticatedDiagnoseRoute
+  '/site-settings': typeof AuthenticatedSiteSettingsRoute
   '/guide/$slug': typeof GuideSlugRoute
   '/install/$slug': typeof InstallSlugRoute
   '/p/$slug': typeof PSlugRoute
@@ -123,6 +132,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/diagnose': typeof AuthenticatedDiagnoseRoute
+  '/_authenticated/site-settings': typeof AuthenticatedSiteSettingsRoute
   '/guide/$slug': typeof GuideSlugRoute
   '/install/$slug': typeof InstallSlugRoute
   '/p/$slug': typeof PSlugRoute
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/diagnose'
+    | '/site-settings'
     | '/guide/$slug'
     | '/install/$slug'
     | '/p/$slug'
@@ -153,6 +164,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/diagnose'
+    | '/site-settings'
     | '/guide/$slug'
     | '/install/$slug'
     | '/p/$slug'
@@ -168,6 +180,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/dashboard'
     | '/_authenticated/diagnose'
+    | '/_authenticated/site-settings'
     | '/guide/$slug'
     | '/install/$slug'
     | '/p/$slug'
@@ -226,6 +239,13 @@ declare module '@tanstack/react-router' {
       path: '/diagnose'
       fullPath: '/diagnose'
       preLoaderRoute: typeof AuthenticatedDiagnoseRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/site-settings': {
+      id: '/_authenticated/site-settings'
+      path: '/site-settings'
+      fullPath: '/site-settings'
+      preLoaderRoute: typeof AuthenticatedSiteSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/guide/$slug': {
@@ -290,12 +310,14 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDiagnoseRoute: typeof AuthenticatedDiagnoseRoute
+  AuthenticatedSiteSettingsRoute: typeof AuthenticatedSiteSettingsRoute
   AuthenticatedTTenantIdRoute: typeof AuthenticatedTTenantIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDiagnoseRoute: AuthenticatedDiagnoseRoute,
+  AuthenticatedSiteSettingsRoute: AuthenticatedSiteSettingsRoute,
   AuthenticatedTTenantIdRoute: AuthenticatedTTenantIdRoute,
 }
 
