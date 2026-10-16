@@ -68,7 +68,28 @@ function useTvNav() {
   }, []);
 }
 
+// يسجّل الجهاز لاستقبال إشعارات Firebase (داخل تطبيق الأندرويد فقط).
+function usePushRegistration(slug: string, enabled: boolean) {
+  useEffect(() => {
+    if (!enabled) return;
+    const cap = (window as any).Capacitor;
+    const push = cap?.Plugins?.PushNotifications;
+    if (!cap?.isNativePlatform?.() || !push || !cap.isPluginAvailable?.("PushNotifications")) return;
+    (async () => {
+      try {
+        await push.addListener("registration", async (t: { value: string }) => {
+          await fetch("/api/public/push-register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug, token: t.value }) });
+        });
+        let perm = await push.checkPermissions();
+        if (perm.receive === "prompt" || perm.receive === "prompt-with-rationale") perm = await push.requestPermissions();
+        if (perm.receive === "granted") await push.register();
+      } catch (e) { console.warn("push registration failed", e); }
+    })();
+  }, [slug, enabled]);
+}
+
 export function PlayerApp({ cfg, preview = false }: { cfg: TenantConfig; preview?: boolean }) {
+  usePushRegistration(cfg.slug, !preview);
   const key = `iptv:${cfg.slug}`;
   const [session, setSession] = useState<Session | null>(null);
   const [ready, setReady] = useState(false);

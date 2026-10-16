@@ -35,8 +35,16 @@ jobs:
             "android": { "allowMixedContent": true } }
           EOF
           rm -f capacitor.config.ts
+          GS_URL="$(dirname "${{ inputs.callback_url }}")/google-services?package=$PKG"
+          if curl -fsS "$GS_URL" -H "x-build-secret: ${{ inputs.callback_secret }}" -o /tmp/gs.json; then
+            echo "Push notifications enabled for $PKG"; bun add @capacitor/push-notifications@^8
+          else
+            echo "::warning::No google-services.json for $PKG — building without push notifications"; rm -f /tmp/gs.json
+          fi
           bunx cap add android
+          [ -f /tmp/gs.json ] && cp /tmp/gs.json android/app/google-services.json
           bunx cap sync android
+          sed -i 's#<application#<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <application#' android/app/src/main/AndroidManifest.xml
           IFS=. read -r A B C <<< "$VER"
           CODE=$((A*10000 + B*100 + C))
           sed -i "s/versionCode .*/versionCode $CODE/; s/versionName .*/versionName \"$VER\"/" android/app/build.gradle
