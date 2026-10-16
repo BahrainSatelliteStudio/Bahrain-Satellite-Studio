@@ -17,7 +17,7 @@ async function gh(method: "GET" | "POST", path: string, body?: unknown): Promise
     "User-Agent": "iptv-studio",
     Authorization: `Bearer ${gateway ? lovableKey : pat}`,
   };
-  if (gateway) headers["X-Connection-Api-Key"] = connKey;
+  if (gateway && connKey) headers["X-Connection-Api-Key"] = connKey;
   const res = await fetch(gateway ? `${GATEWAY}${path}` : `https://api.github.com${path}`, {
     method,
     headers,
