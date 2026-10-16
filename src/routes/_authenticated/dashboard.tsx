@@ -271,7 +271,7 @@ function NewTenant({ autoOpen, onDone }: { autoOpen: boolean; onDone: () => void
         <details className="rounded-lg border bg-muted/40 p-3 text-sm leading-7" open>
           <summary className="cursor-pointer font-bold">قائمة استقبال الزبون — اطلب منه:</summary>
           <ul className="list-disc pr-5 mt-1">
-            <li><b>ضروري:</b> اسم التطبيق، الشعار (PNG/JPG)، بريد الدخول.</li>
+            <li><b>ضروري:</b> اسم التطبيق، الشعار (PNG مربع — يصبح أيقونة التطبيق)، البريد ورقم الجوال.</li>
             <li><b>السيرفر:</b> Host + يوزر + باسورد، والنوع Xtream / M3U.</li>
             <li><b>التواصل:</b> رقم واتساب الدعم.</li>
             <li><b>نحدده تلقائيًا:</b> الرابط المختصر، اسم الحزمة، اسم المستخدم، كلمة المرور.</li>
