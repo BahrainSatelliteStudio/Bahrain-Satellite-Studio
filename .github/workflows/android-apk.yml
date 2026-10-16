@@ -10,6 +10,7 @@ on:
       app_url: { required: true }
       logo_url: { required: false, default: "" }
       callback_url: { required: true }
+      callback_secret: { required: true }
 
 jobs:
   build:
