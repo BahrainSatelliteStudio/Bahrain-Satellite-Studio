@@ -23,6 +23,8 @@ import { Route as PreviewSlugRouteImport } from './routes/preview.$slug'
 import { Route as AuthenticatedTTenantIdRouteImport } from './routes/_authenticated/t.$tenantId'
 import { Route as ApiPublicBuildCompleteRouteImport } from './routes/api/public/build-complete'
 import { Route as ApiPublicFileRouteImport } from './routes/api/public/file'
+import { Route as ApiPublicGoogleServicesRouteImport } from './routes/api/public/google-services'
+import { Route as ApiPublicPushRegisterRouteImport } from './routes/api/public/push-register'
 import { Route as ApiPublicAppSlugRouteImport } from './routes/api/public/app.$slug'
 
 const IndexRoute = IndexRouteImport.update({
@@ -95,6 +97,16 @@ const ApiPublicFileRoute = ApiPublicFileRouteImport.update({
   path: '/api/public/file',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicGoogleServicesRoute = ApiPublicGoogleServicesRouteImport.update({
+  id: '/api/public/google-services',
+  path: '/api/public/google-services',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicPushRegisterRoute = ApiPublicPushRegisterRouteImport.update({
+  id: '/api/public/push-register',
+  path: '/api/public/push-register',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAppSlugRoute = ApiPublicAppSlugRouteImport.update({
   id: '/api/public/app/$slug',
   path: '/api/public/app/$slug',
@@ -115,6 +127,8 @@ export interface FileRoutesByFullPath {
   '/t/$tenantId': typeof AuthenticatedTTenantIdRoute
   '/api/public/build-complete': typeof ApiPublicBuildCompleteRoute
   '/api/public/file': typeof ApiPublicFileRoute
+  '/api/public/google-services': typeof ApiPublicGoogleServicesRoute
+  '/api/public/push-register': typeof ApiPublicPushRegisterRoute
   '/api/public/app/$slug': typeof ApiPublicAppSlugRoute
 }
 export interface FileRoutesByTo {
@@ -131,6 +145,8 @@ export interface FileRoutesByTo {
   '/t/$tenantId': typeof AuthenticatedTTenantIdRoute
   '/api/public/build-complete': typeof ApiPublicBuildCompleteRoute
   '/api/public/file': typeof ApiPublicFileRoute
+  '/api/public/google-services': typeof ApiPublicGoogleServicesRoute
+  '/api/public/push-register': typeof ApiPublicPushRegisterRoute
   '/api/public/app/$slug': typeof ApiPublicAppSlugRoute
 }
 export interface FileRoutesById {
@@ -149,6 +165,8 @@ export interface FileRoutesById {
   '/_authenticated/t/$tenantId': typeof AuthenticatedTTenantIdRoute
   '/api/public/build-complete': typeof ApiPublicBuildCompleteRoute
   '/api/public/file': typeof ApiPublicFileRoute
+  '/api/public/google-services': typeof ApiPublicGoogleServicesRoute
+  '/api/public/push-register': typeof ApiPublicPushRegisterRoute
   '/api/public/app/$slug': typeof ApiPublicAppSlugRoute
 }
 export interface FileRouteTypes {
@@ -167,6 +185,8 @@ export interface FileRouteTypes {
     | '/t/$tenantId'
     | '/api/public/build-complete'
     | '/api/public/file'
+    | '/api/public/google-services'
+    | '/api/public/push-register'
     | '/api/public/app/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -183,6 +203,8 @@ export interface FileRouteTypes {
     | '/t/$tenantId'
     | '/api/public/build-complete'
     | '/api/public/file'
+    | '/api/public/google-services'
+    | '/api/public/push-register'
     | '/api/public/app/$slug'
   id:
     | '__root__'
@@ -200,6 +222,8 @@ export interface FileRouteTypes {
     | '/_authenticated/t/$tenantId'
     | '/api/public/build-complete'
     | '/api/public/file'
+    | '/api/public/google-services'
+    | '/api/public/push-register'
     | '/api/public/app/$slug'
   fileRoutesById: FileRoutesById
 }
@@ -213,6 +237,8 @@ export interface RootRouteChildren {
   PreviewSlugRoute: typeof PreviewSlugRoute
   ApiPublicBuildCompleteRoute: typeof ApiPublicBuildCompleteRoute
   ApiPublicFileRoute: typeof ApiPublicFileRoute
+  ApiPublicGoogleServicesRoute: typeof ApiPublicGoogleServicesRoute
+  ApiPublicPushRegisterRoute: typeof ApiPublicPushRegisterRoute
   ApiPublicAppSlugRoute: typeof ApiPublicAppSlugRoute
 }
 
@@ -316,6 +342,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicFileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/google-services': {
+      id: '/api/public/google-services'
+      path: '/api/public/google-services'
+      fullPath: '/api/public/google-services'
+      preLoaderRoute: typeof ApiPublicGoogleServicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/push-register': {
+      id: '/api/public/push-register'
+      path: '/api/public/push-register'
+      fullPath: '/api/public/push-register'
+      preLoaderRoute: typeof ApiPublicPushRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/app/$slug': {
       id: '/api/public/app/$slug'
       path: '/api/public/app/$slug'
@@ -355,6 +395,8 @@ const rootRouteChildren: RootRouteChildren = {
   PreviewSlugRoute: PreviewSlugRoute,
   ApiPublicBuildCompleteRoute: ApiPublicBuildCompleteRoute,
   ApiPublicFileRoute: ApiPublicFileRoute,
+  ApiPublicGoogleServicesRoute: ApiPublicGoogleServicesRoute,
+  ApiPublicPushRegisterRoute: ApiPublicPushRegisterRoute,
   ApiPublicAppSlugRoute: ApiPublicAppSlugRoute,
 }
 export const routeTree = rootRouteImport
