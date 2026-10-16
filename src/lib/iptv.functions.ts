@@ -161,6 +161,7 @@ export const triggerBuild = createServerFn({ method: "POST" })
       await dispatchBuild(repo, {
         build_id: b.id, app_name: t.name, package_id: t.package_id, version: data.version,
         app_url: `${origin}/p/${t.slug}`, logo_url: logo, callback_url: `${origin}/api/public/build-complete`,
+        callback_secret: process.env["BUILD_CALLBACK_SECRET"] ?? "",
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "فشل تشغيل البناء";
