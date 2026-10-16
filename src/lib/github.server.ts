@@ -10,26 +10,24 @@ async function gh(method: "GET" | "POST", path: string, body?: unknown): Promise
   const lovableKey = process.env["LOVABLE_API_KEY"];
   const connKey = process.env["GITHUB_API_KEY"];
   const pat = process.env["GITHUB_TOKEN"];
+  const gateway = Boolean(lovableKey && connKey);
+  if (!gateway && !pat) throw new Error("لم يتم ربط GitHub بعد — اربط اتصال GitHub من إعدادات المشروع");
   const headers: Record<string, string> = {
     Accept: "application/vnd.github+json",
     "User-Agent": "iptv-studio",
+    Authorization: `Bearer ${gateway ? lovableKey : pat}`,
+    ...(gateway ? { "X-Connection-Api-Key": connKey } : {}),
   };
-  let url: string;
-  if (lovableKey && connKey) {
-    url = `${GATEWAY}${path}`;
-    headers.Authorization = `Bearer ${lovableKey}`;
-    headers["X-Connection-Api-Key"] = connKey;
-  } else if (pat) {
-    url = `https://api.github.com${path}`;
-    headers.Authorization = `Bearer ${pat}`;
-  } else {
-    throw new Error("لم يتم ربط GitHub بعد — اربط اتصال GitHub من إعدادات المشروع");
-  }
-  const res = await fetch(url, {
+  const res = await fetch(gateway ? `${GATEWAY}${path}` : `https://api.github.com${path}`, {
     method,
     headers,
     ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
   });
+  const text = await res.text();
+  let json: any = null;
+  try { json = JSON.parse(text); } catch { /* الرد ليس JSON */ }
+  return { status: res.status, ok: res.ok, json, text };
+}
   const text = await res.text();
   let json: any = null;
   try { json = JSON.parse(text); } catch { /* الرد ليس JSON */ }
