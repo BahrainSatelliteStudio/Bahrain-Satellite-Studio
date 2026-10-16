@@ -201,6 +201,12 @@ function NewTenant({ autoOpen, onDone }: { autoOpen: boolean; onDone: () => void
   const [phone, setPhone] = useState("");
   const [done, setDone] = useState<{ name: string; slug: string; username: string; password: string } | null>(null);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [logo, setLogo] = useState<File | null>(null);
+  const logoPreview = useMemo(() => (logo ? URL.createObjectURL(logo) : ""), [logo]);
+  const getStatus = useServerFn(githubStatus);
+  const gs = useQuery({ queryKey: ["github-status"], queryFn: () => getStatus({}), staleTime: 30_000, enabled: open });
+  const SIGN_KEYS = ["ANDROID_KEYSTORE_BASE64", "ANDROID_KEYSTORE_PASSWORD", "ANDROID_KEY_ALIAS", "ANDROID_KEY_PASSWORD"];
+  const signed = SIGN_KEYS.every((k) => gs.data?.secrets?.includes(k));
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
     setTouched((t) => ({ ...t, [k]: true }));
@@ -227,7 +233,16 @@ function NewTenant({ autoOpen, onDone }: { autoOpen: boolean; onDone: () => void
   };
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true);
-    try { await create({ data: { ...f, phone: `${cc} ${phone}` } }); setPhone(""); toast.success("تم إنشاء الزبون وحسابه"); setDone({ name: f.name, slug: f.slug, username: f.username, password: f.password }); setF({ name: "", slug: "", package_id: "", username: "", email: "", password: "" }); setTouched({}); onDone(); }
+    try {
+      if (logo && logo.size > 3 * 1024 * 1024) throw new Error("الحد الأقصى للشعار 3MB");
+      const r = await create({ data: { ...f, phone: `${cc} ${phone}` } });
+      if (logo) {
+        const path = `${r.id}/${Date.now()}-${logo.name.replace(/[^\w.\-]/g, "")}`;
+        const up = await supabase.storage.from("branding").upload(path, logo, { upsert: true, contentType: logo.type });
+        if (up.error) toast.error("أُنشئ الزبون لكن فشل رفع الشعار — ارفعه من صفحة الزبون");
+        else await supabase.from("tenants").update({ logo_url: `/api/public/file?b=branding&p=${encodeURIComponent(path)}` }).eq("id", r.id);
+      }
+      setLogo(null); setPhone(""); toast.success("تم إنشاء الزبون وحسابه"); setDone({ name: f.name, slug: f.slug, username: f.username, password: f.password }); setF({ name: "", slug: "", package_id: "", username: "", email: "", password: "" }); setTouched({}); onDone(); }
     catch (err) { toast.error(err instanceof Error ? err.message : "خطأ"); }
     setBusy(false);
   }
@@ -256,7 +271,7 @@ function NewTenant({ autoOpen, onDone }: { autoOpen: boolean; onDone: () => void
         <details className="rounded-lg border bg-muted/40 p-3 text-sm leading-7" open>
           <summary className="cursor-pointer font-bold">قائمة استقبال الزبون — اطلب منه:</summary>
           <ul className="list-disc pr-5 mt-1">
-            <li><b>ضروري:</b> اسم التطبيق، الشعار (PNG/JPG)، بريد الدخول.</li>
+            <li><b>ضروري:</b> اسم التطبيق، الشعار (PNG مربع — يصبح أيقونة التطبيق)، البريد ورقم الجوال.</li>
             <li><b>السيرفر:</b> Host + يوزر + باسورد، والنوع Xtream / M3U.</li>
             <li><b>التواصل:</b> رقم واتساب الدعم.</li>
             <li><b>نحدده تلقائيًا:</b> الرابط المختصر، اسم الحزمة، اسم المستخدم، كلمة المرور.</li>
@@ -268,6 +283,31 @@ function NewTenant({ autoOpen, onDone }: { autoOpen: boolean; onDone: () => void
           <p className="-mt-2 text-xs text-muted-foreground">الحقول التالية تُعبَّأ تلقائيًا من الاسم — تعدّل أيًّا منها لو تبي.</p>
           <div className="space-y-1"><Label>الرابط المختصر (إنجليزي صغير)</Label><Input dir="ltr" required pattern="[a-z0-9][a-z0-9\-]{1,30}" value={f.slug} onChange={set("slug")} placeholder="mytv" /></div>
           <div className="space-y-1"><Label>اسم الحزمة (لا يتغير لاحقًا)</Label><Input dir="ltr" required value={f.package_id} onChange={set("package_id")} /></div>
+          <div className="space-y-1"><Label>شعار التطبيق <span className="text-xs font-normal text-muted-foreground">(اختياري لكن مهم — يصبح أيقونة التطبيق على الجهاز)</span></Label>
+            <div className="flex items-center gap-3">
+              {logoPreview ? <img src={logoPreview} alt="الشعار" className="h-14 w-14 rounded-xl bg-secondary object-contain p-1" /> : <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-secondary text-xs text-muted-foreground">لا يوجد</div>}
+              <Input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => setLogo(e.target.files?.[0] ?? null)} />
+            </div>
+            <p className="text-xs text-muted-foreground">يفضّل PNG مربع 512×512 بخلفية شفافة، حتى 3MB.</p>
+          </div>
+          <div className={`rounded-lg border p-3 text-sm leading-7 ${signed ? "border-primary/40 bg-primary/5" : "bg-muted/40"}`}>
+            <p className="font-bold">توقيع التطبيق <span className="text-xs font-normal text-muted-foreground">(اختياري لكن موصى به)</span></p>
+            {gs.isLoading ? <p className="text-muted-foreground">جارٍ فحص مفتاح التوقيع…</p> : signed ? (
+              <p className="text-primary">✅ مفتاح التوقيع جاهز — سيُبنى التطبيق كنسخة Release موقّعة رسميًا وتعمل تحديثاته بلا مشاكل.</p>
+            ) : (
+              <details>
+                <summary className="cursor-pointer text-muted-foreground">⚠️ لا يوجد مفتاح توقيع — سيُبنى كنسخة تجريبية (Debug). اضغط لطريقة الإعداد</summary>
+                <ol className="list-decimal pr-5 text-xs leading-6">
+                  <li>أنشئ المفتاح مرة واحدة على حاسبك (احتفظ به للأبد — ضياعه يمنع تحديث التطبيقات):<pre dir="ltr" className="mt-1 overflow-x-auto rounded bg-background p-2">keytool -genkey -v -keystore release.jks -alias bhsat -keyalg RSA -keysize 2048 -validity 10000{"\n"}base64 -w0 release.jks &gt; release.b64</pre></li>
+                  <li>في GitHub: المستودع ← Settings ← Secrets and variables ← Actions ← New secret، وأضف:
+                    <ul dir="ltr" className="font-mono">{SIGN_KEYS.map((k) => <li key={k}>{gs.data?.secrets?.includes(k) ? "✅" : "⬜"} {k}</li>)}</ul>
+                  </li>
+                  <li>اضغط «إعادة الفحص» بعد الإضافة.</li>
+                </ol>
+                <Button type="button" size="sm" variant="ghost" onClick={() => gs.refetch()} disabled={gs.isFetching}>إعادة الفحص</Button>
+              </details>
+            )}
+          </div>
           <div className="rounded-lg border border-primary/40 bg-primary/5 p-3 space-y-3">
           <p className="text-sm font-bold">بيانات لوحة التحكم والتواصل مع الزبون <span className="text-xs font-normal text-muted-foreground">(إلزامية — لا تظهر في التطبيق)</span></p>
           <div className="space-y-1"><Label>اسم مستخدم الزبون (إنجليزي صغير)</Label><Input dir="ltr" required pattern="[a-z0-9._\-]{3,30}" value={f.username} onChange={set("username")} placeholder="mytv" /></div>
