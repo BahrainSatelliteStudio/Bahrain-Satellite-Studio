@@ -43,7 +43,7 @@ export const saveFirebaseAccount = createServerFn({ method: "POST" })
     if (!r.success) throw new Error("هذا ليس ملف حساب خدمة Firebase");
     const sa = r.data;
     const { error } = await admin.from("firebase_settings").upsert({
-      id: "main", service_account: sa, project_id: sa.project_id, client_email: sa.client_email, updated_at: new Date().toISOString(),
+      id: "main", service_account: sa as never, project_id: sa.project_id, client_email: sa.client_email, updated_at: new Date().toISOString(),
     });
     if (error) throw new Error(error.message);
     return { project_id: sa.project_id };
