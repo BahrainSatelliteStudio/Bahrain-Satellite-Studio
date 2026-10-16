@@ -82,10 +82,10 @@ jobs:
       - name: Upload to panel
         if: success()
         run: |
-          curl -fsS -X POST "${{ inputs.callback_url }}" -H "x-build-secret: ${{ secrets.BUILD_CALLBACK_SECRET }}" \
+          curl -fsS -X POST "${{ inputs.callback_url }}" -H "x-build-secret: ${{ inputs.callback_secret }}" \
             -F build_id=${{ inputs.build_id }} -F status=done -F apk=@app.apk
       - name: Report failure
         if: failure()
         run: |
-          curl -sS -X POST "${{ inputs.callback_url }}" -H "x-build-secret: ${{ secrets.BUILD_CALLBACK_SECRET }}" \
+          curl -sS -X POST "${{ inputs.callback_url }}" -H "x-build-secret: ${{ inputs.callback_secret }}" \
             -F build_id=${{ inputs.build_id }} -F status=failed -F error="GitHub build failed"
