@@ -190,7 +190,7 @@ function NewTenant({ onDone }: { onDone: () => void }) {
   const [busy, setBusy] = useState(false);
   const [cc, setCc] = useState("+973");
   const [phone, setPhone] = useState("");
-  const [done, setDone] = useState<{ name: string; slug: string; username: string; password: string } | null>(null);
+  const [done, setDone] = useState<{ name: string; slug: string; username: string; password: string; packageId: string } | null>(null);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [logo, setLogo] = useState<File | null>(null);
   const logoPreview = useMemo(() => (logo ? URL.createObjectURL(logo) : ""), [logo]);
