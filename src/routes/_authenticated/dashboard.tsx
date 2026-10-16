@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Plus, LogOut, Search, Users, CheckCircle2, Ban, Eye, BookOpen, Copy, Smartphone, Stethoscope, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { createTenant } from "@/lib/iptv.functions";
+import { createTenant, githubStatus } from "@/lib/iptv.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -84,9 +84,11 @@ function Dashboard() {
           <div className="grid gap-4 sm:grid-cols-3">
             <Stat icon={<Users className="h-5 w-5" />} label="إجمالي الزبائن" value={list.length} />
             <Stat icon={<CheckCircle2 className="h-5 w-5 text-primary" />} label="نشط" value={active} />
-            <Stat icon={<Ban className="h-5 w-5 text-destructive" />} label="معطّل" value={disabled} />
+          <Stat icon={<Ban className="h-5 w-5 text-destructive" />} label="معطّل" value={disabled} />
           </div>
         )}
+
+        {me.data?.isAdmin && <GithubStrip />}
 
         <div className="relative max-w-sm">
           <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
