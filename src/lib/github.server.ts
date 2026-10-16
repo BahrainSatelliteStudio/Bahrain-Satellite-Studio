@@ -28,11 +28,6 @@ async function gh(method: "GET" | "POST", path: string, body?: unknown): Promise
   try { json = JSON.parse(text); } catch { /* الرد ليس JSON */ }
   return { status: res.status, ok: res.ok, json, text };
 }
-  const text = await res.text();
-  let json: any = null;
-  try { json = JSON.parse(text); } catch { /* الرد ليس JSON */ }
-  return { status: res.status, ok: res.ok, json, text };
-}
 
 export type RepoInfo = { name: string; hasCode: boolean; workflow: boolean; private: boolean };
 
