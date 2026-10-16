@@ -135,35 +135,37 @@ export const createTenant = createServerFn({ method: "POST" })
     return { id: t.id };
   });
 
+export const githubStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { readStatus } = await import("./github.server");
+    return readStatus();
+  });
+
 export const triggerBuild = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ tenantId: z.string().uuid(), version: z.string().regex(/^\d+\.\d+\.\d+$/), siteUrl: z.string().url() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
-    const token = process.env["GITHUB_TOKEN"];
-    const repo = process.env["GITHUB_REPO"];
-    if (!token || !repo) throw new Error("لم يتم ربط GitHub بعد — أضف مفتاح GitHub واسم المستودع");
+    const repo = (process.env["GITHUB_REPO"] ?? "").trim();
+    if (!repo) throw new Error("لم يتم ربط GitHub بعد — اربط اتصال GitHub من إعدادات المشروع");
     const { data: t } = await context.supabase.from("tenants").select("*").eq("id", data.tenantId).single();
     if (!t) throw new Error("الزبون غير موجود");
     const { data: b, error } = await context.supabase.from("builds").insert({ tenant_id: t.id, version: data.version, status: "building" }).select("id").single();
     if (error) throw new Error(error.message);
     const origin = new URL(data.siteUrl).origin;
     const logo = t.logo_url ? (t.logo_url.startsWith("http") ? t.logo_url : origin + t.logo_url) : "";
-    const res = await fetch(`https://api.github.com/repos/${repo}/actions/workflows/android-apk.yml/dispatches`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json", "User-Agent": "iptv-studio" },
-      body: JSON.stringify({
-        ref: "main",
-        inputs: {
-          build_id: b.id, app_name: t.name, package_id: t.package_id, version: data.version,
-          app_url: `${origin}/p/${t.slug}`, logo_url: logo, callback_url: `${origin}/api/public/build-complete`,
-        },
-      }),
-    });
-    if (!res.ok) {
-      const msg = await res.text();
+    try {
+      const { dispatchBuild } = await import("./github.server");
+      await dispatchBuild(repo, {
+        build_id: b.id, app_name: t.name, package_id: t.package_id, version: data.version,
+        app_url: `${origin}/p/${t.slug}`, logo_url: logo, callback_url: `${origin}/api/public/build-complete`,
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "فشل تشغيل البناء";
       await context.supabase.from("builds").update({ status: "failed", error: msg.slice(0, 500) }).eq("id", b.id);
-      throw new Error("فشل تشغيل البناء على GitHub: " + res.status);
+      throw new Error(msg);
     }
     await context.supabase.from("tenants").update({ latest_version: data.version }).eq("id", t.id);
     return { buildId: b.id };
