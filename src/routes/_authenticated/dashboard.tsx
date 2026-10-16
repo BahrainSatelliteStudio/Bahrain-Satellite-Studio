@@ -4,9 +4,9 @@ import { useMe, signOut } from "@/lib/me";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Plus, LogOut, Search, Users, CheckCircle2, Ban, Eye, BookOpen, Copy, Smartphone, Stethoscope, RefreshCw } from "lucide-react";
+import { Plus, LogOut, Search, Users, CheckCircle2, Ban, Eye, BookOpen, Copy, Smartphone, Stethoscope, RefreshCw, Github, CircleCheck, CircleAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { createTenant } from "@/lib/iptv.functions";
+import { createTenant, githubStatus } from "@/lib/iptv.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -84,9 +84,11 @@ function Dashboard() {
           <div className="grid gap-4 sm:grid-cols-3">
             <Stat icon={<Users className="h-5 w-5" />} label="إجمالي الزبائن" value={list.length} />
             <Stat icon={<CheckCircle2 className="h-5 w-5 text-primary" />} label="نشط" value={active} />
-            <Stat icon={<Ban className="h-5 w-5 text-destructive" />} label="معطّل" value={disabled} />
+          <Stat icon={<Ban className="h-5 w-5 text-destructive" />} label="معطّل" value={disabled} />
           </div>
         )}
+
+        {me.data?.isAdmin && <GithubStrip />}
 
         <div className="relative max-w-sm">
           <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -302,3 +304,35 @@ const COUNTRIES: [string, string][] = [
   ["🇬🇧 بريطانيا", "+44"], ["🇩🇪 ألمانيا", "+49"], ["🇫🇷 فرنسا", "+33"], ["🇳🇱 هولندا", "+31"],
   ["🇸🇪 السويد", "+46"], ["🇺🇸 أمريكا/كندا", "+1"], ["🇦🇺 أستراليا", "+61"], ["🇮🇳 الهند", "+91"], ["🇵🇰 باكستان", "+92"],
 ];
+
+// حالة اتصال GitHub المستخدمة في بناء APK
+function GithubStrip() {
+  const getStatus = useServerFn(githubStatus);
+  const q = useQuery({ queryKey: ["github-status"], queryFn: () => getStatus({}), staleTime: 30_000 });
+  const s = q.data;
+  const ready = Boolean(s?.connected && s.repoFound && s.workflowFound);
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-2xl border bg-card px-5 py-3 text-sm">
+      <Github className="h-4 w-4 shrink-0" />
+      <b>اتصال GitHub:</b>
+      {!s ? (
+        <span className="text-muted-foreground">جارٍ الفحص…</span>
+      ) : s.error ? (
+        <span className="flex items-center gap-1 text-destructive"><CircleAlert className="h-4 w-4" />{s.error}</span>
+      ) : ready ? (
+        <span className="flex items-center gap-1 text-primary"><CircleCheck className="h-4 w-4" />جاهز للبناء — {s.account}</span>
+      ) : (
+        <span className="flex items-center gap-1 text-destructive"><CircleAlert className="h-4 w-4" />غير مكتمل</span>
+      )}
+      {s?.repo && <span className="text-muted-foreground" dir="ltr">{s.repo}</span>}
+      <Button size="sm" variant="ghost" onClick={() => q.refetch()} disabled={q.isFetching}><RefreshCw className="h-3.5 w-3.5" />فحص</Button>
+      {s && !s.repoFound && (
+        <p className="w-full text-xs leading-6 text-muted-foreground">
+          {s.repos.length
+            ? <>المستودعات التي يراها هذا الحساب: <span dir="ltr">{s.repos.map((r) => r.name).join("، ")}</span></>
+            : "لا يوجد مستودع متاح لهذا الحساب بعد."}
+        </p>
+      )}
+    </div>
+  );
+}
