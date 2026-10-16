@@ -1,0 +1,1 @@
+ALTER TABLE public.firebase_settings ADD COLUMN IF NOT EXISTS google_services jsonb;

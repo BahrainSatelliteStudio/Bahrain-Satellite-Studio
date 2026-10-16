@@ -142,6 +142,7 @@ export type Database = {
         Row: {
           client_email: string
           enabled: boolean
+          google_services: Json | null
           id: string
           project_id: string
           service_account: Json
@@ -150,6 +151,7 @@ export type Database = {
         Insert: {
           client_email: string
           enabled?: boolean
+          google_services?: Json | null
           id?: string
           project_id: string
           service_account: Json
@@ -158,6 +160,7 @@ export type Database = {
         Update: {
           client_email?: string
           enabled?: boolean
+          google_services?: Json | null
           id?: string
           project_id?: string
           service_account?: Json

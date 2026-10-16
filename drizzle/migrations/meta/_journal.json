@@ -92,6 +92,13 @@
       "when": 1792148371865,
       "tag": "0012_firebase_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792151987593,
+      "tag": "0013_firebase_google_services",
+      "breakpoints": true
     }
   ]
 }
