@@ -605,6 +605,32 @@ function Notify(c: Ctx) {
   );
 }
 
+/* ---------------- Firebase (admin only) ---------------- */
+function FirebasePanel() {
+  const status = useServerFn(getFirebaseStatus);
+  const q = useQuery({ queryKey: ["firebase-status-tenant"], queryFn: () => status() });
+  const s = q.data?.settings;
+  const state = q.isLoading
+    ? "جارٍ التحقق من حالة Firebase…"
+    : !s
+      ? "غير مربوطة — ارفع ملف حساب الخدمة من إعدادات Firebase"
+      : s.enabled
+        ? "مفعّلة — إشعاراتك توصل لجوالات المشتركين حتى لو التطبيق مقفل"
+        : "مربوطة لكن موقوفة — شغّلها من صفحة إعدادات Firebase";
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-4">
+      <div className="flex items-center gap-3">
+        <Bell className="h-5 w-5 shrink-0 text-primary" />
+        <div>
+          <p className="font-extrabold">الإشعارات (Firebase)</p>
+          <p className="text-xs text-muted-foreground">{state}</p>
+        </div>
+      </div>
+      <Button asChild size="sm"><Link to="/firebase">فتح إعدادات Firebase</Link></Button>
+    </div>
+  );
+}
+
 /* ---------------- Builds ---------------- */
 function bump(v: string) { const p = v.split(".").map(Number); return `${p[0] ?? 1}.${p[1] ?? 0}.${(p[2] ?? 0) + 1}`; }
 function Builds(c: Ctx) {
