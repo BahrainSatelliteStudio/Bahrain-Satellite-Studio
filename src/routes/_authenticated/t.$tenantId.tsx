@@ -11,7 +11,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { triggerBuild, checkHost } from "@/lib/iptv.functions";
-import { sendPush } from "@/lib/firebase.functions";
+import { sendPush, getFirebaseStatus } from "@/lib/firebase.functions";
 import { useMe, signOut } from "@/lib/me";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -548,6 +548,7 @@ function Notify(c: Ctx) {
   const kinds: Record<string, string> = { info: "معلومة", maintenance: "صيانة", offer: "عرض", urgent: "عاجل" };
   return (
     <div className="space-y-6">
+      {c.isAdmin && <FirebasePanel />}
       <form className={card} onSubmit={async (e) => {
         e.preventDefault(); setBusy(true);
         try {
@@ -600,6 +601,32 @@ function Notify(c: Ctx) {
         </table>
         {q.data?.length === 0 && <p className="p-8 text-center text-muted-foreground">لا توجد إشعارات بعد.</p>}
       </div>
+    </div>
+  );
+}
+
+/* ---------------- Firebase (admin only) ---------------- */
+function FirebasePanel() {
+  const status = useServerFn(getFirebaseStatus);
+  const q = useQuery({ queryKey: ["firebase-status-tenant"], queryFn: () => status() });
+  const s = q.data?.settings;
+  const state = q.isLoading
+    ? "جارٍ التحقق من حالة Firebase…"
+    : !s
+      ? "غير مربوطة — ارفع ملف حساب الخدمة من إعدادات Firebase"
+      : s.enabled
+        ? "مفعّلة — إشعاراتك توصل لجوالات المشتركين حتى لو التطبيق مقفل"
+        : "مربوطة لكن موقوفة — شغّلها من صفحة إعدادات Firebase";
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-4">
+      <div className="flex items-center gap-3">
+        <Bell className="h-5 w-5 shrink-0 text-primary" />
+        <div>
+          <p className="font-extrabold">الإشعارات (Firebase)</p>
+          <p className="text-xs text-muted-foreground">{state}</p>
+        </div>
+      </div>
+      <Button asChild size="sm"><Link to="/firebase">فتح إعدادات Firebase</Link></Button>
     </div>
   );
 }
