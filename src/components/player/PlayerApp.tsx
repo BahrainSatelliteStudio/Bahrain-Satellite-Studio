@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Tv, Film, Clapperboard, Heart, LogOut, Search, MessageCircle, Send, Phone, ChevronRight, Loader2, Settings, Play, History, Smartphone, House } from "lucide-react";
-import { xtreamApi, m3uFetch, macCall } from "@/lib/iptv.functions";
+import { xtreamApi, m3uFetch, macCall, activateCode } from "@/lib/iptv.functions";
 import { prefs, t as str, type AppSettings, type Lang } from "@/lib/player/prefs";
 import { VideoPlayer } from "./VideoPlayer";
 import { resolveLayout, previewChannel, ICONS, type AppLayout, type SectionCfg } from "@/lib/layout";
@@ -428,7 +428,11 @@ function Login({ cfg, onDone }: { cfg: TenantConfig; onDone: (s: Session) => voi
             {types.map((t) => <button data-nav type="button" key={t} onClick={() => setType(t)} className={`rounded-lg py-2 text-sm font-bold ${t === type ? "bg-primary text-primary-foreground" : ""}`}>{labels[t]}</button>)}
           </div>
         )}
-        {list.length > 1 && <select className={field} value={sourceId} onChange={(e) => setSourceId(e.target.value)}>{list.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select>}
+        {type === "code" && <>
+          <input className={field} dir="ltr" placeholder="رمز التفعيل" required maxLength={128} value={actCode} onChange={(e) => setActCode(e.target.value)} />
+          <input className={field} dir="ltr" inputMode="numeric" placeholder="كود السيرفر (اختياري إذا عندك سيرفر واحد)" value={srvCode} onChange={(e) => setSrvCode(e.target.value.replace(/\D/g, "").slice(0, 6))} />
+        </>}
+        {type !== "code" && list.length > 1 && <select className={field} value={sourceId} onChange={(e) => setSourceId(e.target.value)}>{list.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select>}
         {type === "xtream" && <>
           <input className={field} dir="ltr" placeholder="اسم المستخدم" required value={u} onChange={(e) => setU(e.target.value)} />
           <input className={field} dir="ltr" type="password" placeholder="كلمة المرور" required value={p} onChange={(e) => setP(e.target.value)} />
