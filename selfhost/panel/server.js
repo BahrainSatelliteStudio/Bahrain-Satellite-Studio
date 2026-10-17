@@ -188,6 +188,24 @@ async function activateRoute(req, res, cors) {
   finally { actLocks.delete(lock); actRunning--; }
 }
 
+
+/* ---------- signed config (compatible with panel.bhsat.me: /config/servers.json + /config/app-release.json) ---------- */
+const PRIV = path.join(DATA, "private.pem"), PUB = path.join(DATA, "public.pem");
+if (!fs.existsSync(PRIV)) {
+  const { privateKey, publicKey } = crypto.generateKeyPairSync("rsa", { modulusLength: 3072 });
+  fs.writeFileSync(PRIV, privateKey.export({ type: "pkcs8", format: "pem" }), { mode: 0o600 });
+  fs.writeFileSync(PUB, publicKey.export({ type: "spki", format: "pem" }));
+}
+function signed(obj) {
+  const payload = Buffer.from(JSON.stringify(obj), "utf8");
+  return { payload: payload.toString("base64"), signature: crypto.sign("sha256", payload, fs.readFileSync(PRIV, "utf8")).toString("base64") };
+}
+function serversJson() {
+  const s = db.settings;
+  return signed({ revision: db.changes.length, settings: { logoUrl: s.logo, storeUrl: s.store_url || "", supportNumbers: [s.whatsapp, s.phone].filter(Boolean) },
+    servers: db.servers.filter((x) => x.enabled).map((x) => ({ id: x.id, loginCode: x.login_code, name: x.name, type: x.type, url: x.url, backupUrls: x.backup_urls, enabled: true, activationEnabled: !!x.activation_api_url })) });
+}
+
 /* ---------- router ---------- */
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://x");
@@ -207,6 +225,10 @@ const server = http.createServer(async (req, res) => {
       if (p === "/api/public/activate" && req.method === "POST") return activateRoute(req, res, cors);
       return send(res, 404, { error: "not found" }, cors);
     }
+    if (p === "/config/servers.json") return send(res, 200, serversJson(), cors);
+    if (p === "/config/app-release.json") { const s = db.settings; return send(res, 200, signed({ latestVersion: s.latest_version, minVersion: s.min_version, updateUrl: s.update_url || "" }), cors); }
+    if (p === "/config/public.pem") return send(res, 200, fs.readFileSync(PUB, "utf8"), cors);
+    if (p === "/api/activate" && req.method === "POST") return activateRoute(req, res, cors);
     if (p === "/health") return send(res, 200, { ok: true, version: VERSION });
     if (p.startsWith("/uploads/")) { const f = path.join(UPLOADS, path.basename(p)); return serveFile(res, f, true); }
 
