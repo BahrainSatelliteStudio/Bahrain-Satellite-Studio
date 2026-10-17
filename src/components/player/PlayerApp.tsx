@@ -705,7 +705,16 @@ function Browser({ cfg, session, settings, layout, onSettings }: { cfg: TenantCo
       {!homeSections.length && <p className="py-12 text-center text-muted-foreground">لا توجد أقسام معروضة في الرئيسية</p>}
     </div>
   );
-  const continuation = <section className="min-w-0 flex-1 space-y-3"><h2 className="text-xl font-extrabold">{contSec?.label}</h2>{historyList.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{historyList.map(([id, item]) => card({ id, name: item.title, ...(item.logo ? { logo: item.logo } : {}), url: item.url, kind: "movie" }))}</div> : <p className="py-12 text-center text-muted-foreground">لا توجد مشاهدة سابقة</p>}</section>;
+  const continuation = <section className="min-w-0 flex-1 space-y-3"><h2 className="text-xl font-extrabold">{contSec?.label}</h2>{historyList.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{historyList.map(([id, p]) => (
+    <button data-nav key={id} onClick={() => setPlaying({ src: p.url, title: p.title, itemId: id, logo: p.logo })}
+      className="overflow-hidden rounded-2xl border bg-card text-start transition hover:border-primary focus:border-primary focus:outline-none">
+      <div className="flex aspect-video items-center justify-center bg-secondary">
+        {p.logo ? <img src={p.logo} alt="" loading="lazy" className="h-full w-full object-cover" onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} /> : <Play className="h-8 w-8 text-muted-foreground" />}
+      </div>
+      <p className="line-clamp-2 p-2 text-sm font-bold">{p.title}</p>
+      <div className="h-1 bg-secondary"><div className="h-full bg-primary" style={{ width: `${Math.min(100, (p.t / p.d) * 100)}%` }} /></div>
+    </button>
+  ))}</div> : <p className="py-12 text-center text-muted-foreground">لا توجد مشاهدة سابقة</p>}</section>;
   const appList = layout.apps.filter((a) => a.name && a.url).slice(0, appsSec?.limit || 50);
   const openApp = (url: string) => { if (session.type === "demo") { toast.info(`سيفتح: ${url}`); return; } window.open(url, "_blank", "noopener"); };
   const appsView = appsSec && <section className="min-w-0 flex-1 space-y-3"><h2 className="text-xl font-extrabold">{appsSec.label}</h2>
