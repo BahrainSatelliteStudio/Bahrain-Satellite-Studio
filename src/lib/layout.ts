@@ -1,5 +1,5 @@
 // تخطيط التطبيق: قالب الشكل + إعدادات كل قسم (مخزّن في tenants.layout)
-import { Tv, Film, Clapperboard, Heart, History, Star, Radio, Trophy, Baby, Music, Flame, Globe, type LucideIcon } from "lucide-react";
+import { Tv, Film, Clapperboard, Heart, History, Star, Radio, Trophy, Baby, Music, Flame, Globe, LayoutGrid, type LucideIcon } from "lucide-react";
 
 export const TEMPLATES = [
   ["classic", "قالب 1 — كلاسيكي", "تبويبات علوية وشبكة بطاقات"],
@@ -11,18 +11,19 @@ export const TEMPLATES = [
 ] as const;
 export type TemplateKey = (typeof TEMPLATES)[number][0];
 
-export const SECTION_KEYS = ["continue", "live", "movie", "series", "fav"] as const;
+export const SECTION_KEYS = ["continue", "live", "movie", "series", "fav", "apps"] as const;
 export type SectionKey = (typeof SECTION_KEYS)[number];
-export const SECTION_DEFAULT_LABEL: Record<SectionKey, string> = { continue: "أكمل المشاهدة", live: "البث المباشر", movie: "الأفلام", series: "المسلسلات", fav: "المفضلة" };
+export const SECTION_DEFAULT_LABEL: Record<SectionKey, string> = { continue: "أكمل المشاهدة", live: "البث المباشر", movie: "الأفلام", series: "المسلسلات", fav: "المفضلة", apps: "التطبيقات" };
 
-export const ICONS: Record<string, LucideIcon> = { tv: Tv, film: Film, clapper: Clapperboard, heart: Heart, history: History, star: Star, radio: Radio, trophy: Trophy, baby: Baby, music: Music, flame: Flame, globe: Globe };
-const DEFAULT_ICON: Record<SectionKey, string> = { continue: "history", live: "tv", movie: "film", series: "clapper", fav: "heart" };
+export const ICONS: Record<string, LucideIcon> = { tv: Tv, film: Film, clapper: Clapperboard, heart: Heart, history: History, star: Star, radio: Radio, trophy: Trophy, baby: Baby, music: Music, flame: Flame, globe: Globe, apps: LayoutGrid };
+const DEFAULT_ICON: Record<SectionKey, string> = { continue: "history", live: "tv", movie: "film", series: "clapper", fav: "heart", apps: "apps" };
 
 export type SectionCfg = {
   key: SectionKey; visible: boolean; label: string; icon: string;
   view: "grid" | "row"; size: "sm" | "md" | "lg"; limit: number; hiddenCats: string[];
 };
-export type AppLayout = { template: TemplateKey; sections: SectionCfg[] };
+export type AppLink = { name: string; logo: string; url: string };
+export type AppLayout = { template: TemplateKey; sections: SectionCfg[]; apps: AppLink[] };
 
 export function resolveLayout(raw: unknown): AppLayout {
   const r = (raw ?? {}) as Partial<AppLayout>;
@@ -38,7 +39,8 @@ export function resolveLayout(raw: unknown): AppLayout {
       limit: Math.max(0, Math.min(2000, Number(s.limit) || 0)), hiddenCats: Array.isArray(s.hiddenCats) ? s.hiddenCats.map(String) : [],
     } satisfies SectionCfg;
   });
-  return { template, sections };
+  const apps = (Array.isArray(r.apps) ? r.apps : []).slice(0, 50).map((a) => ({ name: String(a?.name ?? "").slice(0, 60), logo: String(a?.logo ?? "").slice(0, 500), url: String(a?.url ?? "").slice(0, 500) }));
+  return { template, sections, apps };
 }
 
 export const previewChannel = (slug: string) => `layout-preview:${slug}`;

@@ -453,9 +453,11 @@ function Browser({ cfg, session, settings, layout, onSettings }: { cfg: TenantCo
   const xt = useServerFn(xtreamApi); const m3 = useServerFn(m3uFetch); const mc = useServerFn(macCall);
   const L = str(settings.lang);
   const full = session.type === "xtream" || session.type === "demo";
-  const tabs = layout.sections.filter((s) => s.visible && s.key !== "continue" && (full || s.key === "live" || s.key === "fav")) as (SectionCfg & { key: Kind | "fav" })[];
+  const tabs = layout.sections.filter((s) => s.visible && s.key !== "continue" && s.key !== "apps" && (full || s.key === "live" || s.key === "fav")) as (SectionCfg & { key: Kind | "fav" })[];
   const contSec = layout.sections.find((s) => s.key === "continue") ?? resolveLayout(null).sections[0];
-  const [screen, setScreen] = useState<"home" | "browse" | "continue">("home");
+  const appsSec = layout.sections.find((s) => s.key === "apps");
+  const showApps = !!appsSec?.visible && layout.apps.some((a) => a.name && a.url);
+  const [screen, setScreen] = useState<"home" | "browse" | "continue" | "apps">("home");
   const [tab, setTab] = useState<Kind | "fav">(tabs[0]?.key ?? "live");
   useEffect(() => { const first = tabs[0]; if (first && !tabs.some((t) => t.key === tab)) setTab(first.key); }, [tabs, tab]);
   const sec = tabs.find((t) => t.key === tab) ?? resolveLayout(null).sections.find((s) => s.key === tab) ?? { key: "live", visible: false, label: "", icon: "tv", view: "grid", size: "md", limit: 0, hiddenCats: [] } satisfies SectionCfg;
@@ -583,6 +585,7 @@ function Browser({ cfg, session, settings, layout, onSettings }: { cfg: TenantCo
           : <Button variant="ghost" data-nav key={tb.key} onClick={() => { setTab(tb.key); setScreen("browse"); }} className={`h-auto shrink-0 justify-start gap-3 rounded-lg border px-4 py-4 font-bold ${on ? "border-primary bg-primary/10 text-primary" : "border-border bg-card"}`}><Icon />{tb.label}</Button>;
       })}
       {contSec?.visible && <Button data-nav variant="ghost" onClick={() => setScreen("continue")} className={`h-auto shrink-0 justify-start gap-3 rounded-lg border px-4 py-4 ${screen === "continue" ? "border-primary text-primary" : "border-border"}`}><History />{contSec.label}</Button>}
+      {showApps && appsSec && (() => { const AIcon = ICONS[appsSec.icon] ?? Tv; return <Button data-nav variant="ghost" onClick={() => setScreen("apps")} className={`h-auto shrink-0 justify-start gap-3 rounded-lg border px-4 py-4 ${screen === "apps" ? "border-primary text-primary" : "border-border"}`}><AIcon />{appsSec.label}</Button>; })()}
       {tpl === "sidebar" && <Button data-nav variant="ghost" onClick={onSettings} className="h-auto shrink-0 justify-start gap-3 rounded-lg border px-4 py-4"><Settings />{L.settings}</Button>}
     </nav>
   );
@@ -682,7 +685,15 @@ function Browser({ cfg, session, settings, layout, onSettings }: { cfg: TenantCo
     </div>
   );
   const continuation = <section className="min-w-0 flex-1 space-y-3"><h2 className="text-xl font-extrabold">{contSec?.label}</h2>{historyList.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{historyList.map(([id, item]) => card({ id, name: item.title, ...(item.logo ? { logo: item.logo } : {}), url: item.url, kind: "movie" }))}</div> : <p className="py-12 text-center text-muted-foreground">لا توجد مشاهدة سابقة</p>}</section>;
-  const content = screen === "home" ? home : screen === "continue" ? continuation : tabs.length ? body : <p className="py-12 text-center text-muted-foreground">كل الأقسام مخفية</p>;
+  const appList = layout.apps.filter((a) => a.name && a.url).slice(0, appsSec?.limit || 50);
+  const openApp = (url: string) => { if (session.type === "demo") { toast.info(`سيفتح: ${url}`); return; } window.open(url, "_blank", "noopener"); };
+  const appsView = appsSec && <section className="min-w-0 flex-1 space-y-3"><h2 className="text-xl font-extrabold">{appsSec.label}</h2>
+    <div className={appsSec.view === "row" ? "flex gap-3 overflow-x-auto pb-2" : `grid gap-3 ${SIZE[appsSec.size].grid}`}>
+      {appList.map((a, i) => <button data-nav key={i} onClick={() => openApp(a.url)} className={`${appsSec.view === "row" ? `${SIZE[appsSec.size].row} shrink-0` : ""} overflow-hidden rounded-2xl border bg-card text-center transition hover:border-primary focus:border-primary focus:outline-none`}>
+        <div className="flex aspect-square items-center justify-center bg-secondary p-4">{a.logo ? <img src={a.logo} alt={a.name} loading="lazy" className="h-full w-full object-contain" /> : <span className="text-3xl font-extrabold text-primary">{a.name[0]}</span>}</div>
+        <p className="line-clamp-1 p-2 text-sm font-bold">{a.name}</p></button>)}
+    </div></section>;
+  const content = screen === "home" ? home : screen === "apps" ? appsView : screen === "continue" ? continuation : tabs.length ? body : <p className="py-12 text-center text-muted-foreground">كل الأقسام مخفية</p>;
 
   return (
     <div className={`space-y-4 ${tpl === "cinema" ? "pb-24" : ""}`}>
