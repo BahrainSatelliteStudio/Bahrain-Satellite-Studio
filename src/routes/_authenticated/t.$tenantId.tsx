@@ -501,7 +501,21 @@ function LayoutEditor(c: Ctx) {
                   <select className={sel} value={s.size} onChange={(e) => upd(i, { size: e.target.value as SectionCfg["size"] })}><option value="sm">صغير</option><option value="md">متوسط</option><option value="lg">كبير</option></select></div>
                 <div className="space-y-1"><Label>عدد العناصر (0 = الكل)</Label><Input type="number" min={0} value={s.limit} onChange={(e) => upd(i, { limit: Number(e.target.value) })} /></div>
               </div>
-              {s.key !== "continue" && s.key !== "fav" && (
+              {s.key === "apps" && (
+                <div className="space-y-2">
+                  <Label>التطبيقات التي تظهر في هذا القسم (الاسم، رابط الشعار، رابط الفتح)</Label>
+                  {lay.apps.map((a, k) => (
+                    <div key={k} className="grid gap-2 sm:grid-cols-[1fr_1fr_1fr_auto]">
+                      <Input placeholder="الاسم مثل: يوتيوب" value={a.name} onChange={(e) => setLay({ ...lay, apps: lay.apps.map((x, j) => j === k ? { ...x, name: e.target.value } : x) })} />
+                      <Input dir="ltr" placeholder="https://.../logo.png" value={a.logo} onChange={(e) => setLay({ ...lay, apps: lay.apps.map((x, j) => j === k ? { ...x, logo: e.target.value } : x) })} />
+                      <Input dir="ltr" placeholder="https://youtube.com" value={a.url} onChange={(e) => setLay({ ...lay, apps: lay.apps.map((x, j) => j === k ? { ...x, url: e.target.value } : x) })} />
+                      <Button variant="ghost" onClick={() => setLay({ ...lay, apps: lay.apps.filter((_, j) => j !== k) })}>حذف</Button>
+                    </div>
+                  ))}
+                  <Button variant="secondary" size="sm" onClick={() => setLay({ ...lay, apps: [...lay.apps, { name: "", logo: "", url: "" }] })}>+ إضافة تطبيق</Button>
+                </div>
+              )}
+              {s.key !== "continue" && s.key !== "fav" && s.key !== "apps" && (
                 <div className="space-y-1"><Label>فئات مخفية (اكتب أسماءها مفصولة بفاصلة)</Label>
                   <Input value={s.hiddenCats.join("، ")} placeholder="مثال: أطفال، رعب" onChange={(e) => upd(i, { hiddenCats: e.target.value.split(/[,،]/).map((x) => x.trim()) })} /></div>
               )}
