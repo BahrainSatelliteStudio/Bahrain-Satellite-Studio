@@ -564,6 +564,7 @@ export type Database = {
         Returns: boolean
       }
       is_tenant_member: { Args: { _tenant_id: string }; Returns: boolean }
+      tenant_activation_count: { Args: { _slug: string }; Returns: number }
     }
     Enums: {
       app_role: "admin" | "user"
