@@ -32,8 +32,8 @@ export async function loadTenantConfig(slug: string) {
   ]);
   const { id: _id, enabled: _e, panel_url, ...rest } = t;
   // هل للزبون سيرفر يدعم تفعيل الأكواد؟ (بدون كشف الرابط)
-  const { count: actCount } = await sb.rpc("tenant_activation_count" as never, { _slug: slug } as never).then((r: any) => ({ count: Number(r.data) || 0 }), () => ({ count: 0 }));
-  const cloud = { ...rest, sources: sources ?? [], activation_enabled: actCount > 0, announcements: ann ?? [], latest_build: build ?? null };
+  const { data: actCount } = await sb.rpc("tenant_activation_count", { _slug: slug });
+  const cloud = { ...rest, sources: sources ?? [], activation_enabled: Number(actCount) > 0, announcements: ann ?? [], latest_build: build ?? null };
   // إذا كان للزبون لوحة مستقلة على سيرفره، تكون هي مصدر الإعدادات (مع الرجوع للوحة السحابية عند تعذر الوصول)
   if (panel_url) {
     try {
