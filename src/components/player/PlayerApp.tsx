@@ -373,7 +373,7 @@ const field = "w-full rounded-xl border bg-input/40 px-4 py-3 outline-none focus
 function deviceMac() {
   let m = localStorage.getItem("device-mac");
   if (!m) {
-    const b = crypto.getRandomValues(new Uint8Array(6)); b[0] = (b[0] & 0xfc) | 0x02;
+    const b = crypto.getRandomValues(new Uint8Array(6)); b[0] = (b[0]! & 0xfc) | 0x02;
     m = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join(":").toUpperCase();
     localStorage.setItem("device-mac", m);
   }
