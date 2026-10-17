@@ -11,7 +11,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { triggerBuild, checkHost } from "@/lib/iptv.functions";
-import { sendPush } from "@/lib/firebase.functions";
+import { sendPush, getFirebaseStatus } from "@/lib/firebase.functions";
 import { useMe, signOut } from "@/lib/me";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -548,6 +548,7 @@ function Notify(c: Ctx) {
   const kinds: Record<string, string> = { info: "معلومة", maintenance: "صيانة", offer: "عرض", urgent: "عاجل" };
   return (
     <div className="space-y-6">
+      {c.isAdmin && <FirebasePanel />}
       <form className={card} onSubmit={async (e) => {
         e.preventDefault(); setBusy(true);
         try {
