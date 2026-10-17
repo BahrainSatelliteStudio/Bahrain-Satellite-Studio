@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Tv, Film, Clapperboard, Heart, LogOut, Search, MessageCircle, Send, Phone, ChevronRight, Loader2, Settings, Play, History, Smartphone, House } from "lucide-react";
-import { xtreamApi, m3uFetch, macCall } from "@/lib/iptv.functions";
+import { xtreamApi, m3uFetch, macCall, activateCode } from "@/lib/iptv.functions";
 import { prefs, t as str, type AppSettings, type Lang } from "@/lib/player/prefs";
 import { VideoPlayer } from "./VideoPlayer";
 import { resolveLayout, previewChannel, ICONS, type AppLayout, type SectionCfg } from "@/lib/layout";
@@ -370,23 +370,40 @@ function SettingsDialog({ cfg, settings, onSave, onClose }: { cfg: TenantConfig;
 
 const field = "w-full rounded-xl border bg-input/40 px-4 py-3 outline-none focus:ring-2 focus:ring-ring";
 
+function deviceMac() {
+  let m = localStorage.getItem("device-mac");
+  if (!m) {
+    const b = crypto.getRandomValues(new Uint8Array(6)); b[0] = (b[0]! & 0xfc) | 0x02;
+    m = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join(":").toUpperCase();
+    localStorage.setItem("device-mac", m);
+  }
+  return m;
+}
+
 function Login({ cfg, onDone }: { cfg: TenantConfig; onDone: (s: Session) => void }) {
-  const types = Array.from(new Set(cfg.sources.map((s) => s.type)));
+  const actOn = !!(cfg as any).activation_enabled;
+  const types = [...(actOn ? ["code"] : []), ...Array.from(new Set(cfg.sources.map((s) => s.type)))];
   const [type, setType] = useState(types[0] ?? "xtream");
   const list = cfg.sources.filter((s) => s.type === type);
   const [sourceId, setSourceId] = useState(list[0]?.id ?? "");
   const [u, setU] = useState(""); const [p, setP] = useState(""); const [mac, setMac] = useState("");
+  const [actCode, setActCode] = useState(""); const [srvCode, setSrvCode] = useState("");
   const [busy, setBusy] = useState(false);
-  const xt = useServerFn(xtreamApi); const mc = useServerFn(macCall);
+  const xt = useServerFn(xtreamApi); const mc = useServerFn(macCall); const act = useServerFn(activateCode);
   useEffect(() => { setSourceId(cfg.sources.find((s) => s.type === type)?.id ?? ""); }, [type, cfg.sources]);
 
   if (!cfg.sources.length) return <p className="mt-16 text-center text-muted-foreground">لا توجد سيرفرات مضافة لهذا التطبيق بعد.</p>;
-  const labels: Record<string, string> = { xtream: "اسم مستخدم", m3u: "قائمة M3U", mac: "عنوان MAC" };
+  const labels: Record<string, string> = { code: "تفعيل كود", xtream: "اسم مستخدم", m3u: "قائمة M3U", mac: "عنوان MAC" };
 
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true);
     try {
-      if (type === "xtream") {
+      if (type === "code") {
+        const r = await act({ data: { slug: cfg.slug, serverCode: srvCode, code: actCode.trim(), deviceId: deviceMac(), model: "Android TV", firmware: "12" } });
+        const a = await xt({ data: { slug: cfg.slug, sourceId: r.sourceId, username: r.username, password: r.password, action: "auth" } });
+        if (String((a.json as any)?.user_info?.auth) !== "1") throw new Error("تم التفعيل لكن تعذر الدخول للسيرفر");
+        onDone({ type: "xtream", sourceId: r.sourceId, username: r.username, password: r.password });
+      } else if (type === "xtream") {
         const r = await xt({ data: { slug: cfg.slug, sourceId, username: u, password: p, action: "auth" } });
         const info = (r.json as any)?.user_info;
         if (!info || String(info.auth) !== "1") throw new Error("اسم المستخدم أو كلمة المرور غير صحيحة");
@@ -411,7 +428,11 @@ function Login({ cfg, onDone }: { cfg: TenantConfig; onDone: (s: Session) => voi
             {types.map((t) => <button data-nav type="button" key={t} onClick={() => setType(t)} className={`rounded-lg py-2 text-sm font-bold ${t === type ? "bg-primary text-primary-foreground" : ""}`}>{labels[t]}</button>)}
           </div>
         )}
-        {list.length > 1 && <select className={field} value={sourceId} onChange={(e) => setSourceId(e.target.value)}>{list.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select>}
+        {type === "code" && <>
+          <input className={field} dir="ltr" placeholder="رمز التفعيل" required maxLength={128} value={actCode} onChange={(e) => setActCode(e.target.value)} />
+          <input className={field} dir="ltr" inputMode="numeric" placeholder="كود السيرفر (اختياري إذا عندك سيرفر واحد)" value={srvCode} onChange={(e) => setSrvCode(e.target.value.replace(/\D/g, "").slice(0, 6))} />
+        </>}
+        {type !== "code" && list.length > 1 && <select className={field} value={sourceId} onChange={(e) => setSourceId(e.target.value)}>{list.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select>}
         {type === "xtream" && <>
           <input className={field} dir="ltr" placeholder="اسم المستخدم" required value={u} onChange={(e) => setU(e.target.value)} />
           <input className={field} dir="ltr" type="password" placeholder="كلمة المرور" required value={p} onChange={(e) => setP(e.target.value)} />

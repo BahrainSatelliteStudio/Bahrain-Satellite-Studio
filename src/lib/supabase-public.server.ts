@@ -31,7 +31,9 @@ export async function loadTenantConfig(slug: string) {
     sb.from("builds").select("version,apk_url,finished_at").eq("tenant_id", t.id).eq("status", "done").order("created_at", { ascending: false }).limit(1).maybeSingle(),
   ]);
   const { id: _id, enabled: _e, panel_url, ...rest } = t;
-  const cloud = { ...rest, sources: sources ?? [], announcements: ann ?? [], latest_build: build ?? null };
+  // هل للزبون سيرفر يدعم تفعيل الأكواد؟ (بدون كشف الرابط)
+  const { data: actCount } = await sb.rpc("tenant_activation_count", { _slug: slug });
+  const cloud = { ...rest, sources: sources ?? [], activation_enabled: Number(actCount) > 0, announcements: ann ?? [], latest_build: build ?? null };
   // إذا كان للزبون لوحة مستقلة على سيرفره، تكون هي مصدر الإعدادات (مع الرجوع للوحة السحابية عند تعذر الوصول)
   if (panel_url) {
     try {

@@ -120,9 +120,72 @@ function publicConfig() {
     support_whatsapp: s.whatsapp || null, support_telegram: s.telegram || null, support_facebook: s.facebook || null, support_website: s.website || null,
     support_email: s.email || null, support_phone: s.phone || null, store_url: s.store_url || null, customer_notice: s.notice || null,
     latest_version: s.latest_version, min_version: s.min_version, update_url: s.update_url || null,
-    sources: db.servers.filter((x) => x.enabled).map((x) => ({ id: x.id, type: x.type, name: x.name, has_code: !!x.login_code })),
+    sources: db.servers.filter((x) => x.enabled).map((x) => ({ id: x.id, type: x.type, name: x.name, has_code: !!x.login_code, activation_enabled: !!x.activation_api_url })),
+    activation_enabled: db.servers.some((x) => x.enabled && x.type === "xtream" && x.activation_api_url),
     announcements: db.notifications.filter((n) => n.active && (!n.expires_at || Date.parse(n.expires_at) > t)).map(({ id, title, body, image_url, kind }) => ({ id, title, body, image_url, kind })),
   };
+}
+
+
+/* ---------- activation (code → username/password) — provider URL & XOR key never leave the server ---------- */
+const RECEIPTS = path.join(DATA, "activation-receipts");
+fs.mkdirSync(RECEIPTS, { recursive: true, mode: 0o700 });
+const actHits = new Map(); const actLocks = new Set(); let actRunning = 0;
+const xorStr = (s, k) => { let o = ""; for (let i = 0; i < s.length; i++) o += String.fromCharCode(s.charCodeAt(i) ^ k.charCodeAt(i % k.length)); return o; };
+function privateIp(ip) {
+  const net = require("node:net");
+  if (net.isIPv4(ip)) return /^(0|10|127)\.|^169\.254\.|^172\.(1[6-9]|2\d|3[01])\.|^192\.168\.|^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|^(22[4-9]|2[3-5]\d)\./.test(ip);
+  const h = ip.toLowerCase(); return h === "::1" || h === "::" || /^(fc|fd|fe[89ab]|ff)/.test(h) || h.startsWith("::ffff:") || h.startsWith("2001:db8");
+}
+async function safeFetch(raw, init = {}) {
+  const u = new URL(raw);
+  if (!["http:", "https:"].includes(u.protocol) || u.username || u.password || u.hash) throw new Error("رابط غير مسموح");
+  const dns = require("node:dns").promises;
+  const { address } = await Promise.race([dns.lookup(u.hostname), new Promise((_, b) => setTimeout(() => b(new Error("DNS")), 4000))]);
+  if (privateIp(address)) throw new Error("عنوان داخلي غير مسموح");
+  const mod = require(u.protocol === "https:" ? "node:https" : "node:http");
+  return new Promise((ok, bad) => {
+    const r = mod.request(u, { method: init.method || "GET", headers: { "accept-encoding": "identity", ...(init.headers || {}) }, timeout: 12000,
+      lookup: (_h, _o, cb) => cb(null, address, address.includes(":") ? 6 : 4) }, (resp) => {
+      if (resp.statusCode < 200 || resp.statusCode > 299) { resp.resume(); return bad(new Error("خدمة التفعيل لم تستجب")); }
+      const chunks = []; let n = 0;
+      resp.on("data", (c) => { n += c.length; if (n > 256 * 1024) { r.destroy(); bad(new Error("رد كبير")); } else chunks.push(c); });
+      resp.on("end", () => ok(Buffer.concat(chunks)));
+    });
+    r.on("timeout", () => r.destroy(new Error("انتهت المهلة"))); r.on("error", bad);
+    if (init.body) r.write(init.body); r.end();
+  });
+}
+async function activateRoute(req, res, cors) {
+  const ip = req.headers["x-real-ip"] || req.socket.remoteAddress; const t = Date.now();
+  const h = (actHits.get(ip) || []).filter((x) => t - x < 600_000); h.push(t); actHits.set(ip, h);
+  if (actHits.size > 5000) actHits.delete(actHits.keys().next().value);
+  if (h.length > 30 || actRunning >= 8) return send(res, 429, { error: "محاولات كثيرة، انتظر قليلًا" }, cors);
+  let b; try { b = await body(req, 4096); } catch { return send(res, 413, { error: "طلب كبير" }, cors); }
+  const code = String(b.code || ""), mac = String(b.deviceId || "").toUpperCase(), sc = String(b.serverId || b.serverCode || "");
+  if (!/^[\x20-\x7e]{1,128}$/.test(code) || !/^([0-9A-F]{2}:){5}[0-9A-F]{2}$/.test(mac) || (sc && !/^\d{1,6}$/.test(sc))) return send(res, 400, { error: "بيانات غير صحيحة" }, cors);
+  const list = db.servers.filter((x) => x.enabled && x.type === "xtream" && x.activation_api_url);
+  const sv = sc ? list.find((x) => x.login_code === sc) : list.length === 1 ? list[0] : null;
+  if (!sv) return send(res, 400, { error: list.length ? "كود السيرفر غير صحيح" : "تفعيل الأكواد غير متاح" }, cors);
+  const rid = crypto.createHash("sha256").update(`${sv.id}|${sv.activation_api_url}|${mac}|${code}`).digest("hex");
+  const rf = path.join(RECEIPTS, rid + ".json");
+  const reply = (r) => send(res, 200, { serverId: sv.id, sourceId: sv.id, username: r.username, password: r.password, hosts: [sv.url, ...sv.backup_urls] }, cors);
+  if (fs.existsSync(rf)) return reply(readJson(rf, {}));
+  const lock = sv.id + "|" + code; if (actLocks.has(lock)) return send(res, 409, { error: "جارٍ تفعيل هذا الرمز" }, cors);
+  actLocks.add(lock); actRunning++;
+  try {
+    const cfg = JSON.parse((await safeFetch(sv.activation_api_url)).toString("utf8"));
+    const key = String(cfg.xor_key || ""), ua = String(cfg.user_agent || "Mozilla/5.0 IPTVPlayer").replace(/[\r\n]/g, "").slice(0, 256);
+    if (!cfg.activation_base_url || !key || key.length > 256) throw new Error("إعدادات خدمة التفعيل غير صالحة");
+    const payload = JSON.stringify({ mode: "active", code, mac, sn: mac, chipid: "000000", model: str(b.model, 60) || "Android TV", firmware_ver: str(b.firmware, 20) || "12" });
+    const raw = await safeFetch(String(cfg.activation_base_url), { method: "POST", body: new URLSearchParams({ json: xorStr(payload, key) }).toString(), headers: { "content-type": "application/x-www-form-urlencoded", "user-agent": ua } });
+    let r; try { r = JSON.parse(xorStr(raw.toString("latin1"), key)); } catch { throw new Error("رد خدمة التفعيل غير مفهوم"); }
+    if (Number(r.status) !== 101 || r.username == null || r.password == null) return send(res, 400, { error: String(r.message || "رمز التفعيل غير صحيح").replace(/[\u0000-\u001f<>]/g, "").slice(0, 240) }, cors);
+    const out = { username: String(r.username), password: String(r.password), at: now() };
+    fs.writeFileSync(rf + ".tmp", JSON.stringify(out), { mode: 0o600 }); fs.renameSync(rf + ".tmp", rf);
+    return reply(out);
+  } catch (e) { return send(res, 502, { error: e.message || "تعذر التفعيل" }, cors); }
+  finally { actLocks.delete(lock); actRunning--; }
 }
 
 /* ---------- router ---------- */
@@ -141,6 +204,7 @@ const server = http.createServer(async (req, res) => {
         if (!list.length) return send(res, 404, { error: "كود السيرفر غير صحيح" }, cors);
         return send(res, 200, { servers: list.map((x) => ({ id: x.id, type: x.type, name: x.name, hosts: [x.url, ...x.backup_urls], activation_api_url: x.activation_api_url || null })) }, cors);
       }
+      if (p === "/api/public/activate" && req.method === "POST") return activateRoute(req, res, cors);
       return send(res, 404, { error: "not found" }, cors);
     }
     if (p === "/health") return send(res, 200, { ok: true, version: VERSION });

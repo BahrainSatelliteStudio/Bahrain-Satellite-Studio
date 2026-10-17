@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      activation_receipts: {
+        Row: {
+          created_at: string
+          id: string
+          password: string
+          source_id: string
+          tenant_id: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          password: string
+          source_id: string
+          tenant_id: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          password?: string
+          source_id?: string
+          tenant_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
       announcements: {
         Row: {
           active: boolean
@@ -537,6 +564,7 @@ export type Database = {
         Returns: boolean
       }
       is_tenant_member: { Args: { _tenant_id: string }; Returns: boolean }
+      tenant_activation_count: { Args: { _slug: string }; Returns: number }
     }
     Enums: {
       app_role: "admin" | "user"
