@@ -1,8 +1,10 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { getTenantConfig } from "@/lib/iptv.functions";
 import { PlayerApp, type TenantConfig } from "@/components/player/PlayerApp";
+import { TEMPLATES, resolveLayout, type TemplateKey } from "@/lib/layout";
 
 export const Route = createFileRoute("/preview/$slug")({
+  validateSearch: (search: Record<string, unknown>): { template?: TemplateKey } => TEMPLATES.some(([key]) => key === search["template"]) ? { template: search["template"] as TemplateKey } : {},
   loader: async ({ params }) => {
     const cfg = await getTenantConfig({ data: { slug: params.slug } });
     if (!cfg) throw notFound();
@@ -28,10 +30,12 @@ export const Route = createFileRoute("/preview/$slug")({
 
 function PreviewPage() {
   const cfg = Route.useLoaderData();
+  const { template } = Route.useSearch();
+  const previewCfg = template ? { ...cfg, layout: { ...resolveLayout(cfg.layout), template } } : cfg;
   return (
     <div>
       <div className="sticky top-0 z-50 bg-secondary py-1.5 text-center text-xs font-bold text-foreground">معاينة مباشرة — بيانات تجريبية، تتحدث فورًا مع تعديلاتك في اللوحة</div>
-      <PlayerApp cfg={cfg} preview />
+      <PlayerApp cfg={previewCfg} preview />
     </div>
   );
 }
