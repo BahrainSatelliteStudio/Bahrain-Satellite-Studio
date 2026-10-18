@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ExperienceNav } from "./ExperienceNav";
+import { ExperienceHome } from "./ExperienceHome";
+import { progressKey } from "@/lib/player/media";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Tv, Film, Clapperboard, Heart, LogOut, Search, MessageCircle, Send, Phone, ChevronRight, Loader2, Settings, Play, History, Smartphone, House } from "lucide-react";
@@ -563,7 +566,7 @@ function Browser({ cfg, session, settings, layout, onSettings }: { cfg: TenantCo
   async function play(it: Item) {
     if (it.kind === "series") return openSeries(it);
     if (session.type === "demo") { toast.info("هذا عرض تجريبي — التشغيل يعمل بعد تسجيل الدخول"); return; }
-    const itemId = it.kind === "live" ? undefined : `${it.kind}:${it.id}`;
+    const itemId = progressKey(it.kind, it.id);
     if (it.url) return setPlaying({ src: it.url, title: it.name, itemId, logo: it.logo });
     if (it.cmd && session.type === "mac") run(async () => {
       const r: any = await mc({ data: { slug: cfg.slug, sourceId: session.sourceId, mac: session.mac, token: session.token, op: "link", cmd: it.cmd } });
@@ -723,13 +726,21 @@ function Browser({ cfg, session, settings, layout, onSettings }: { cfg: TenantCo
         <div className="flex aspect-square items-center justify-center bg-secondary p-4">{a.logo ? <img src={a.logo} alt={a.name} loading="lazy" className="h-full w-full object-contain" /> : <span className="text-3xl font-extrabold text-primary">{a.name[0]}</span>}</div>
         <p className="line-clamp-1 p-2 text-sm font-bold">{a.name}</p></button>)}
     </div></section>;
-  const content = screen === "home" ? home : screen === "apps" ? appsView : screen === "continue" ? continuation : tabs.length ? body : <p className="py-12 text-center text-muted-foreground">كل الأقسام مخفية</p>;
+  const removeHistory = (id: string) => { prefs.clearProgress(cfg.slug, id); setHistory(prefs.progress(cfg.slug)); };
+  const xHome = tpl === "experience" ? <ExperienceHome name={cfg.name} layout={layout} catalog={session.type === "demo" ? [...demoItems("movie"), ...demoItems("series")] : favs}
+    favorites={favs} history={historyList} card={(it, extra) => card(it as Item, extra)} onOpen={(it) => play(it as Item)}
+    onBrowse={(k) => { setTab(k); setScreen("browse"); }} onResume={(id, p) => setPlaying({ src: p.url, title: p.title, itemId: id, logo: p.logo })}
+    onRemove={removeHistory} demo={session.type === "demo"} english={settings.lang === "en"} busy={loading} /> : null;
+  const content = screen === "home" ? (xHome ?? home) : screen === "apps" ? appsView : screen === "continue" ? continuation : tabs.length ? body : <p className="py-12 text-center text-muted-foreground">كل الأقسام مخفية</p>;
 
   return (
     <div className={`space-y-4 ${tpl === "cinema" ? "pb-24" : ""}`}>
       {playing && <VideoPlayer src={playing.src} title={playing.title} slug={cfg.slug} itemId={playing.itemId} logo={playing.logo} onClose={() => setPlaying(null)} />}
       <Announcements cfg={cfg} />
-      {tpl === "sidebar" ? <div className="flex gap-6 max-md:flex-col">{nav}{content}</div> : <>{nav}{content}</>}
+      {tpl === "experience" ? <div className="flex gap-6 max-md:flex-col max-md:pb-20"><ExperienceNav name={cfg.name} logo={cfg.logo_url ?? null} sections={layout.sections.filter((s) => s.key !== "apps" || showApps)}
+        active={screen === "browse" ? tab : screen} english={settings.lang === "en"} onSettings={onSettings}
+        onSelect={(k) => { if (k === "home" || k === "continue" || k === "apps") setScreen(k); else { setTab(k); setScreen("browse"); } }} /><div className="min-w-0 flex-1">{content}</div></div>
+      : tpl === "sidebar" ? <div className="flex gap-6 max-md:flex-col">{nav}{content}</div> : <>{nav}{content}</>}
     </div>
   );
 }
