@@ -1,0 +1,2 @@
+CREATE POLICY "Admins manage catalog" ON public.application_catalog FOR ALL TO authenticated USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
+GRANT INSERT, UPDATE ON public.application_catalog TO authenticated;
