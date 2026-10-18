@@ -361,8 +361,8 @@ function SettingsDialog({ cfg, settings, onSave, onClose }: { cfg: TenantConfig;
               <button data-nav className="rounded-xl bg-secondary px-4 font-bold">{L.changePin}</button>
             </form>
             <div className="grid grid-cols-2 gap-2">
-              <button data-nav onClick={() => { localStorage.removeItem(`iptv:${cfg.slug}:fav`); toast.success(L.saved); }} className="rounded-xl bg-secondary py-2.5 text-sm font-bold">{L.clearFavs}</button>
-              <button data-nav onClick={() => { prefs.clearProgress(cfg.slug); toast.success(L.saved); }} className="rounded-xl bg-secondary py-2.5 text-sm font-bold">{L.clearHistory}</button>
+              <button data-nav onClick={() => { localStorage.removeItem(`iptv:${cfg.slug}:fav`); onSave({ ...settings }); toast.success(L.saved); }} className="rounded-xl bg-secondary py-2.5 text-sm font-bold">{L.clearFavs}</button>
+              <button data-nav onClick={() => { prefs.clearProgress(cfg.slug); onSave({ ...settings }); toast.success(L.saved); }} className="rounded-xl bg-secondary py-2.5 text-sm font-bold">{L.clearHistory}</button>
               <button data-nav onClick={downloadBackup} className="rounded-xl bg-secondary py-2.5 text-sm font-bold">{L.backup}</button>
               <button data-nav onClick={() => fileRef.current?.click()} className="rounded-xl bg-secondary py-2.5 text-sm font-bold">{L.restore}</button>
               <input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) restoreBackup(f); e.target.value = ""; }} />
@@ -500,7 +500,7 @@ function Browser({ cfg, session, settings, layout, onSettings }: { cfg: TenantCo
   const favKey = `iptv:${namespace}:fav`;
   const [favs, setFavs] = useState<Item[]>([]);
   const [history, setHistory] = useState<Record<string, import("@/lib/player/prefs").Progress>>({});
-  useEffect(() => { try { setFavs(JSON.parse(localStorage.getItem(favKey) || "[]")); } catch {} }, [favKey]);
+  useEffect(() => { try { setFavs(JSON.parse(localStorage.getItem(favKey) || "[]")); } catch {} }, [favKey, settings]);
   useEffect(() => { if (!playing) setHistory(prefs.progress(namespace)); }, [playing, namespace, settings]);
   const toggleFav = (it: Item) => {
     const next = favs.some((f) => f.id === it.id && f.kind === it.kind) ? favs.filter((f) => !(f.id === it.id && f.kind === it.kind)) : [...favs, it];

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render } from "@testing-library/react";
+import { act, cleanup, fireEvent, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { VideoPlayer } from "@/components/player/VideoPlayer";
 import { PlayerApp, type TenantConfig } from "@/components/player/PlayerApp";
@@ -41,10 +41,12 @@ describe("Playback regressions", () => {
     expect(prefs.progress("tenant")["movie:123"]?.t).toBe(120);
   });
 
-  it("does not expose customer history or erase it through preview settings", () => {
+  it("does not expose customer history or erase it through preview settings", async () => {
     prefs.saveProgress("tenant", "movie:123", saved);
     const cfg: TenantConfig = { slug: "tenant", name: "Test", logo_url: null, primary_color: "", accent_color: "", theme: "default", support_whatsapp: null, support_telegram: null, support_phone: null, latest_version: "1.0.0", min_version: "1.0.0", update_url: null, sources: [], announcements: [] };
-    const view = render(<PlayerApp cfg={cfg} preview />);
+    let view: ReturnType<typeof render>;
+    await act(async () => { view = render(<PlayerApp cfg={cfg} preview />); });
+    if (typeof view === "undefined") throw new Error("Missing player");
     fireEvent.click(view.getByRole("button", { name: "أكمل المشاهدة" }));
     expect(view.queryByText("Saved movie")).toBeNull();
     const settingsButton = view.getAllByRole("button", { name: "الإعدادات" }).at(-1);
