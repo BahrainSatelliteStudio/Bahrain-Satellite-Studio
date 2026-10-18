@@ -14,4 +14,18 @@ describe("App routing", () => {
 
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
   });
+
+  it.each([
+    ["/auth", "/auth"],
+    ["/dashboard", "/_authenticated/dashboard"],
+    ["/applications", "/_authenticated/applications"],
+    ["/t/00000000-0000-4000-8000-000000000001", "/_authenticated/t/$tenantId"],
+    ["/p/audit-app", "/p/$slug"],
+    ["/preview/audit-app", "/preview/$slug"],
+    ["/install/audit-app", "/install/$slug"],
+    ["/guide/audit-app", "/guide/$slug"],
+  ])("preserves the existing URL %s", (path, routeId) => {
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+    expect(router.matchRoutes(path).at(-1)?.routeId).toBe(routeId);
+  });
 });
