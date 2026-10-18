@@ -170,6 +170,7 @@ async function activateRoute(req, res, cors) {
   let b; try { b = await body(req, 4096); } catch { return send(res, 413, { error: "طلب كبير" }, cors); }
   const code = String(b.code || ""), mac = String(b.deviceId || "").toUpperCase(), sc = String(b.serverId || b.serverCode || "");
   if (!/^[\x20-\x7e]{1,128}$/.test(code) || !/^([0-9A-F]{2}:){5}[0-9A-F]{2}$/.test(mac) || (sc && !/^\d{1,6}$/.test(sc))) return send(res, 400, { error: "بيانات غير صحيحة" }, cors);
+  if (code.trim().toUpperCase().startsWith("BH-")) return redeemBuiltin(code, mac, res, cors);
   const list = db.servers.filter((x) => x.enabled && x.type === "xtream" && x.activation_api_url);
   const sv = sc ? list.find((x) => x.login_code === sc) : list.length === 1 ? list[0] : null;
   if (!sv) return send(res, 400, { error: list.length ? "كود السيرفر غير صحيح" : "تفعيل الأكواد غير متاح" }, cors);
