@@ -69,7 +69,7 @@ export function Builds(c: Ctx) {
           </Button>
         </div>
       </div>
-      <div className={card}>
+      {(isAdmin || (t.features as {workflow?:string})?.workflow !== "order") && <div className={card}>
         <h2 className="text-lg font-extrabold">إجبار التحديث</h2>
         <p className="text-sm text-muted-foreground">
           أي تطبيق نسخته أقل من هذا الرقم يطلب من المستخدم التحديث. أحدث نسخة: v{t.latest_version}
@@ -91,7 +91,7 @@ export function Builds(c: Ctx) {
             حفظ
           </Button>
         </div>
-      </div>
+      </div>}
       <div className={card}>
         <h2 className="text-lg font-extrabold">الإصدارات المنشورة</h2>
         {isAdmin && (

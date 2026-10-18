@@ -1,0 +1,22 @@
+import {describe,it,expect} from 'vitest';
+import {selectionSchema,orderPanelSection,validateAvailable,panelManifest} from '@/features/orders/rules';
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url);
+const panel=require('../../selfhost/panel/features.js');
+const selection={catalog_id:'iptv-player',name:'مشغل تجريبي',logo:'data:image/png;base64,aGVsbG8=',template:'experience',theme:'bhsat',features:['servers','contact'],contact:'test contact'};
+describe('customer order rules',()=>{
+ it('does not accept hosts in an application request',()=>expect(selectionSchema.safeParse({...selection,hosts:['http://provider.test']}).success).toBe(false));
+ it('does not accept sending messages in a request',()=>expect(selectionSchema.safeParse({...selection,messages:['hello']}).success).toBe(false));
+ it('only accepts available designs',()=>expect(()=>validateAvailable(selectionSchema.parse(selection),{templates:['classic'],features:['servers','contact']})).toThrow());
+ it('only accepts available features',()=>expect(()=>validateAvailable(selectionSchema.parse(selection),{templates:['experience'],features:['contact']})).toThrow());
+ it('shows selected host management after provisioning',()=>expect(orderPanelSection({workflow:'order',selected:['servers']},'servers')).toBe(true));
+ it('hides unselected messages in the customer panel',()=>expect(orderPanelSection({workflow:'order',selected:['servers']},'notify')).toBe(false));
+ it('keeps app design management out of the operational panel',()=>expect(orderPanelSection({workflow:'order',selected:['themes']},'layout')).toBe(false));
+ it('does not change legacy sections',()=>expect(orderPanelSection({plan:'premium'},'studio')).toBe(true));
+ it('generates a panel with exactly the approved choices',()=>expect(panelManifest(selectionSchema.parse(selection),'test').features).toEqual(['servers','contact']));
+ it('denies unselected standalone notifications',()=>expect(panel.featureEnabled({features:['servers']},'notify')).toBe(false));
+ it('denies standalone identity changes',()=>expect(panel.settingsAllowed({features:['brand']},{name:'replacement'})).toBe(false));
+ it('allows selected contact updates',()=>expect(panel.settingsAllowed({features:['contact']},{whatsapp:'123'})).toBe(true));
+ it('prevents restoring a different locked identity',()=>expect(panel.restoreAllowed({features:['backup']},{settings:{name:'original'},servers:[],notifications:[]},{settings:{name:'other'},servers:[]})).toBe(false));
+ it('keeps legacy standalone behavior without a manifest',()=>expect(panel.settingsAllowed(null,{name:'changed'})).toBe(true));
+});
