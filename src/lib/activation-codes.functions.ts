@@ -29,7 +29,7 @@ export const createActivationCodes = createServerFn({ method: "POST" })
     const entries = await Promise.all(codes.map(async (code) => ({ hash: await sha256(code), hint: code.slice(-6) })));
     const { error } = await context.supabase.rpc("create_activation_bundle", {
       _tenant: data.tenantId, _source: data.sourceId, _mode: data.mode, _label: data.label,
-      _username: data.username, _password: data.password, _account: data.accountId ?? null, _codes: entries,
+      _username: data.username, _password: data.password, _account: data.accountId ?? "00000000-0000-0000-0000-000000000000", _codes: entries,
     });
     if (error) throw new Error(error.message);
     return { codes };
