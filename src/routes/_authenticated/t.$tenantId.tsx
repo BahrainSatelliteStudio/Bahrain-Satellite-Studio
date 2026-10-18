@@ -147,7 +147,7 @@ function Panel() {
     go: setSec,
   };
   const feats = resolveFeatures(t.features);
-  const allowed = (k: string) => ctx.isAdmin || !(k in feats) || feats[k as FeatureKey];
+  const allowed = (k: string) => ctx.isAdmin || (orderPanelSection(t.features,k) && (!(k in feats) || feats[k as FeatureKey]));
   const visible = SECTIONS.filter((s) => allowed(s[0]));
   if (!allowed(sec)) {
     setTimeout(() => setSec("home"));
