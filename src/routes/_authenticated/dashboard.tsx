@@ -1,3 +1,4 @@
+import { WorkspaceNav } from "@/features/orders/WorkspaceNav";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMe, signOut } from "@/lib/me";
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
 });
 
-type Tenant = { id: string; name: string; slug: string; logo_url: string | null; enabled: boolean; latest_version: string };
+type Tenant = { id: string; name: string; slug: string; logo_url: string | null; enabled: boolean; latest_version: string; features: unknown };
 
 function Dashboard() {
   const me = useMe();
@@ -28,20 +29,22 @@ function Dashboard() {
     queryKey: ["tenants", me.data?.uid, me.data?.isAdmin],
     enabled: !!me.data,
     queryFn: async () => {
-      let qy = supabase.from("tenants").select("id,name,slug,logo_url,enabled,latest_version").order("created_at", { ascending: false });
-      if (!me.data!.isAdmin) {
-        const { data: m } = await supabase.from("tenant_members").select("tenant_id").eq("user_id", me.data!.uid);
+      let qy = supabase.from("tenants").select("id,name,slug,logo_url,enabled,latest_version,features").order("created_at", { ascending: false });
+      if (!me.data) return [];
+      if (!me.data.isAdmin) {
+        const { data: m } = await supabase.from("tenant_members").select("tenant_id").eq("user_id", me.data.uid);
         qy = qy.in("id", (m ?? []).map((x) => x.tenant_id));
       }
       const { data, error } = await qy;
       if (error) throw error;
+      if (!me.data.isAdmin) {
+        const { data: orders, error: orderError } = await supabase.from("application_orders").select("tenant_id,status");
+        if (orderError) throw orderError;
+        return (data as Tenant[]).filter(t => (t.features as {workflow?:string})?.workflow !== "order" || orders?.some(o=>o.tenant_id===t.id && o.status==="delivered"));
+      }
       return data as Tenant[];
     },
   });
-
-  useEffect(() => {
-    if (me.data && !me.data.isAdmin && tenants.data?.length === 1) nav({ to: "/t/$tenantId", params: { tenantId: tenants.data[0]!.id }, replace: true });
-  }, [me.data, tenants.data, nav]);
 
   const list = tenants.data ?? [];
   const filtered = useMemo(() => {
@@ -59,7 +62,7 @@ function Dashboard() {
       <header className="flex items-center justify-between border-b px-6 py-4">
         <span className="text-xl font-extrabold">BHSAT <span className="text-primary">Studio</span></span>
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
-          <Button asChild variant="outline" size="sm"><Link to="/applications"><Smartphone className="h-4 w-4" />صناعة التطبيقات</Link></Button>
+          {me.data?.isAdmin && <Button asChild variant="outline" size="sm"><Link to="/applications"><Smartphone className="h-4 w-4" />صناعة التطبيقات</Link></Button>}
           {me.data?.isAdmin && <Button asChild variant="outline" size="sm"><Link to="/site-settings">إدارة الصفحة الرئيسية</Link></Button>}
           {me.data?.isAdmin && <Button asChild variant="outline" size="sm"><Link to="/firebase">الإشعارات (Firebase)</Link></Button>}
           {me.data?.isAdmin && <Link to="/diagnose" className="flex items-center gap-1 hover:text-foreground"><Stethoscope className="h-4 w-4" />تشخيص البناء</Link>}
@@ -67,7 +70,8 @@ function Dashboard() {
           <Button variant="secondary" size="sm" onClick={() => signOut(qc, () => nav({ to: "/auth", replace: true }))}><LogOut className="h-4 w-4" />خروج</Button>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl space-y-6 p-6">
+      <main dir="rtl" className="mx-auto max-w-6xl space-y-6 p-6">
+        <WorkspaceNav admin={!!me.data?.isAdmin}/>
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-extrabold">{me.data?.isAdmin ? "الزبائن والتطبيقات" : "تطبيقاتي"}</h1>
           {me.data?.isAdmin && <NewTenant onDone={() => qc.invalidateQueries({ queryKey: ["tenants"] })} />}
