@@ -116,6 +116,41 @@ const VIEWS = {
     draw();
   },
 
+  codes(v) {
+    const codes = S.codes || [];
+    v.innerHTML = `
+    <div class="grid g3">
+      <div class="card stat"><p class="muted">الأكواد</p><div class="n">${codes.length}</div></div>
+      <div class="card stat"><p class="muted">المفعّلة على أجهزة</p><div class="n" style="color:var(--p)">${codes.filter((c) => c.bound).length}</div></div>
+      <div class="card stat"><p class="muted">الموقوفة</p><div class="n">${codes.filter((c) => !c.enabled).length}</div></div>
+    </div>
+    <form class="card" id="cf"><h2>إنشاء أكواد جديدة</h2><p class="muted">الكود يبدأ بـ BH- ويعمل داخل التطبيق مباشرة. «حساب مستقل» = كود واحد بحسابه الخاص، «حساب مشترك» = عدة أكواد تعطي نفس الحساب. الكود يرتبط بأول جهاز يفعّله.</p>
+      <div class="grid g2">
+        <label>الطريقة<select name="mode"><option value="individual">حساب مستقل لكل كود</option><option value="shared">حساب مشترك لعدة أكواد</option></select></label>
+        <label>السيرفر المرتبط<select name="source_id">${S.servers.map((s) => `<option value="${s.id}">${esc(s.name)}</option>`).join("")}</select></label>
+        <label>اسم مستخدم الاشتراك<input dir="ltr" name="username" required></label>
+        <label>كلمة مرور الاشتراك<input dir="ltr" name="password" required></label>
+        <label>عدد الأكواد<input dir="ltr" type="number" name="count" value="1" min="1" max="100"></label>
+      </div><button class="btn primary">+ توليد الأكواد</button><div id="newCodes"></div></form>
+    <div class="card" style="overflow-x:auto"><table><thead><tr><th>الكود</th><th>الطريقة</th><th>الحساب</th><th>الجهاز</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>
+      ${codes.map((c) => `<tr data-id="${c.id}"><td dir="ltr"><b>BH-••••-${esc(c.hint)}</b></td><td>${c.mode === "shared" ? "مشترك" : "مستقل"}</td><td dir="ltr" class="muted">${esc(c.username)}</td><td>${c.bound ? '<span class="tag">مرتبط</span>' : '<span class="muted">—</span>'}</td><td>${c.enabled ? '<span class="ok">فعّال</span>' : '<span class="err">موقوف</span>'}</td>
+        <td><div class="row">${sw(c.enabled, "data-a")}${c.bound ? '<button class="btn sm" data-u>فك الجهاز</button>' : ""}<button class="btn sm danger" data-d>حذف</button></div></td></tr>`).join("") || '<tr><td colspan="6" class="center muted">لا توجد أكواد بعد.</td></tr>'}
+    </tbody></table></div>`;
+    $("#cf").onsubmit = run(async (e) => {
+      e.preventDefault(); const f = Object.fromEntries(new FormData(e.target));
+      const r = await api("/api/codes", { body: f });
+      $("#newCodes").innerHTML = `<div class="card" style="background:var(--sf2);margin-top:12px"><b>الأكواد الجديدة — انسخها الآن، لن تظهر كاملة مرة أخرى:</b><div class="row" style="flex-wrap:wrap;margin-top:8px">${r.codes.map((c) => `<code dir="ltr" style="background:var(--bg);padding:8px 12px;border-radius:8px">${c}</code>`).join("")}</div><button type="button" class="btn sm" id="cpAll" style="margin-top:10px">نسخ الكل</button></div>`;
+      $("#cpAll").onclick = () => { navigator.clipboard?.writeText(r.codes.join("\n")); toast("تم النسخ"); };
+      toast(`تم إنشاء ${r.codes.length} كود`); await load();
+    });
+    v.querySelectorAll("tr[data-id]").forEach((tr) => {
+      const id = tr.dataset.id;
+      $("[data-a]", tr).onchange = run(async (e) => { await api(`/api/codes/${id}`, { method: "PUT", body: { enabled: e.target.checked } }); await reload(); });
+      const ub = $("[data-u]", tr); if (ub) ub.onclick = run(async () => { if (!confirm("فك ارتباط الجهاز؟ يمكن تفعيل الكود على جهاز جديد بعدها.")) return; await api(`/api/codes/${id}`, { method: "PUT", body: { unbind: true } }); await reload(); });
+      $("[data-d]", tr).onclick = run(async () => { if (!confirm("حذف الكود نهائيًا؟")) return; await api(`/api/codes/${id}`, { method: "DELETE" }); await reload(); });
+    });
+  },
+
   brand(v) {
     const PRESETS = {
       "Bahrain Satellite": ["bhsat", { primary: "#FBBD23", secondary: "#303540", accent: "#DCA518", background: "#14181F", surface: "#20242C", text: "#F8F8F6", button: "#20242C" }],
