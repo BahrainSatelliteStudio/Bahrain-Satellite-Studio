@@ -30,7 +30,7 @@ if (!db) {
     settings: { name: "Bahrain Satellite", logo: null, banner: null, theme: "bhsat", colors: DEFAULT_COLORS,
       whatsapp: "", telegram: "", facebook: "", website: "", email: "", phone: "", store_url: "", notice: "",
       latest_version: "1.0.0", min_version: "1.0.0", update_url: "", max_hosts: 40 },
-    servers: [], notifications: [], changes: [], users: [], sessions: {},
+    servers: [], notifications: [], changes: [], users: [], sessions: {}, codes: [],
   };
   if (manifest) { db.settings.name=manifest.name; db.settings.logo=manifest.logo; db.settings.theme=manifest.theme; db.settings.layout={template:manifest.template}; db.settings.max_hosts=2; }
   const pass = process.env.PANEL_ADMIN_PASSWORD || crypto.randomBytes(9).toString("base64url");
@@ -40,6 +40,7 @@ if (!db) {
   console.log(`\n  First login → user: ${user}  password: ${pass}\n  (saved in data/initial-login.txt)\n`);
   save();
 }
+if (!Array.isArray(db.codes)) db.codes = [];
 function save() { const tmp = DB_FILE + ".tmp"; fs.writeFileSync(tmp, JSON.stringify(db, null, 2)); fs.renameSync(tmp, DB_FILE); }
 function log(user, section, summary) { db.changes.unshift({ id: id(), user, section, summary, at: now() }); db.changes = db.changes.slice(0, 500); save(); }
 
