@@ -8,4 +8,3 @@ export const getTenantConfig = createServerFn({ method: "GET" })
     const { loadTenantConfig } = await import("@/lib/supabase-public.server");
     return loadTenantConfig(data.slug);
   });
-
