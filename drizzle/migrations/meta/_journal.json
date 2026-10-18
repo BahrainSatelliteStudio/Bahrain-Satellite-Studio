@@ -134,6 +134,13 @@
       "when": 1792284176786,
       "tag": "0018_activation_optional_account_compatibility",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792307567220,
+      "tag": "0019_application_order_workflow",
+      "breakpoints": true
     }
   ]
 }
