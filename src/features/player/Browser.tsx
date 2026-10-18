@@ -1,19 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ExperienceNav } from "@/components/player/ExperienceNav";
 import { ExperienceHome } from "@/components/player/ExperienceHome";
-import { progressKey, progressNamespace } from "@/lib/player/media";
-import { useServerFn } from "@tanstack/react-start";
-import { toast } from "sonner";
-import { Tv, Film, Clapperboard, Heart, LogOut, Search, MessageCircle, Send, Phone, ChevronRight, Loader2, Settings, Play, History, Smartphone, House } from "lucide-react";
-import { xtreamApi, m3uFetch, macCall, activateCode } from "@/lib/iptv.functions";
-import { prefs, t as str, type AppSettings, type Lang } from "@/lib/player/prefs";
+import { ExperienceNav } from "@/components/player/ExperienceNav";
 import { VideoPlayer } from "@/components/player/VideoPlayer";
-import { resolveLayout, previewChannel, ICONS, type AppLayout, type SectionCfg } from "@/lib/layout";
 import { Button } from "@/components/ui/button";
+import { m3uFetch,macCall,xtreamApi } from "@/lib/iptv.functions";
+import { ICONS,resolveLayout,type AppLayout,type SectionCfg } from "@/lib/layout";
 import { PREVIEW_CATALOG } from "@/lib/player/demo";
+import { progressKey,progressNamespace } from "@/lib/player/media";
+import { prefs,t as str,type AppSettings } from "@/lib/player/prefs";
+import { useServerFn } from "@tanstack/react-start";
+import { ChevronRight,Heart,History,House,Loader2,Play,Search,Settings,Tv } from "lucide-react";
+import { useEffect,useMemo,useState } from "react";
+import { toast } from "sonner";
 
-import type { TenantConfig, Session, Kind, Cat, Item, Playing } from "./types";
 import { Announcements } from "./Announcements";
+import type { Cat,Item,Kind,Playing,Session,TenantConfig } from "./types";
 const field = "w-full rounded-xl border bg-input/40 px-4 py-3 outline-none focus:ring-2 focus:ring-ring";
 const DEMO_CATS: Record<Kind, string[]> = { live: ["رياضة", "أخبار", "أطفال", "وثائقي", "منوعات"], movie: ["أكشن", "دراما", "كوميديا", "رعب"], series: ["خليجي", "تركي", "أجنبي", "كرتون"] };
 const demoItems = (kind: Kind, cat?: string): Item[] => kind === "live"

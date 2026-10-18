@@ -1,28 +1,13 @@
-import type React from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
-import {
-  ArrowRight, Trash2, Plus, ExternalLink, Hammer, LayoutDashboard, Server, Palette, Phone, Bell, Package,
-  History, DatabaseBackup, LayoutTemplate, ArrowUp, ArrowDown, ShieldCheck, LogOut, RefreshCw, Download, Upload, Menu, X, Image as ImageIcon, Smartphone, Tablet, Tv, Wand2, Check, ChevronLeft, ChevronRight, RotateCw,
-} from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
-import { triggerBuild, checkHost } from "@/lib/iptv.functions";
-import { sendPush, getFirebaseStatus } from "@/lib/firebase.functions";
-import { useMe, signOut } from "@/lib/me";
 import { Button } from "@/components/ui/button";
-import { ActivationCodesPanel } from "@/components/ActivationCodesPanel";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { TEMPLATES, ICONS, resolveLayout, previewChannel, type AppLayout, type SectionCfg } from "@/lib/layout";
-import { FEATURES, PLANS, resolveFeatures, type FeatureKey, type FeatureState, type PlanKey } from "@/lib/features";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+Download,Upload
+} from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
-import { type Ctx, type Tenant, type Source, card, logChange, useSave, uploadImage, useSources, hostCount, Stat } from "./shared";
+import { card,logChange,type Ctx,type Tenant } from "./shared";
 /* ---------------- Backup ---------------- */
 const TENANT_KEYS = ["name", "logo_url", "banner_url", "colors", "primary_color", "accent_color", "theme", "support_whatsapp", "support_telegram", "support_phone", "support_facebook", "support_website", "support_email", "customer_notice", "store_url", "min_version", "layout"] as const;
 export function Backup(c: Ctx) {

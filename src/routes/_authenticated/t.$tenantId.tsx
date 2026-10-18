@@ -1,38 +1,41 @@
-import type React from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
-import {
-  ArrowRight, Trash2, Plus, ExternalLink, Hammer, LayoutDashboard, Server, Palette, Phone, Bell, Package,
-  History, DatabaseBackup, LayoutTemplate, ArrowUp, ArrowDown, ShieldCheck, LogOut, RefreshCw, Download, Upload, Menu, X, Image as ImageIcon, Smartphone, Tablet, Tv, Wand2, Check, ChevronLeft, ChevronRight, RotateCw,
-} from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
-import { triggerBuild, checkHost } from "@/lib/iptv.functions";
-import { sendPush, getFirebaseStatus } from "@/lib/firebase.functions";
-import { useMe, signOut } from "@/lib/me";
-import { Button } from "@/components/ui/button";
 import { ActivationCodesPanel } from "@/components/ActivationCodesPanel";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { TEMPLATES, ICONS, resolveLayout, previewChannel, type AppLayout, type SectionCfg } from "@/lib/layout";
-import { FEATURES, PLANS, resolveFeatures, type FeatureKey, type FeatureState, type PlanKey } from "@/lib/features";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { resolveFeatures,type FeatureKey } from "@/lib/features";
+import { signOut,useMe } from "@/lib/me";
+import { useQuery,useQueryClient } from "@tanstack/react-query";
+import { createFileRoute,Link } from "@tanstack/react-router";
+import {
+ArrowRight,
+Bell,
+DatabaseBackup,
+ExternalLink,
+History,
+LayoutDashboard,
+LayoutTemplate,
+LogOut,
+Menu,
+Package,
+Palette,Phone,
+Server,
+ShieldCheck,
+Smartphone,
+Wand2,
+X
+} from "lucide-react";
+import { useEffect,useState } from "react";
 
-import { type Sec } from "@/features/tenant-management/shared";
-import { Home } from "@/features/tenant-management/HomePanel";
-import { Servers } from "@/features/tenant-management/ServersPanel";
+import { Backup } from "@/features/tenant-management/BackupPanel";
 import { Brand } from "@/features/tenant-management/BrandPanel";
-import { LayoutEditor } from "@/features/tenant-management/LayoutPanel";
-import { Contact } from "@/features/tenant-management/ContactPanel";
-import { Notify } from "@/features/tenant-management/NotificationsPanel";
 import { Builds } from "@/features/tenant-management/BuildsPanel";
 import { Changes } from "@/features/tenant-management/ChangesPanel";
-import { Backup } from "@/features/tenant-management/BackupPanel";
+import { Contact } from "@/features/tenant-management/ContactPanel";
+import { Home } from "@/features/tenant-management/HomePanel";
+import { LayoutEditor } from "@/features/tenant-management/LayoutPanel";
+import { Notify } from "@/features/tenant-management/NotificationsPanel";
 import { Security } from "@/features/tenant-management/SecurityPanel";
+import { Servers } from "@/features/tenant-management/ServersPanel";
+import { type Sec } from "@/features/tenant-management/shared";
 import { Studio } from "@/features/tenant-management/StudioPanel";
 export const Route = createFileRoute("/_authenticated/t/$tenantId")({
   validateSearch: (search: Record<string, unknown>): { section?: "studio" | "builds" } => search["section"] === "studio" || search["section"] === "builds" ? { section: search["section"] } : {},

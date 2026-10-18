@@ -1,18 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ExperienceNav } from "@/components/player/ExperienceNav";
-import { ExperienceHome } from "@/components/player/ExperienceHome";
-import { progressKey, progressNamespace } from "@/lib/player/media";
-import { useServerFn } from "@tanstack/react-start";
+import { prefs,t as str,type AppSettings,type Lang } from "@/lib/player/prefs";
+import { useEffect,useRef,useState } from "react";
 import { toast } from "sonner";
-import { Tv, Film, Clapperboard, Heart, LogOut, Search, MessageCircle, Send, Phone, ChevronRight, Loader2, Settings, Play, History, Smartphone, House } from "lucide-react";
-import { xtreamApi, m3uFetch, macCall, activateCode } from "@/lib/iptv.functions";
-import { prefs, t as str, type AppSettings, type Lang } from "@/lib/player/prefs";
-import { VideoPlayer } from "@/components/player/VideoPlayer";
-import { resolveLayout, previewChannel, ICONS, type AppLayout, type SectionCfg } from "@/lib/layout";
-import { Button } from "@/components/ui/button";
-import { PREVIEW_CATALOG } from "@/lib/player/demo";
 
-import type { TenantConfig, Session, Kind, Cat, Item, Playing } from "./types";
+import type { TenantConfig } from "./types";
 export function SettingsDialog({ cfg, settings, onSave, onClose }: { cfg: TenantConfig; settings: AppSettings; onSave: (s: AppSettings) => void; onClose: () => void }) {
   const [unlocked, setUnlocked] = useState(false);
   const [pin, setPin] = useState("");

@@ -1,24 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ExperienceNav } from "@/components/player/ExperienceNav";
-import { ExperienceHome } from "@/components/player/ExperienceHome";
-import { progressKey, progressNamespace } from "@/lib/player/media";
-import { useServerFn } from "@tanstack/react-start";
-import { toast } from "sonner";
-import { Tv, Film, Clapperboard, Heart, LogOut, Search, MessageCircle, Send, Phone, ChevronRight, Loader2, Settings, Play, History, Smartphone, House } from "lucide-react";
-import { xtreamApi, m3uFetch, macCall, activateCode } from "@/lib/iptv.functions";
-import { prefs, t as str, type AppSettings, type Lang } from "@/lib/player/prefs";
-import { VideoPlayer } from "@/components/player/VideoPlayer";
-import { resolveLayout, previewChannel, ICONS, type AppLayout, type SectionCfg } from "@/lib/layout";
-import { Button } from "@/components/ui/button";
-import { PREVIEW_CATALOG } from "@/lib/player/demo";
+import { previewChannel,resolveLayout,type AppLayout } from "@/lib/layout";
+import { progressNamespace } from "@/lib/player/media";
+import { prefs,t as str,type AppSettings,type Lang } from "@/lib/player/prefs";
+import { Smartphone,Tv } from "lucide-react";
+import { useEffect,useState } from "react";
 
-import type { TenantConfig, Session, Kind, Cat, Item, Playing } from "./types";
-import { useTvNav, usePushRegistration } from "./device-hooks";
-import { Shell } from "./Shell";
-import { SettingsDialog } from "./SettingsDialog";
-import { PreviewLogin } from "./PreviewLogin";
-import { Login } from "./Login";
 import { Browser } from "./Browser";
+import { usePushRegistration,useTvNav } from "./device-hooks";
+import { Login } from "./Login";
+import { PreviewLogin } from "./PreviewLogin";
+import { SettingsDialog } from "./SettingsDialog";
+import { Shell } from "./Shell";
+import type { Session,TenantConfig } from "./types";
 const cmpVer = (a: string, b: string) => {
   const pa = a.split(".").map(Number), pb = b.split(".").map(Number);
   for (let i = 0; i < 3; i++) if ((pa[i] ?? 0) !== (pb[i] ?? 0)) return (pa[i] ?? 0) - (pb[i] ?? 0);
