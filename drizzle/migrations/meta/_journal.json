@@ -113,6 +113,13 @@
       "when": 1792274246801,
       "tag": "0015_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792284031253,
+      "tag": "0016_builtin_activation_codes",
+      "breakpoints": true
     }
   ]
 }
