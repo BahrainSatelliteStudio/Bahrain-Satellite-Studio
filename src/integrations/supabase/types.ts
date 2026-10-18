@@ -684,6 +684,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_activation_bundle: {
+        Args: {
+          _account: string
+          _codes: Json
+          _label: string
+          _mode: string
+          _password: string
+          _source: string
+          _tenant: string
+          _username: string
+        }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
