@@ -272,12 +272,12 @@ const server = http.createServer(async (req, res) => {
       const s = session(req);
       if (!s) return send(res, 401, { error: "سجّل الدخول" });
       const who = s.user;
-      const feature = p.startsWith("/api/servers") ? "servers" : p.startsWith("/api/notifications") ? "notify" : ["/api/backups","/api/backup","/api/restore","/api/backup-test"].includes(p) ? "backup" : p==="/api/upload" ? "brand" : null;
+      const feature = p.startsWith("/api/servers") ? "servers" : p.startsWith("/api/notifications") ? "notify" : p.startsWith("/api/codes") ? "activation" : ["/api/backups","/api/backup","/api/restore","/api/backup-test"].includes(p) ? "backup" : p==="/api/upload" ? "brand" : null;
       if(feature && !featureEnabled(feature)) return send(res,403,{error:"الميزة غير متاحة لهذا التطبيق"});
       if (p === "/api/logout") { delete db.sessions[s.sid]; save(); return send(res, 200, { ok: true }, { "set-cookie": "sid=; Path=/; Max-Age=0" }); }
       if (p === "/api/logout-all") { for (const [k, v] of Object.entries(db.sessions)) if (v.user === who) delete db.sessions[k]; save(); return send(res, 200, { ok: true }); }
       if (p === "/api/me") return send(res, 200, { user: who, version: VERSION, users: db.users.map((u) => u.username) });
-      if (p === "/api/state") return send(res, 200, { settings: db.settings, servers: featureEnabled("servers") ? db.servers : [], notifications: featureEnabled("notify") ? db.notifications : [], features: manifest?.features ?? null, hosts_used: hostsUsed() });
+      if (p === "/api/state") return send(res, 200, { settings: db.settings, servers: featureEnabled("servers") ? db.servers : [], notifications: featureEnabled("notify") ? db.notifications : [], codes: featureEnabled("activation") ? db.codes.map(({ id, hint, mode, source_id, username, device, enabled, created_at, activated_at }) => ({ id, hint, mode, source_id, username, bound: !!device, enabled, created_at, activated_at: activated_at || null })) : [], features: manifest?.features ?? null, hosts_used: hostsUsed() });
       if (p === "/api/changes") return send(res, 200, db.changes);
       if (p === "/api/backups") return send(res, 200, fs.readdirSync(BACKUPS).filter((x) => x.startsWith("db-")).sort().reverse());
 
