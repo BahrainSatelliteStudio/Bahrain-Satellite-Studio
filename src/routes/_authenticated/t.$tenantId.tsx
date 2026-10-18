@@ -27,6 +27,7 @@ type Source = Database["public"]["Tables"]["tenant_sources"]["Row"];
 type Colors = { primary: string; secondary: string; accent: string; background: string; surface: string; text: string; button: string };
 
 export const Route = createFileRoute("/_authenticated/t/$tenantId")({
+  validateSearch: (search: Record<string, unknown>): { section?: "studio" | "builds" } => ({ section: search.section === "studio" || search.section === "builds" ? search.section : undefined }),
   head: () => ({ meta: [
     { title: "لوحة إدارة التطبيق" }, { name: "description", content: "تحكم بالسيرفرات والهوية والتواصل والإشعارات لتطبيقك" },
     { property: "og:title", content: "لوحة إدارة التطبيق" }, { property: "og:description", content: "تحكم بالسيرفرات والهوية والتواصل والإشعارات لتطبيقك" },
@@ -47,7 +48,9 @@ function Panel() {
   const me = useMe();
   const qc = useQueryClient();
   const nav = Route.useNavigate();
-  const [sec, setSec] = useState<Sec>("home");
+  const search = Route.useSearch();
+  const [sec, setSec] = useState<Sec>(search.section ?? "home");
+  useEffect(() => { setSec(search.section ?? "home"); }, [search.section]);
   const [open, setOpen] = useState(false);
   const access = useQuery({ queryKey: ["tenant-access", tenantId, me.data?.uid], enabled: !!me.data, queryFn: async () => {
     if (me.data?.isAdmin) return true;
@@ -86,6 +89,7 @@ function Panel() {
           <p className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-primary" />{ctx.isAdmin ? "المسؤول" : "المالك"} · {ctx.email}</p>
           <p>إصدار اللوحة 1.0.0</p>
           {ctx.isAdmin && <Link to="/dashboard" className="flex items-center gap-2 font-bold text-foreground"><ArrowRight className="h-4 w-4" />كل الزبائن</Link>}
+          <Button asChild variant="ghost" size="sm"><Link to="/applications"><Smartphone />صناعة التطبيقات</Link></Button>
           <button className="flex items-center gap-2 font-bold text-foreground" onClick={() => signOut(qc, () => nav({ to: "/auth", replace: true }))}><LogOut className="h-4 w-4" />تسجيل الخروج</button>
         </div>
       </aside>

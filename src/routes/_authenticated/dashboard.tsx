@@ -59,6 +59,7 @@ function Dashboard() {
       <header className="flex items-center justify-between border-b px-6 py-4">
         <span className="text-xl font-extrabold">BHSAT <span className="text-primary">Studio</span></span>
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <Button asChild variant="outline" size="sm"><Link to="/applications"><Smartphone className="h-4 w-4" />صناعة التطبيقات</Link></Button>
           {me.data?.isAdmin && <Button asChild variant="outline" size="sm"><Link to="/site-settings">إدارة الصفحة الرئيسية</Link></Button>}
           {me.data?.isAdmin && <Button asChild variant="outline" size="sm"><Link to="/firebase">الإشعارات (Firebase)</Link></Button>}
           {me.data?.isAdmin && <Link to="/diagnose" className="flex items-center gap-1 hover:text-foreground"><Stethoscope className="h-4 w-4" />تشخيص البناء</Link>}
