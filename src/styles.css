@@ -219,3 +219,20 @@ body { font-family: 'Tajawal', system-ui, sans-serif; }
   z-index: 5;
 }
 [data-nav] { transition: transform 0.12s ease, outline-color 0.12s ease; }
+
+/* Opt-in viewing experience; customer color variables remain authoritative. */
+.experience-shade { background: linear-gradient(to left, var(--background) 0%, color-mix(in oklab, var(--background) 85%, transparent) 32%, transparent 90%), linear-gradient(to top, var(--background), transparent 55%); }
+[dir="ltr"] .experience-shade { transform: scaleX(-1); }
+.experience-feature { min-height: 340px; }
+.experience-nav { position: sticky; top: 24px; width: 205px; flex-shrink: 0; align-self: flex-start; display: flex; flex-direction: column; gap: 6px; }
+.experience-nav-item { min-height: 48px; height: auto; justify-content: flex-start; padding: 12px 14px; gap: 12px; font-weight: 700; white-space: normal; }
+.watch-progress { display: block; width: 100%; height: 3px; accent-color: var(--primary); }
+.watch-progress::-webkit-progress-bar { background: var(--secondary); }
+.watch-progress::-webkit-progress-value { background: var(--primary); }
+.watch-progress::-moz-progress-bar { background: var(--primary); }
+@media (max-width: 767px) {
+  .experience-feature { min-height: 310px; }
+  .experience-nav { position: fixed; inset-inline: 0; bottom: 0; top: auto; z-index: 30; width: auto; flex-direction: row; overflow-x: auto; border-top: 1px solid var(--border); background: var(--background); padding: 6px 8px max(6px, env(safe-area-inset-bottom)); }
+  .experience-nav-item { flex-shrink: 0; flex-direction: column; gap: 4px; min-width: 65px; padding: 8px; font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) { [data-nav] { transition: none; } [data-nav]:focus-visible { transform: none; } }
