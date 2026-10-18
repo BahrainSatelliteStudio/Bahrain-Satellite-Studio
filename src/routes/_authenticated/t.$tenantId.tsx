@@ -52,7 +52,6 @@ const SECTIONS = [
   ["activation", "أكواد التفعيل", ShieldCheck], ["contact", "روابط التواصل والدعم", Phone], ["notify", "الإشعارات الجماعية", Bell], ["builds", "الإصدارات والتحديثات", Package],
   ["changes", "سجل التغييرات", History], ["backup", "النسخ الاحتياطي", DatabaseBackup], ["security", "أمان حسابي", ShieldCheck],
 ] as const;
-type Sec = (typeof SECTIONS)[number][0];
 
 function Panel() {
   const { tenantId } = Route.useParams();
