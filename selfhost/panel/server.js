@@ -128,6 +128,7 @@ function publicConfig() {
     latest_version: s.latest_version, min_version: s.min_version, update_url: s.update_url || null,
     sources: db.servers.filter((x) => x.enabled).map((x) => ({ id: x.id, type: x.type, name: x.name, has_code: !!x.login_code, activation_enabled: !!x.activation_api_url })),
     activation_enabled: db.servers.some((x) => x.enabled && x.type === "xtream" && x.activation_api_url),
+    builtin_activation_enabled: featureEnabled("activation") && db.codes.some((x) => x.enabled),
     announcements: db.notifications.filter((n) => n.active && (!n.expires_at || Date.parse(n.expires_at) > t)).map(({ id, title, body, image_url, kind }) => ({ id, title, body, image_url, kind })),
   };
 }
