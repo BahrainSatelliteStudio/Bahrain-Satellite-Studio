@@ -162,6 +162,21 @@ async function safeFetch(raw, init = {}) {
     if (init.body) r.write(init.body); r.end();
   });
 }
+/* ---------- built-in activation codes (BH-) — same rules as the cloud panel ---------- */
+const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const genCode = () => "BH-" + [0, 1, 2].map(() => Array.from(crypto.randomBytes(4)).map((b) => CODE_CHARS[b % CODE_CHARS.length]).join("")).join("-");
+const codeHash = (c) => crypto.createHash("sha256").update(c.trim().toUpperCase()).digest("hex");
+function redeemBuiltin(code, mac, res, cors) {
+  if (!featureEnabled("activation")) return send(res, 403, { error: "تفعيل الأكواد غير متاح لهذا التطبيق" }, cors);
+  const c = db.codes.find((x) => x.hash === codeHash(code));
+  if (!c || !c.enabled) return send(res, 400, { error: "كود التفعيل غير صحيح" }, cors);
+  if (c.device && c.device !== mac) return send(res, 403, { error: "هذا الكود مفعّل على جهاز آخر" }, cors);
+  const sv = db.servers.find((x) => x.id === c.source_id && x.enabled);
+  if (!sv) return send(res, 400, { error: "السيرفر المرتبط بالكود غير متاح" }, cors);
+  if (!c.device) { c.device = mac; c.activated_at = now(); save(); }
+  return send(res, 200, { serverId: sv.id, sourceId: sv.id, username: c.username, password: c.password, hosts: [sv.url, ...sv.backup_urls] }, cors);
+}
+
 async function activateRoute(req, res, cors) {
   const ip = req.headers["x-real-ip"] || req.socket.remoteAddress; const t = Date.now();
   const h = (actHits.get(ip) || []).filter((x) => t - x < 600_000); h.push(t); actHits.set(ip, h);
