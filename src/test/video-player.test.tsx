@@ -47,7 +47,9 @@ describe("Playback regressions", () => {
     const view = render(<PlayerApp cfg={cfg} preview />);
     fireEvent.click(view.getByRole("button", { name: "أكمل المشاهدة" }));
     expect(view.queryByText("Saved movie")).toBeNull();
-    fireEvent.click(view.getByRole("button", { name: "الإعدادات" }));
+    const settingsButton = view.getAllByRole("button", { name: "الإعدادات" }).at(-1);
+    if (!settingsButton) throw new Error("Missing settings button");
+    fireEvent.click(settingsButton);
     fireEvent.change(view.getByPlaceholderText("••••"), { target: { value: "0000" } });
     fireEvent.click(view.getByRole("button", { name: "فتح" }));
     fireEvent.click(view.getByRole("button", { name: "مسح سجل المشاهدة" }));
