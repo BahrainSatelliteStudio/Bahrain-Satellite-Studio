@@ -42,8 +42,10 @@ async function boot() {
   await load(); go(SEC);
 }
 function go(sec) {
+  const sections = SECTIONS.filter(([k])=>!S.features || ['home','changes','security'].includes(k) || S.features.includes(k) && !['brand','themes'].includes(k));
+  if(!sections.some(([k])=>k===sec))sec='home';
   SEC = sec; $("#side").classList.remove("open");
-  $("#nav").innerHTML = SECTIONS.map(([k, l, i]) => `<button data-k="${k}" class="${k === sec ? "on" : ""}"><span>${i}</span>${l}</button>`).join("");
+  $("#nav").innerHTML = sections.map(([k, l, i]) => `<button data-k="${k}" class="${k === sec ? "on" : ""}"><span>${i}</span>${l}</button>`).join("");
   $("#nav").querySelectorAll("button").forEach((b) => (b.onclick = () => go(b.dataset.k)));
   $("#title").textContent = SECTIONS.find((s) => s[0] === sec)[1];
   VIEWS[sec]($("#view"));

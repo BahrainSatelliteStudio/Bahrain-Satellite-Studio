@@ -22,3 +22,6 @@
 - Built-in activation separates broadcast accounts from hashed codes; authenticated tenant-scoped management and atomic database redemption keep individual/shared accounts isolated and prevent concurrent device claims. Raw codes are returned only at creation; disabling a code prevents future redemption, not upstream broadcast access already granted.
 - Feature implementations live in `src/features/`; routes retain their URL, metadata, access and loading contracts, while existing public modules may re-export implementations to preserve callers during incremental organization.
 - Keep player identity and preference rules in browser-safe `src/lib/player/` and keep server helpers behind handler-local imports; this prevents organization changes from crossing runtime or storage boundaries.
+
+- Application orders and immutable quote snapshots live separately from tenants; only admin provisioning creates tenants after customer acceptance, so legacy applications and signing remain unchanged.
+- Order-managed panels derive capabilities from approved feature selections; optional selfhost delivery manifests enforce the same selections without adding panel dependencies.

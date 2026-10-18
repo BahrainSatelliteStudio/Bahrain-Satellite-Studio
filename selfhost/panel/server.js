@@ -6,6 +6,10 @@ const path = require("node:path");
 const crypto = require("node:crypto");
 
 const ROOT = __dirname;
+const rules = require("./features");
+const manifestPath = path.join(ROOT,"delivery.json");
+const manifest = fs.existsSync(manifestPath) ? rules.validateManifest(JSON.parse(fs.readFileSync(manifestPath,"utf8"))) : null;
+const featureEnabled = k => rules.featureEnabled(manifest,k);
 const DATA = process.env.PANEL_DATA || path.join(ROOT, "data");
 const UPLOADS = path.join(DATA, "uploads");
 const BACKUPS = path.join(DATA, "backups");
@@ -28,6 +32,7 @@ if (!db) {
       latest_version: "1.0.0", min_version: "1.0.0", update_url: "", max_hosts: 40 },
     servers: [], notifications: [], changes: [], users: [], sessions: {},
   };
+  if (manifest) { db.settings.name=manifest.name; db.settings.logo=manifest.logo; db.settings.theme=manifest.theme; db.settings.layout={template:manifest.template}; db.settings.max_hosts=2; }
   const pass = process.env.PANEL_ADMIN_PASSWORD || crypto.randomBytes(9).toString("base64url");
   const user = (process.env.PANEL_ADMIN_USER || "admin").toLowerCase();
   db.users.push({ username: user, ...hashPw(pass) });
@@ -116,7 +121,7 @@ async function checkUrl(u) {
 function publicConfig() {
   const s = db.settings, t = Date.now();
   return {
-    name: s.name, logo_url: s.logo, banner_url: s.banner, theme: s.theme, colors: s.colors, primary_color: s.colors.primary, accent_color: s.colors.accent,
+    slug: manifest?.slug, layout: s.layout, feature_selection: manifest?.features, name: s.name, logo_url: s.logo, banner_url: s.banner, theme: s.theme, colors: s.colors, primary_color: s.colors.primary, accent_color: s.colors.accent,
     support_whatsapp: s.whatsapp || null, support_telegram: s.telegram || null, support_facebook: s.facebook || null, support_website: s.website || null,
     support_email: s.email || null, support_phone: s.phone || null, store_url: s.store_url || null, customer_notice: s.notice || null,
     latest_version: s.latest_version, min_version: s.min_version, update_url: s.update_url || null,
@@ -250,15 +255,17 @@ const server = http.createServer(async (req, res) => {
       const s = session(req);
       if (!s) return send(res, 401, { error: "سجّل الدخول" });
       const who = s.user;
+      const feature = p.startsWith("/api/servers") ? "servers" : p.startsWith("/api/notifications") ? "notify" : ["/api/backups","/api/backup","/api/restore","/api/backup-test"].includes(p) ? "backup" : p==="/api/upload" ? "brand" : null;
+      if(feature && !featureEnabled(feature)) return send(res,403,{error:"الميزة غير متاحة لهذا التطبيق"});
       if (p === "/api/logout") { delete db.sessions[s.sid]; save(); return send(res, 200, { ok: true }, { "set-cookie": "sid=; Path=/; Max-Age=0" }); }
       if (p === "/api/logout-all") { for (const [k, v] of Object.entries(db.sessions)) if (v.user === who) delete db.sessions[k]; save(); return send(res, 200, { ok: true }); }
       if (p === "/api/me") return send(res, 200, { user: who, version: VERSION, users: db.users.map((u) => u.username) });
-      if (p === "/api/state") return send(res, 200, { settings: db.settings, servers: db.servers, notifications: db.notifications, hosts_used: hostsUsed() });
+      if (p === "/api/state") return send(res, 200, { settings: db.settings, servers: featureEnabled("servers") ? db.servers : [], notifications: featureEnabled("notify") ? db.notifications : [], features: manifest?.features ?? null, hosts_used: hostsUsed() });
       if (p === "/api/changes") return send(res, 200, db.changes);
       if (p === "/api/backups") return send(res, 200, fs.readdirSync(BACKUPS).filter((x) => x.startsWith("db-")).sort().reverse());
 
       if (p === "/api/settings" && req.method === "PUT") {
-        const b = await body(req); const s0 = db.settings; const next = { ...s0 };
+        const b = await body(req); if(!rules.settingsAllowed(manifest,b)) return send(res,403,{error:"هذه الإعدادات تخص الإدارة أو لم تعتمد للتطبيق"}); const s0 = db.settings; const next = { ...s0 };
         for (const k of ["name", "whatsapp", "telegram", "facebook", "website", "email", "phone", "store_url", "notice", "update_url", "theme"]) if (k in b) next[k] = str(b[k], k === "notice" ? 3000 : 300);
         for (const k of ["latest_version", "min_version"]) if (k in b) { if (!/^\d+\.\d+\.\d+$/.test(b[k])) return send(res, 400, { error: "صيغة النسخة 1.0.0" }); next[k] = b[k]; }
         if (b.colors) { for (const v of Object.values(b.colors)) if (!isHex(v)) return send(res, 400, { error: "كود لون غير صحيح" }); next.colors = { ...DEFAULT_COLORS, ...b.colors }; }
@@ -322,6 +329,7 @@ const server = http.createServer(async (req, res) => {
         const b = await body(req, 60 * 1024 * 1024);
         let j; try { j = JSON.parse(decrypt(String(b.file || ""), String(b.password || ""))); } catch { return send(res, 400, { error: "كلمة الحماية غير صحيحة أو الملف تالف" }); }
         if (!j.settings || !Array.isArray(j.servers)) return send(res, 400, { error: "ملف غير صالح" });
+        if(!rules.restoreAllowed(manifest,db,j)) return send(res,403,{error:"النسخة تغير هوية التطبيق أو ميزاته المقفلة"});
         fs.copyFileSync(DB_FILE, path.join(BACKUPS, `before-restore-${Date.now()}.json`));
         for (const [f, data] of j.uploads || []) fs.writeFileSync(path.join(UPLOADS, path.basename(f)), Buffer.from(data, "base64"));
         db = { settings: j.settings, servers: j.servers, notifications: j.notifications || [], changes: j.changes || [], users: j.users?.length ? j.users : db.users, sessions: {} };
