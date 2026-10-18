@@ -13,6 +13,7 @@
 - The applications library uses the shared TEMPLATES registry and PlayerApp preview; applying a template updates only the tenant layout template, preserving sections and using the existing APK build pipeline.
 - The opt-in viewing experience uses focused navigation/home/history/detail components with the shared PlayerApp transport logic; existing tenant templates remain unchanged so redesign never silently changes deployed apps.
 - Media history keys and preview namespaces are defined in the browser-safe player/media module; history entries retain their stored identity so reopening cannot create duplicate typed keys.
+- All preview preferences, backups, favorites and playback progress use the same isolated namespace; playback owns remote keys while open and saves progress only after current-source metadata and resume readiness to avoid erasing history on failed loads.
 - Homepage content uses a validated singleton in public.homepage_settings and a shared HomepageView renderer for the public page and admin preview; authenticated admin-only saves and RLS prevent customer edits.
 - Tenant management screens verify tenant membership before loading, while privileged actions validate admin role server-side; customer account creation never attaches an existing account after a username conflict.
 

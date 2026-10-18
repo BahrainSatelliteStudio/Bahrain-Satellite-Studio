@@ -33,6 +33,8 @@ export function VideoPlayer({ src, title, onClose, slug, itemId, logo, season, e
   const saveRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // الترجمة
   const [subOpen, setSubOpen] = useState(false);
+  const subOpenRef = useRef(false);
+  subOpenRef.current = subOpen;
   const [subQuery, setSubQuery] = useState(title);
   const [subLang, setSubLang] = useState<"ar" | "en">("ar");
   const [subs, setSubs] = useState<SubResult[] | null>(null);
@@ -95,7 +97,7 @@ export function VideoPlayer({ src, title, onClose, slug, itemId, logo, season, e
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       if (target?.matches("input, textarea, select")) return;
-      if (subOpen) return;
+      if (subOpenRef.current) return;
       const k = e.key;
       if (k === "Escape" || k === "Backspace" || k === "GoBack" || k === "BrowserBack") { e.preventDefault(); onClose(); return; }
       if (k === " " || k === "MediaPlayPause" || k === "Enter" || k === "NumpadEnter") {
