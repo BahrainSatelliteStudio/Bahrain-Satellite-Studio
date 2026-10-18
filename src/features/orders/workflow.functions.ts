@@ -26,7 +26,21 @@ export const orderAction=createServerFn({method:'POST'}).middleware([requireSupa
  const r=await context.supabase.rpc('order_workflow',{_id:data.id,_action:data.action,_payload:payload as Json});
  if(r.error)throw new Error(r.error.message);return r.data;
 });
-export const saveCatalog=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((d:unknown)=>z.object({id:z.string().regex(/^[a-z0-9-]+$/),name:z.string().min(2).max(80),enabled:z.boolean(),templates:z.array(z.string()).min(1),features:z.array(z.enum(AVAILABLE_FEATURES))}).strict().parse(d)).handler(async({data,context})=>{
+export const saveCatalog=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((d:unknown)=>z.object({id:z.string().regex(/^[a-z0-9-]+$/),name:z.string().min(2).max(80),enabled:z.boolean(),templates:z.array(z.string()).min(1),features:z.array(z.enum(AVAILABLE_FEATURES)),source:z.enum(['internal','opensource']).default('internal'),repo_url:z.string().url().max(500).nullable().default(null),license:z.string().max(40).nullable().default(null),status:z.enum(['preparing','ready','suspended']).default('ready')}).strict().parse(d)).handler(async({data,context})=>{
  const {assertAdmin}=await import('@/lib/admin-access.server');await assertAdmin(context.supabase,context.userId);
- const r=await context.supabase.rpc('order_workflow',{_id:null as unknown as string,_action:'catalog',_payload:data});if(r.error)throw new Error(r.error.message);return {ok:true};
+ const {data:existing}=await context.supabase.from('application_catalog').select('id').eq('id',data.id).maybeSingle();
+ const row={id:data.id,name:data.name,enabled:data.enabled,templates:data.templates,features:data.features,source:data.source,repo_url:data.repo_url,license:data.license,status:data.status};
+ const r=existing?await context.supabase.from('application_catalog').update(row).eq('id',data.id):await context.supabase.from('application_catalog').insert(row);
+ if(r.error)throw new Error(existing?'تعذر تحديث التطبيق':'تعذر إضافة التطبيق');return {ok:true};
+});
+const themeInput=z.object({id:z.string().uuid().optional(),key:z.string().regex(/^[a-z0-9-]{2,40}$/),name:z.string().min(2).max(60),colors:z.record(z.string().regex(/^#[0-9A-Fa-f]{6}$/)),catalog_id:z.string().regex(/^[a-z0-9-]+$/).nullable(),enabled:z.boolean().default(true)}).strict();
+export const saveTheme=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((d:unknown)=>themeInput.parse(d)).handler(async({data,context})=>{
+ const {assertAdmin}=await import('@/lib/admin-access.server');await assertAdmin(context.supabase,context.userId);
+ const row={key:data.key,name:data.name,colors:data.colors,catalog_id:data.catalog_id,enabled:data.enabled};
+ const r=data.id?await context.supabase.from('app_themes').update(row).eq('id',data.id):await context.supabase.from('app_themes').insert(row);
+ if(r.error)throw new Error(r.error.code==='23505'?'معرّف الثيم مستخدم مسبقًا':'تعذر حفظ الثيم');return {ok:true};
+});
+export const deleteTheme=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((d:unknown)=>z.object({id:z.string().uuid()}).strict().parse(d)).handler(async({data,context})=>{
+ const {assertAdmin}=await import('@/lib/admin-access.server');await assertAdmin(context.supabase,context.userId);
+ const r=await context.supabase.from('app_themes').delete().eq('id',data.id);if(r.error)throw new Error('تعذر حذف الثيم');return {ok:true};
 });
