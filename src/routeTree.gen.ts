@@ -12,15 +12,21 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedApplicationsRouteImport } from './routes/_authenticated/applications'
+import { Route as AuthenticatedCatalogRouteImport } from './routes/_authenticated/catalog'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDiagnoseRouteImport } from './routes/_authenticated/diagnose'
 import { Route as AuthenticatedFirebaseRouteImport } from './routes/_authenticated/firebase'
+import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
+import { Route as AuthenticatedQuotesRouteImport } from './routes/_authenticated/quotes'
 import { Route as AuthenticatedSiteSettingsRouteImport } from './routes/_authenticated/site-settings'
+import { Route as AuthenticatedWorkspaceRouteImport } from './routes/_authenticated/workspace'
 import { Route as GuideSlugRouteImport } from './routes/guide.$slug'
 import { Route as InstallSlugRouteImport } from './routes/install.$slug'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as PreviewSlugRouteImport } from './routes/preview.$slug'
+import { Route as AuthenticatedOrdersOrderIdRouteImport } from './routes/_authenticated/orders_.$orderId'
 import { Route as AuthenticatedTTenantIdRouteImport } from './routes/_authenticated/t.$tenantId'
 import { Route as ApiPublicBuildCompleteRouteImport } from './routes/api/public/build-complete'
 import { Route as ApiPublicFileRouteImport } from './routes/api/public/file'
@@ -42,12 +48,22 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedApplicationsRoute =
   AuthenticatedApplicationsRouteImport.update({
     id: '/applications',
     path: '/applications',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCatalogRoute = AuthenticatedCatalogRouteImport.update({
+  id: '/catalog',
+  path: '/catalog',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -63,12 +79,27 @@ const AuthenticatedFirebaseRoute = AuthenticatedFirebaseRouteImport.update({
   path: '/firebase',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedOrdersRoute = AuthenticatedOrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedQuotesRoute = AuthenticatedQuotesRouteImport.update({
+  id: '/quotes',
+  path: '/quotes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSiteSettingsRoute =
   AuthenticatedSiteSettingsRouteImport.update({
     id: '/site-settings',
     path: '/site-settings',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedWorkspaceRoute = AuthenticatedWorkspaceRouteImport.update({
+  id: '/workspace',
+  path: '/workspace',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const GuideSlugRoute = GuideSlugRouteImport.update({
   id: '/guide/$slug',
   path: '/guide/$slug',
@@ -89,6 +120,12 @@ const PreviewSlugRoute = PreviewSlugRouteImport.update({
   path: '/preview/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedOrdersOrderIdRoute =
+  AuthenticatedOrdersOrderIdRouteImport.update({
+    id: '/orders_/$orderId',
+    path: '/orders/$orderId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedTTenantIdRoute = AuthenticatedTTenantIdRouteImport.update({
   id: '/t/$tenantId',
   path: '/t/$tenantId',
@@ -123,15 +160,21 @@ const ApiPublicAppSlugRoute = ApiPublicAppSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/account': typeof AuthenticatedAccountRoute
   '/applications': typeof AuthenticatedApplicationsRoute
+  '/catalog': typeof AuthenticatedCatalogRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/diagnose': typeof AuthenticatedDiagnoseRoute
   '/firebase': typeof AuthenticatedFirebaseRoute
+  '/orders': typeof AuthenticatedOrdersRoute
+  '/quotes': typeof AuthenticatedQuotesRoute
   '/site-settings': typeof AuthenticatedSiteSettingsRoute
+  '/workspace': typeof AuthenticatedWorkspaceRoute
   '/guide/$slug': typeof GuideSlugRoute
   '/install/$slug': typeof InstallSlugRoute
   '/p/$slug': typeof PSlugRoute
   '/preview/$slug': typeof PreviewSlugRoute
+  '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/t/$tenantId': typeof AuthenticatedTTenantIdRoute
   '/api/public/build-complete': typeof ApiPublicBuildCompleteRoute
   '/api/public/file': typeof ApiPublicFileRoute
@@ -142,15 +185,21 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/account': typeof AuthenticatedAccountRoute
   '/applications': typeof AuthenticatedApplicationsRoute
+  '/catalog': typeof AuthenticatedCatalogRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/diagnose': typeof AuthenticatedDiagnoseRoute
   '/firebase': typeof AuthenticatedFirebaseRoute
+  '/orders': typeof AuthenticatedOrdersRoute
+  '/quotes': typeof AuthenticatedQuotesRoute
   '/site-settings': typeof AuthenticatedSiteSettingsRoute
+  '/workspace': typeof AuthenticatedWorkspaceRoute
   '/guide/$slug': typeof GuideSlugRoute
   '/install/$slug': typeof InstallSlugRoute
   '/p/$slug': typeof PSlugRoute
   '/preview/$slug': typeof PreviewSlugRoute
+  '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/t/$tenantId': typeof AuthenticatedTTenantIdRoute
   '/api/public/build-complete': typeof ApiPublicBuildCompleteRoute
   '/api/public/file': typeof ApiPublicFileRoute
@@ -163,15 +212,21 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/applications': typeof AuthenticatedApplicationsRoute
+  '/_authenticated/catalog': typeof AuthenticatedCatalogRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/diagnose': typeof AuthenticatedDiagnoseRoute
   '/_authenticated/firebase': typeof AuthenticatedFirebaseRoute
+  '/_authenticated/orders': typeof AuthenticatedOrdersRoute
+  '/_authenticated/quotes': typeof AuthenticatedQuotesRoute
   '/_authenticated/site-settings': typeof AuthenticatedSiteSettingsRoute
+  '/_authenticated/workspace': typeof AuthenticatedWorkspaceRoute
   '/guide/$slug': typeof GuideSlugRoute
   '/install/$slug': typeof InstallSlugRoute
   '/p/$slug': typeof PSlugRoute
   '/preview/$slug': typeof PreviewSlugRoute
+  '/_authenticated/orders_/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/_authenticated/t/$tenantId': typeof AuthenticatedTTenantIdRoute
   '/api/public/build-complete': typeof ApiPublicBuildCompleteRoute
   '/api/public/file': typeof ApiPublicFileRoute
@@ -184,15 +239,21 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/account'
     | '/applications'
+    | '/catalog'
     | '/dashboard'
     | '/diagnose'
     | '/firebase'
+    | '/orders'
+    | '/quotes'
     | '/site-settings'
+    | '/workspace'
     | '/guide/$slug'
     | '/install/$slug'
     | '/p/$slug'
     | '/preview/$slug'
+    | '/orders/$orderId'
     | '/t/$tenantId'
     | '/api/public/build-complete'
     | '/api/public/file'
@@ -203,15 +264,21 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/account'
     | '/applications'
+    | '/catalog'
     | '/dashboard'
     | '/diagnose'
     | '/firebase'
+    | '/orders'
+    | '/quotes'
     | '/site-settings'
+    | '/workspace'
     | '/guide/$slug'
     | '/install/$slug'
     | '/p/$slug'
     | '/preview/$slug'
+    | '/orders/$orderId'
     | '/t/$tenantId'
     | '/api/public/build-complete'
     | '/api/public/file'
@@ -223,15 +290,21 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/account'
     | '/_authenticated/applications'
+    | '/_authenticated/catalog'
     | '/_authenticated/dashboard'
     | '/_authenticated/diagnose'
     | '/_authenticated/firebase'
+    | '/_authenticated/orders'
+    | '/_authenticated/quotes'
     | '/_authenticated/site-settings'
+    | '/_authenticated/workspace'
     | '/guide/$slug'
     | '/install/$slug'
     | '/p/$slug'
     | '/preview/$slug'
+    | '/_authenticated/orders_/$orderId'
     | '/_authenticated/t/$tenantId'
     | '/api/public/build-complete'
     | '/api/public/file'
@@ -278,11 +351,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/account': {
+      id: '/_authenticated/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthenticatedAccountRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/applications': {
       id: '/_authenticated/applications'
       path: '/applications'
       fullPath: '/applications'
       preLoaderRoute: typeof AuthenticatedApplicationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/catalog': {
+      id: '/_authenticated/catalog'
+      path: '/catalog'
+      fullPath: '/catalog'
+      preLoaderRoute: typeof AuthenticatedCatalogRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -306,11 +393,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFirebaseRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/orders': {
+      id: '/_authenticated/orders'
+      path: '/orders'
+      fullPath: '/orders'
+      preLoaderRoute: typeof AuthenticatedOrdersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/quotes': {
+      id: '/_authenticated/quotes'
+      path: '/quotes'
+      fullPath: '/quotes'
+      preLoaderRoute: typeof AuthenticatedQuotesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/site-settings': {
       id: '/_authenticated/site-settings'
       path: '/site-settings'
       fullPath: '/site-settings'
       preLoaderRoute: typeof AuthenticatedSiteSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/workspace': {
+      id: '/_authenticated/workspace'
+      path: '/workspace'
+      fullPath: '/workspace'
+      preLoaderRoute: typeof AuthenticatedWorkspaceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/guide/$slug': {
@@ -340,6 +448,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/preview/$slug'
       preLoaderRoute: typeof PreviewSlugRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/orders_/$orderId': {
+      id: '/_authenticated/orders_/$orderId'
+      path: '/orders/$orderId'
+      fullPath: '/orders/$orderId'
+      preLoaderRoute: typeof AuthenticatedOrdersOrderIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/t/$tenantId': {
       id: '/_authenticated/t/$tenantId'
@@ -387,20 +502,32 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedApplicationsRoute: typeof AuthenticatedApplicationsRoute
+  AuthenticatedCatalogRoute: typeof AuthenticatedCatalogRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDiagnoseRoute: typeof AuthenticatedDiagnoseRoute
   AuthenticatedFirebaseRoute: typeof AuthenticatedFirebaseRoute
+  AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
+  AuthenticatedQuotesRoute: typeof AuthenticatedQuotesRoute
   AuthenticatedSiteSettingsRoute: typeof AuthenticatedSiteSettingsRoute
+  AuthenticatedWorkspaceRoute: typeof AuthenticatedWorkspaceRoute
+  AuthenticatedOrdersOrderIdRoute: typeof AuthenticatedOrdersOrderIdRoute
   AuthenticatedTTenantIdRoute: typeof AuthenticatedTTenantIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAccountRoute: AuthenticatedAccountRoute,
   AuthenticatedApplicationsRoute: AuthenticatedApplicationsRoute,
+  AuthenticatedCatalogRoute: AuthenticatedCatalogRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDiagnoseRoute: AuthenticatedDiagnoseRoute,
   AuthenticatedFirebaseRoute: AuthenticatedFirebaseRoute,
+  AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
+  AuthenticatedQuotesRoute: AuthenticatedQuotesRoute,
   AuthenticatedSiteSettingsRoute: AuthenticatedSiteSettingsRoute,
+  AuthenticatedWorkspaceRoute: AuthenticatedWorkspaceRoute,
+  AuthenticatedOrdersOrderIdRoute: AuthenticatedOrdersOrderIdRoute,
   AuthenticatedTTenantIdRoute: AuthenticatedTTenantIdRoute,
 }
 
