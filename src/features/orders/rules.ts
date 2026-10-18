@@ -13,8 +13,13 @@ export function orderPanelSection(features:unknown,section:string){
  if(['studio','brand','layout'].includes(section))return false;
  return f.selected?.includes(section)??false;
 }
-export function validateAvailable(selection:Selection,catalog:{templates:unknown;features:unknown}){
+export function themesForCatalog(themes:{key:string;catalog_id:string|null;enabled:boolean}[],catalogId:string){
+ return themes.filter(t=>t.enabled&&(t.catalog_id===null||t.catalog_id===catalogId));
+}
+export function validateAvailable(selection:Selection,catalog:{templates:unknown;features:unknown;status?:string},themes?:{key:string;catalog_id:string|null;enabled:boolean}[]){
  if(!Array.isArray(catalog.templates)||!catalog.templates.includes(selection.template)||!Array.isArray(catalog.features)||selection.features.some(f=>!(catalog.features as string[]).includes(f)))throw new Error('بعض الاختيارات لم تعد متاحة');
+ if(catalog.status&&catalog.status!=='ready')throw new Error('هذا التطبيق قيد التجهيز ولا يقبل الطلبات بعد');
+ if(themes&&!themesForCatalog(themes,selection.catalog_id).some(t=>t.key===selection.theme))throw new Error('الثيم المختار غير متوافق مع هذا التطبيق');
  return selection;
 }
 export function panelManifest(selection:Selection,slug:string){return {version:1,slug,name:selection.name,logo:selection.logo,theme:selection.theme,template:selection.template,features:selection.features};}
