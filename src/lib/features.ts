@@ -1,5 +1,6 @@
 // Feature flags per tenant: plan preset + per-feature overrides (stored in tenants.features).
 export const FEATURES = [
+  ["activation", "أكواد التفعيل"],
   ["servers", "السيرفرات والهوستات"],
   ["brand", "الشعار والبنر"],
   ["themes", "تصميم ثيم وألوان مخصصة"],
@@ -20,12 +21,12 @@ export const PLANS: Record<PlanKey, Plan> = {
   premium: { label: "مميزة", maxHosts: 8, on: FEATURES.map((f) => f[0]) },
 };
 
-export type FeatureState = { plan?: string; overrides?: Partial<Record<FeatureKey, boolean>> };
+export type FeatureState = { workflow?: string; selected?: string[]; plan?: string; overrides?: Partial<Record<FeatureKey, boolean>> };
 
 export function resolveFeatures(raw: unknown): Record<FeatureKey, boolean> {
   const s = (raw ?? {}) as FeatureState;
   const plan = PLANS[(s.plan as PlanKey) in PLANS ? (s.plan as PlanKey) : "premium"];
   const out = {} as Record<FeatureKey, boolean>;
-  for (const [k] of FEATURES) out[k] = s.overrides?.[k] ?? plan.on.includes(k);
+  for (const [k] of FEATURES) out[k] = s.workflow === "order" ? k === "builds" || !!s.selected?.includes(k) : s.overrides?.[k] ?? plan.on.includes(k);
   return out;
 }

@@ -1,3 +1,4 @@
+import { orderPanelSection } from "@/features/orders/rules";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -88,18 +89,18 @@ export function Home(c: Ctx) {
         </div>
       </div>
       <div className="flex flex-wrap gap-2">
-        <Button onClick={() => c.go("servers")}>
+        {(c.isAdmin || orderPanelSection(t.features,"servers")) && <Button onClick={() => c.go("servers")}>
           <Server className="h-4 w-4" />
           إدارة الهوستات
-        </Button>
-        <Button variant="secondary" onClick={() => c.go("notify")}>
+        </Button>}
+        {(c.isAdmin || orderPanelSection(t.features,"notify")) && <Button variant="secondary" onClick={() => c.go("notify")}>
           <Bell className="h-4 w-4" />
           إرسال إشعار
-        </Button>
-        <Button variant="secondary" onClick={() => c.go("brand")}>
+        </Button>}
+        {(c.isAdmin || orderPanelSection(t.features,"brand")) && <Button variant="secondary" onClick={() => c.go("brand")}>
           <Palette className="h-4 w-4" />
           تغيير الثيم
-        </Button>
+        </Button>}
       </div>
       {c.isAdmin && <PlanEditor c={c} />}
       {c.isAdmin && <PanelLink c={c} />}

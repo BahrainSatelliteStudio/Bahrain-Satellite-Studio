@@ -1,3 +1,4 @@
+import { useMe } from "@/lib/me";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -25,6 +26,7 @@ export const Route = createFileRoute("/_authenticated/applications")({
 function Applications() {
   const { data: apps } = useSuspenseQuery(applicationsQuery());
   const qc = useQueryClient();
+  const me = useMe();
   const [selectedId, setSelectedId] = useState("");
   const [template, setTemplate] = useState<TemplateKey>("experience");
   const [q, setQ] = useState("");
@@ -32,7 +34,7 @@ function Applications() {
   const selected = apps.find((app) => app.id === selectedId) ?? apps[0];
   const filtered = apps.filter((app) => `${app.name} ${app.slug}`.toLowerCase().includes(q.toLowerCase()));
   const apply = async () => {
-    if (!selected || saving) return;
+    if (!selected || saving || !me.data?.isAdmin) return;
     setSaving(true);
     try {
       const { data: current, error: readError } = await supabase.from("tenants").select("layout").eq("id", selected.id).single();
@@ -44,6 +46,8 @@ function Applications() {
     } catch { toast.error("تعذر حفظ الثيم، حاول مجددًا"); }
     finally { setSaving(false); }
   };
+  if (!me.data) return <main dir="rtl" className="p-8">جارٍ التحقق…</main>;
+  if (!me.data.isAdmin) return <main dir="rtl" className="space-y-4 p-8"><h1>صناعة التطبيقات للإدارة فقط</h1><Button asChild><Link to="/catalog">اختيار تطبيق وطلب تصميمه</Link></Button></main>;
   return <div dir="rtl" className="theme-bhsat min-h-screen bg-background text-foreground">
     <header className="border-b"><div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 p-5">
       <div className="flex items-center gap-3"><Layers className="text-primary" /><span className="text-xl font-extrabold">BHSAT Studio</span></div>

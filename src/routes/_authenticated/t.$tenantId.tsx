@@ -1,3 +1,4 @@
+import { orderPanelSection } from "@/features/orders/rules";
 import { ActivationCodesPanel } from "@/components/ActivationCodesPanel";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -97,7 +98,10 @@ function Panel() {
         .eq("user_id", me.data?.uid ?? "")
         .limit(1);
       if (error) throw error;
-      return !!data?.length;
+      if (!data?.length) return false;
+      const { data: orders, error: oe } = await supabase.from("application_orders").select("status").eq("tenant_id", tenantId);
+      if (oe) throw oe;
+      return !orders?.length || orders.some(o=>o.status==="delivered");
     },
   });
   const tq = useQuery({
@@ -118,7 +122,7 @@ function Panel() {
       <main className="theme-bhsat min-h-screen bg-background p-10 text-center">
         <h1 className="text-2xl font-bold">لا تملك صلاحية الدخول إلى هذا التطبيق</h1>
         <Button asChild variant="outline" className="mt-4">
-          <Link to="/dashboard">العودة إلى تطبيقاتي</Link>
+          <Link to="/workspace">العودة إلى تطبيقاتي</Link>
         </Button>
       </main>
     );
@@ -143,7 +147,7 @@ function Panel() {
     go: setSec,
   };
   const feats = resolveFeatures(t.features);
-  const allowed = (k: string) => ctx.isAdmin || !(k in feats) || feats[k as FeatureKey];
+  const allowed = (k: string) => ctx.isAdmin || (orderPanelSection(t.features,k) && (!(k in feats) || feats[k as FeatureKey]));
   const visible = SECTIONS.filter((s) => allowed(s[0]));
   if (!allowed(sec)) {
     setTimeout(() => setSec("home"));
@@ -213,7 +217,7 @@ function Panel() {
         </div>
       </aside>
       <main className="flex-1 p-4 sm:p-8">
-        <div className={`mx-auto ${sec === "studio" ? "max-w-7xl" : "max-w-5xl"}`}>
+        <div className={`mx-auto ${visible.some(([k])=>k===sec) && sec === "studio" ? "max-w-7xl" : "max-w-5xl"}`}>
           <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
             <div>
               <button
@@ -243,18 +247,18 @@ function Panel() {
               </a>
             </div>
           </div>
-          {sec === "home" && <Home {...ctx} />}
-          {sec === "studio" && <Studio {...ctx} />}
-          {sec === "servers" && <Servers {...ctx} />}
-          {sec === "activation" && <ActivationCodesPanel tenantId={t.id} />}
-          {sec === "brand" && <Brand {...ctx} />}
-          {sec === "layout" && <LayoutEditor {...ctx} />}
-          {sec === "contact" && <Contact {...ctx} />}
-          {sec === "notify" && <Notify {...ctx} />}
-          {sec === "builds" && <Builds {...ctx} />}
-          {sec === "changes" && <Changes {...ctx} />}
-          {sec === "backup" && <Backup {...ctx} />}
-          {sec === "security" && <Security {...ctx} />}
+          {visible.some(([k])=>k===sec) && sec === "home" && <Home {...ctx} />}
+          {visible.some(([k])=>k===sec) && sec === "studio" && <Studio {...ctx} />}
+          {visible.some(([k])=>k===sec) && sec === "servers" && <Servers {...ctx} />}
+          {visible.some(([k])=>k===sec) && sec === "activation" && <ActivationCodesPanel tenantId={t.id} />}
+          {visible.some(([k])=>k===sec) && sec === "brand" && <Brand {...ctx} />}
+          {visible.some(([k])=>k===sec) && sec === "layout" && <LayoutEditor {...ctx} />}
+          {visible.some(([k])=>k===sec) && sec === "contact" && <Contact {...ctx} />}
+          {visible.some(([k])=>k===sec) && sec === "notify" && <Notify {...ctx} />}
+          {visible.some(([k])=>k===sec) && sec === "builds" && <Builds {...ctx} />}
+          {visible.some(([k])=>k===sec) && sec === "changes" && <Changes {...ctx} />}
+          {visible.some(([k])=>k===sec) && sec === "backup" && <Backup {...ctx} />}
+          {visible.some(([k])=>k===sec) && sec === "security" && <Security {...ctx} />}
         </div>
       </main>
     </div>

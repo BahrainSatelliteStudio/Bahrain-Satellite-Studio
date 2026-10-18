@@ -42,8 +42,10 @@ async function boot() {
   await load(); go(SEC);
 }
 function go(sec) {
+  const sections = SECTIONS.filter(([k])=>!S.features || ['home','changes','security'].includes(k) || S.features.includes(k) && !['brand','themes'].includes(k));
+  if(!sections.some(([k])=>k===sec))sec='home';
   SEC = sec; $("#side").classList.remove("open");
-  $("#nav").innerHTML = SECTIONS.map(([k, l, i]) => `<button data-k="${k}" class="${k === sec ? "on" : ""}"><span>${i}</span>${l}</button>`).join("");
+  $("#nav").innerHTML = sections.map(([k, l, i]) => `<button data-k="${k}" class="${k === sec ? "on" : ""}"><span>${i}</span>${l}</button>`).join("");
   $("#nav").querySelectorAll("button").forEach((b) => (b.onclick = () => go(b.dataset.k)));
   $("#title").textContent = SECTIONS.find((s) => s[0] === sec)[1];
   VIEWS[sec]($("#view"));
@@ -67,7 +69,7 @@ const VIEWS = {
     <div class="row" style="margin-bottom:18px"><button class="btn primary" data-go="servers">إدارة الهوستات</button><button class="btn" data-go="notify">إرسال إشعار</button><button class="btn" data-go="brand">تغيير الثيم</button></div>
     <div class="card"><h2>الإشعارات الفعّالة</h2>${live.length ? live.map((n) => `<p><b>${esc(n.title)}</b><br><span class="muted">${esc(n.body)}</span></p>`).join("") : '<p class="muted center">لا توجد إشعارات منشورة حاليًا.</p>'}</div>`;
     $("#cp").onclick = () => { navigator.clipboard?.writeText(`${location.origin}/api/public/config`); toast("تم النسخ"); };
-    v.querySelectorAll("[data-go]").forEach((b) => (b.onclick = () => go(b.dataset.go)));
+    v.querySelectorAll("[data-go]").forEach((b) => { if(S.features && (!S.features.includes(b.dataset.go) || b.dataset.go==="brand"))b.remove(); else b.onclick = () => go(b.dataset.go); });
   },
 
   servers(v) {

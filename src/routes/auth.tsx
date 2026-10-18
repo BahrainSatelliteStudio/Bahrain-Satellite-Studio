@@ -25,7 +25,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
-  useEffect(() => { supabase.auth.getUser().then(({ data }) => { if (data.user) nav({ to: "/dashboard", replace: true }); }); }, [nav]);
+  useEffect(() => { supabase.auth.getUser().then(({ data }) => { if (data.user) nav({ to: "/workspace", replace: true }); }); }, [nav]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,7 +34,7 @@ function AuthPage() {
     const em = login.includes("@") ? login : `${login.replace(/[^a-z0-9._-]/g, "")}@users.bhsat.me`;
     const { error } = await supabase.auth.signInWithPassword({ email: em, password });
     if (error) toast.error("بيانات الدخول غير صحيحة");
-    else nav({ to: "/dashboard" });
+    else nav({ to: "/workspace" });
     setBusy(false);
   }
 

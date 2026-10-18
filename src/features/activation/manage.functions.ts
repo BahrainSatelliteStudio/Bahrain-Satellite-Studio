@@ -11,6 +11,8 @@ export const listActivationCodes = createServerFn({ method: "GET" })
       _tenant_id: data.tenantId,
     });
     if (accessError || !allowed) throw new Error("لا تملك صلاحية إدارة أكواد هذا التطبيق");
+    const { data: feature, error: featureError } = await context.supabase.rpc("order_feature_allowed", {_tenant:data.tenantId,_feature:"activation"});
+    if (featureError || !feature) throw new Error("ميزة الأكواد غير متاحة");
     const [accounts, codes] = await Promise.all([
       context.supabase
         .from("activation_accounts")

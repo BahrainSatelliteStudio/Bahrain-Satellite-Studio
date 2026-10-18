@@ -252,6 +252,174 @@ export type Database = {
         }
         Relationships: []
       }
+      application_catalog: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          features: Json
+          id: string
+          name: string
+          templates: Json
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          features?: Json
+          id: string
+          name: string
+          templates?: Json
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          features?: Json
+          id?: string
+          name?: string
+          templates?: Json
+        }
+        Relationships: []
+      }
+      application_order_events: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          id: string
+          note: string
+          order_id: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          id?: string
+          note?: string
+          order_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          id?: string
+          note?: string
+          order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_order_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "application_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      application_orders: {
+        Row: {
+          created_at: string
+          delivery_check: Json | null
+          id: string
+          owner_id: string
+          revision: number
+          selection: Json
+          status: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_check?: Json | null
+          id?: string
+          owner_id: string
+          revision?: number
+          selection?: Json
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          delivery_check?: Json | null
+          id?: string
+          owner_id?: string
+          revision?: number
+          selection?: Json
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_orders_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      application_quotes: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          duration_days: number
+          expires_at: string
+          id: string
+          included_changes: string
+          order_id: string
+          recurring: string
+          responded_at: string | null
+          response: string | null
+          revision: number
+          scope: string
+          selection: Json
+          start_terms: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency: string
+          duration_days: number
+          expires_at: string
+          id?: string
+          included_changes: string
+          order_id: string
+          recurring?: string
+          responded_at?: string | null
+          response?: string | null
+          revision: number
+          scope: string
+          selection: Json
+          start_terms: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          duration_days?: number
+          expires_at?: string
+          id?: string
+          included_changes?: string
+          order_id?: string
+          recurring?: string
+          responded_at?: string | null
+          response?: string | null
+          revision?: number
+          scope?: string
+          selection?: Json
+          start_terms?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_quotes_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "application_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       builds: {
         Row: {
           apk_url: string | null
@@ -705,6 +873,14 @@ export type Database = {
         Returns: boolean
       }
       is_tenant_member: { Args: { _tenant_id: string }; Returns: boolean }
+      order_feature_allowed: {
+        Args: { _feature: string; _tenant: string }
+        Returns: boolean
+      }
+      order_workflow: {
+        Args: { _action: string; _id: string; _payload?: Json }
+        Returns: string
+      }
       redeem_builtin_code: {
         Args: { _device: string; _hash: string; _slug: string }
         Returns: Json
