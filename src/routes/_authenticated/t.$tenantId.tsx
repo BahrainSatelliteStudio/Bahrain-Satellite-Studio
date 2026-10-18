@@ -14,6 +14,7 @@ import { triggerBuild, checkHost } from "@/lib/iptv.functions";
 import { sendPush, getFirebaseStatus } from "@/lib/firebase.functions";
 import { useMe, signOut } from "@/lib/me";
 import { Button } from "@/components/ui/button";
+import { ActivationCodesPanel } from "@/components/ActivationCodesPanel";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,7 +37,7 @@ export const Route = createFileRoute("/_authenticated/t/$tenantId")({
 
 const SECTIONS = [
   ["home", "الرئيسية", LayoutDashboard], ["studio", "استوديو التطبيق والمحاكاة", Wand2], ["servers", "السيرفرات والهوستات", Server], ["brand", "هوية التطبيق والألوان", Palette], ["layout", "تصميم وأقسام التطبيق", LayoutTemplate],
-  ["contact", "روابط التواصل والدعم", Phone], ["notify", "الإشعارات الجماعية", Bell], ["builds", "الإصدارات والتحديثات", Package],
+  ["activation", "أكواد التفعيل", ShieldCheck], ["contact", "روابط التواصل والدعم", Phone], ["notify", "الإشعارات الجماعية", Bell], ["builds", "الإصدارات والتحديثات", Package],
   ["changes", "سجل التغييرات", History], ["backup", "النسخ الاحتياطي", DatabaseBackup], ["security", "أمان حسابي", ShieldCheck],
 ] as const;
 type Sec = (typeof SECTIONS)[number][0];
@@ -104,6 +105,7 @@ function Panel() {
           {sec === "home" && <Home {...ctx} />}
           {sec === "studio" && <Studio {...ctx} />}
           {sec === "servers" && <Servers {...ctx} />}
+          {sec === "activation" && <ActivationCodesPanel tenantId={t.id} />}
           {sec === "brand" && <Brand {...ctx} />}
           {sec === "layout" && <LayoutEditor {...ctx} />}
           {sec === "contact" && <Contact {...ctx} />}

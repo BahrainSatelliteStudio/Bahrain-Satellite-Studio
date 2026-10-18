@@ -14,6 +14,134 @@ export type Database = {
   }
   public: {
     Tables: {
+      activation_accounts: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          mode: string
+          password: string
+          source_id: string
+          tenant_id: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          mode: string
+          password: string
+          source_id: string
+          tenant_id: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          mode?: string
+          password?: string
+          source_id?: string
+          tenant_id?: string
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activation_accounts_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activation_accounts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      activation_attempts: {
+        Row: {
+          attempts: number
+          device_id: string
+          tenant_id: string
+          window_start: string
+        }
+        Insert: {
+          attempts?: number
+          device_id: string
+          tenant_id: string
+          window_start?: string
+        }
+        Update: {
+          attempts?: number
+          device_id?: string
+          tenant_id?: string
+          window_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activation_attempts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      activation_codes: {
+        Row: {
+          account_id: string
+          activated_at: string | null
+          code_hash: string
+          code_hint: string
+          created_at: string
+          device_id: string | null
+          enabled: boolean
+          id: string
+          tenant_id: string
+        }
+        Insert: {
+          account_id: string
+          activated_at?: string | null
+          code_hash: string
+          code_hint: string
+          created_at?: string
+          device_id?: string | null
+          enabled?: boolean
+          id?: string
+          tenant_id: string
+        }
+        Update: {
+          account_id?: string
+          activated_at?: string | null
+          code_hash?: string
+          code_hint?: string
+          created_at?: string
+          device_id?: string | null
+          enabled?: boolean
+          id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activation_codes_account_id_tenant_id_fkey"
+            columns: ["account_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "activation_accounts"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "activation_codes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activation_receipts: {
         Row: {
           created_at: string
@@ -556,6 +684,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_activation_bundle: {
+        Args: {
+          _account: string
+          _codes: Json
+          _label: string
+          _mode: string
+          _password: string
+          _source: string
+          _tenant: string
+          _username: string
+        }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -564,6 +705,10 @@ export type Database = {
         Returns: boolean
       }
       is_tenant_member: { Args: { _tenant_id: string }; Returns: boolean }
+      redeem_builtin_code: {
+        Args: { _device: string; _hash: string; _slug: string }
+        Returns: Json
+      }
       tenant_activation_count: { Args: { _slug: string }; Returns: number }
     }
     Enums: {
