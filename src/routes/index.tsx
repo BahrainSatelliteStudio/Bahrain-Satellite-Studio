@@ -1,9 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getHomepage } from "@/lib/homepage.functions";
 import { HomepageView } from "@/components/HomepageView";
+import { resolveHomepage } from "@/lib/homepage";
 
 export const Route = createFileRoute("/")({
-  loader: () => getHomepage(),
+  loader: async () => {
+    try {
+      return await getHomepage();
+    } catch (e) {
+      console.warn("homepage settings unavailable, using defaults", e);
+      return resolveHomepage(undefined);
+    }
+  },
   head: ({ loaderData: c }) => ({
     meta: [
       { title: `${c?.brand ?? "BHSAT"} ${c?.brandAccent ?? "Studio"} — ${c?.title ?? "صانع مشغلات IPTV"}` },
