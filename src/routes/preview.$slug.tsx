@@ -4,7 +4,7 @@ import { PlayerApp, type TenantConfig } from "@/components/player/PlayerApp";
 import { TEMPLATES, resolveLayout, type TemplateKey } from "@/lib/layout";
 
 export const Route = createFileRoute("/preview/$slug")({
-  validateSearch: (search: Record<string, unknown>): { template?: TemplateKey } => ({ template: TEMPLATES.some(([key]) => key === search.template) ? search.template as TemplateKey : undefined }),
+  validateSearch: (search: Record<string, unknown>): { template?: TemplateKey } => TEMPLATES.some(([key]) => key === search["template"]) ? { template: search["template"] as TemplateKey } : {},
   loader: async ({ params }) => {
     const cfg = await getTenantConfig({ data: { slug: params.slug } });
     if (!cfg) throw notFound();

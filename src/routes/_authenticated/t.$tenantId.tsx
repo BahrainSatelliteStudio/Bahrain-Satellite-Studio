@@ -27,7 +27,7 @@ type Source = Database["public"]["Tables"]["tenant_sources"]["Row"];
 type Colors = { primary: string; secondary: string; accent: string; background: string; surface: string; text: string; button: string };
 
 export const Route = createFileRoute("/_authenticated/t/$tenantId")({
-  validateSearch: (search: Record<string, unknown>): { section?: "studio" | "builds" } => ({ section: search.section === "studio" || search.section === "builds" ? search.section : undefined }),
+  validateSearch: (search: Record<string, unknown>): { section?: "studio" | "builds" } => search["section"] === "studio" || search["section"] === "builds" ? { section: search["section"] } : {},
   head: () => ({ meta: [
     { title: "لوحة إدارة التطبيق" }, { name: "description", content: "تحكم بالسيرفرات والهوية والتواصل والإشعارات لتطبيقك" },
     { property: "og:title", content: "لوحة إدارة التطبيق" }, { property: "og:description", content: "تحكم بالسيرفرات والهوية والتواصل والإشعارات لتطبيقك" },
