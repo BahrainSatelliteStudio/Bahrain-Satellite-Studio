@@ -1,24 +1,25 @@
-# My Lovable Panel
+# Bahrain Satellite Studio
 
-https://panel.bhsat.me/ هذا موجود على vps مالي اريد اطوره
+منصة إدارة تطبيقات IPTV باسم وشعار كل زبون، مع مكتبة قوالب ومعاينة مشتركة، أكواد تفعيل مستقلة، وربط Firebase وتصدير Android.
 
-This project was built with [Lovable](https://lovable.dev).
+## الدليل
+- [تنظيم المشروع وحدود المسؤوليات](docs/project-structure.md)
+- [قائمة التشغيل والتصدير والتسليم](docs/operations.md)
+- [تقرير المراجعة وملاحظات المتابعة](docs/audit.md)
+- [تركيب لوحة الزبون المستقلة](selfhost/panel/INSTALL-GUIDE-AR.md)
+- [مرجع اللوحة المستقلة](selfhost/panel/README-AR.md)
+- [مرجع أفكار التطبيق الأصلي](docs/screens.md) — مرجع أفكار، وليس قائمة ميزات تم تنفيذها أو اختبارها.
 
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/e9e293d2-9d89-4654-9db2-f04937384f95).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+## التطوير المحلي
+المشروع يستخدم TanStack Start وReact وBun، واللوحة المستقلة تستخدم Node دون اعتماديات.
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+bun install
+bun run dev
+bun run test
 ```
+
+تُدار متغيرات الربط والأسرار من إعدادات المشروع؛ لا تُحفظ كلمات المرور أو مفاتيح التوقيع داخل المصدر. لا تُعدّل ملفات الربط أو أنواع البيانات المولّدة آليًا.
+
+## الإصدارات
+مسار GitHub Actions هو مسار إصدار Android النهائي الموقّع. سكربت VPS الحالي ينتج نسخة Debug للتجربة فقط، وليس بديلًا عن إصدار الإنتاج أو تحديثًا متوافقًا تلقائيًا معه.
