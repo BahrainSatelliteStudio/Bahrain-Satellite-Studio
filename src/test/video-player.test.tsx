@@ -44,9 +44,8 @@ describe("Playback regressions", () => {
   it("does not expose customer history or erase it through preview settings", async () => {
     prefs.saveProgress("tenant", "movie:123", saved);
     const cfg: TenantConfig = { slug: "tenant", name: "Test", logo_url: null, primary_color: "", accent_color: "", theme: "default", support_whatsapp: null, support_telegram: null, support_phone: null, latest_version: "1.0.0", min_version: "1.0.0", update_url: null, sources: [], announcements: [] };
-    let view: ReturnType<typeof render>;
-    await act(async () => { view = render(<PlayerApp cfg={cfg} preview />); });
-    if (typeof view === "undefined") throw new Error("Missing player");
+    const view = render(<PlayerApp cfg={cfg} preview />);
+    await act(async () => { await Promise.resolve(); });
     fireEvent.click(view.getByRole("button", { name: "أكمل المشاهدة" }));
     expect(view.queryByText("Saved movie")).toBeNull();
     const settingsButton = view.getAllByRole("button", { name: "الإعدادات" }).at(-1);
