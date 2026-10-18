@@ -2,6 +2,7 @@
 import { Tv, Film, Clapperboard, Heart, History, Star, Radio, Trophy, Baby, Music, Flame, Globe, LayoutGrid, type LucideIcon } from "lucide-react";
 
 export const TEMPLATES = [
+  ["experience", "قالب 7 — تجربة المشاهدة", "رئيسية سينمائية، مكتبة مرتبة وتجربة خاصة للجوال والتلفاز"],
   ["classic", "قالب 1 — كلاسيكي", "تبويبات علوية وشبكة بطاقات"],
   ["sidebar", "قالب 2 — قائمة جانبية", "قائمة جانبية مناسبة للتلفاز"],
   ["cinema", "قالب 3 — سينمائي", "صفوف أفقية وبوسترات كبيرة وشريط سفلي"],
