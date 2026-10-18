@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { isHostReachable, providerHttpError } from "@/lib/player/transport";
 
 const slugZ = z.string().regex(/^[a-z0-9][a-z0-9-]{1,30}$/);
 
@@ -62,9 +63,17 @@ export const activateCode = createServerFn({ method: "POST" })
   });
 
 async function fetchText(url: string, init?: RequestInit) {
-  const res = await fetch(url, { ...init, headers: { "User-Agent": "Mozilla/5.0 (Linux; Android) IPTVPlayer", ...(init?.headers ?? {}) } });
-  if (!res.ok) throw new Error(`السيرفر رد بخطأ ${res.status}`);
-  return res.text();
+  const ctrl = new AbortController();
+  const timeout = setTimeout(() => ctrl.abort(), 20000);
+  try {
+    const res = await fetch(url, { ...init, signal: ctrl.signal, headers: { "User-Agent": "Mozilla/5.0 (Linux; Android) IPTVPlayer", ...(init?.headers ?? {}) } });
+    if (!res.ok) throw new Error(providerHttpError(res.status));
+    return await res.text();
+  } catch (error) {
+    if (ctrl.signal.aborted) throw new Error("انتهت مهلة الاتصال بسيرفر البث — حاول مجددًا");
+    if (error instanceof TypeError) throw new Error("تعذر الوصول إلى سيرفر البث — تحقق من العنوان والاتصال");
+    throw error;
+  } finally { clearTimeout(timeout); }
 }
 
 export const xtreamApi = createServerFn({ method: "POST" })
@@ -256,12 +265,13 @@ export const checkHost = createServerFn({ method: "POST" })
     const urls = [s.url, ...(s.backup_urls ?? [])];
     const results = await Promise.all(urls.map(async (u) => {
       const t0 = Date.now();
+      const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 8000);
       try {
-        const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 8000);
         const r = await fetch(u.replace(/\/+$/, "") + "/player_api.php", { signal: ctrl.signal, headers: { "User-Agent": "Mozilla/5.0 IPTVPlayer" } });
-        clearTimeout(tm);
-        return { url: u, ok: r.status < 500, status: r.status, ms: Date.now() - t0 };
+        await r.body?.cancel();
+        return { url: u, ok: isHostReachable(r.status), status: r.status, ms: Date.now() - t0 };
       } catch { return { url: u, ok: false, status: 0, ms: Date.now() - t0 }; }
+      finally { clearTimeout(tm); }
     }));
     const ok = results.some((r) => r.ok);
     await context.supabase.from("tenant_sources").update({ last_check_ok: ok, last_check_at: new Date().toISOString() }).eq("id", s.id);

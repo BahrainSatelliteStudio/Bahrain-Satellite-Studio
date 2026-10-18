@@ -4,6 +4,7 @@ import { Captions, Loader2, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { prefs } from "@/lib/player/prefs";
 import { searchSubtitles, downloadSubtitle, type SubResult } from "@/lib/subtitles.functions";
+import { mediaPlaybackError, providerHttpError } from "@/lib/player/transport";
 
 type Props = {
   src: string;
@@ -67,7 +68,13 @@ export function VideoPlayer({ src, title, onClose, slug, itemId, logo, season, e
         if (cancelled) return;
         if (Hls.isSupported()) {
           const h = new Hls({ enableWorker: true, lowLatencyMode: true });
-          h.on(Hls.Events.ERROR, (_e, d) => { if (d.fatal) setErr("تعذر تشغيل البث — جرّب قناة أخرى"); });
+          h.on(Hls.Events.ERROR, (_e, d) => {
+            if (cancelled || !d.fatal) return;
+            const status = d.response?.code;
+            setErr(status && status >= 400 ? providerHttpError(status) : d.type === Hls.ErrorTypes.NETWORK_ERROR
+              ? "تعذر تحميل البث — تحقق من اتصال الشبكة وسماح السيرفر بالتشغيل من هذا الجهاز"
+              : "صيغة البث غير قابلة للتشغيل على هذا الجهاز");
+          });
           h.loadSource(src);
           h.attachMedia(video);
           hls = h;
@@ -91,7 +98,7 @@ export function VideoPlayer({ src, title, onClose, slug, itemId, logo, season, e
         }, 5000);
       }
       video.play().catch(() => {});
-    })();
+    })().catch(() => { if (!cancelled) setErr("تعذر تهيئة مشغّل البث — حاول مجددًا"); });
 
     // مفاتيح الريموت والكيبورد
     const onKey = (e: KeyboardEvent) => {
@@ -188,7 +195,7 @@ export function VideoPlayer({ src, title, onClose, slug, itemId, logo, season, e
         </div>
       </div>
       <div className="relative flex flex-1 items-center justify-center bg-background">
-        <video ref={ref} controls autoPlay playsInline className="h-full max-h-full w-full" onError={() => setErr("تعذر تشغيل هذا المحتوى")}>
+        <video ref={ref} controls autoPlay playsInline className="h-full max-h-full w-full" onError={() => setErr(mediaPlaybackError(ref.current?.error?.code))}>
           {vttUrl && <track kind="subtitles" label="الترجمة" srcLang="ar" src={vttUrl} default />}
         </video>
         {err && <div className="absolute bottom-6 rounded-lg bg-destructive px-4 py-2 text-sm font-bold text-destructive-foreground">{err}</div>}
