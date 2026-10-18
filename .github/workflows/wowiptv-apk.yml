@@ -1,0 +1,29 @@
+name: wowiptv-apk
+on:
+  workflow_dispatch:
+    inputs:
+      app_name: { required: true }
+      package_id: { required: true }
+      version: { required: true }
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: players/wowiptv } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - uses: android-actions/setup-android@v3
+      - name: Keystore
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > $RUNNER_TEMP/release.p12
+      - name: Build
+        env:
+          ANDROID_KEYSTORE_FILE: ${{ runner.temp }}/release.p12
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease -PappId="${{ inputs.package_id }}" -PappName="${{ inputs.app_name }}" -PversionName="${{ inputs.version }}"
+      - uses: actions/upload-artifact@v4
+        with: { name: wowiptv-${{ inputs.package_id }}, path: players/wowiptv/app/build/outputs/apk/release/*.apk }

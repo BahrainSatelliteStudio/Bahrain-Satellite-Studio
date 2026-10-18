@@ -25,3 +25,4 @@
 
 - Application orders and immutable quote snapshots live separately from tenants; only admin provisioning creates tenants after customer acceptance, so legacy applications and signing remain unchanged.
 - Order-managed panels derive capabilities from approved feature selections; optional selfhost delivery manifests enforce the same selections without adding panel dependencies.
+- `players/<name>/` holds vendored open-source native players (keep upstream LICENSE); each builds via its own GitHub workflow with build-time appId/appName and the shared signing secrets, so customer branding never edits upstream source.
