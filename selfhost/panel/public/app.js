@@ -17,7 +17,7 @@ const fileToData = (f) => new Promise((ok, bad) => { if (f.size > 4 * 1024 * 102
 const upload = async (f) => (await api("/api/upload", { body: { data: await fileToData(f) } })).url;
 const fmt = (d) => (d ? new Date(d).toLocaleString("ar") : "—");
 
-const SECTIONS = [["home", "الرئيسية", "▦"], ["servers", "السيرفرات والهوستات", "▤"], ["brand", "هوية التطبيق والألوان", "◆"], ["contact", "روابط التواصل والدعم", "☎"], ["notify", "الإشعارات الجماعية", "🔔"], ["updates", "تحديثات التطبيق", "↓"], ["changes", "سجل التغييرات", "⟲"], ["backup", "النسخ الاحتياطي", "⛁"], ["security", "أمان حسابي", "⚿"]];
+const SECTIONS = [["home", "الرئيسية", "▦"], ["servers", "السيرفرات والهوستات", "▤"], ["codes", "أكواد التفعيل", "⚷"], ["brand", "هوية التطبيق والألوان", "◆"], ["contact", "روابط التواصل والدعم", "☎"], ["notify", "الإشعارات الجماعية", "🔔"], ["updates", "تحديثات التطبيق", "↓"], ["changes", "سجل التغييرات", "⟲"], ["backup", "النسخ الاحتياطي", "⛁"], ["security", "أمان حسابي", "⚿"]];
 
 function showLogin() { $("#app").classList.add("hidden"); $("#login").classList.remove("hidden"); }
 $("#loginForm").onsubmit = async (e) => {
@@ -42,7 +42,7 @@ async function boot() {
   await load(); go(SEC);
 }
 function go(sec) {
-  const sections = SECTIONS.filter(([k])=>!S.features || ['home','changes','security'].includes(k) || S.features.includes(k) && !['brand','themes'].includes(k));
+  const sections = SECTIONS.filter(([k])=>{const fk=k==='codes'?'activation':k;return !S.features || ['home','changes','security'].includes(k) || S.features.includes(fk) && !['brand','themes'].includes(k);});
   if(!sections.some(([k])=>k===sec))sec='home';
   SEC = sec; $("#side").classList.remove("open");
   $("#nav").innerHTML = sections.map(([k, l, i]) => `<button data-k="${k}" class="${k === sec ? "on" : ""}"><span>${i}</span>${l}</button>`).join("");
