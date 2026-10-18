@@ -20,3 +20,12 @@ describe('customer order rules',()=>{
  it('prevents restoring a different locked identity',()=>expect(panel.restoreAllowed({features:['backup']},{settings:{name:'original'},servers:[],notifications:[]},{settings:{name:'other'},servers:[]})).toBe(false));
  it('keeps legacy standalone behavior without a manifest',()=>expect(panel.settingsAllowed(null,{name:'changed'})).toBe(true));
 });
+
+describe('catalog status and theme matching',()=>{
+ it('rejects orders for apps still in preparation',()=>expect(()=>validateAvailable(selectionSchema.parse(selection),{templates:['experience'],features:['servers','contact'],status:'preparing'})).toThrow());
+ it('accepts ready apps',()=>expect(validateAvailable(selectionSchema.parse(selection),{templates:['experience'],features:['servers','contact'],status:'ready'})).toBeTruthy());
+ it('rejects a theme not compatible with the chosen app',()=>expect(()=>validateAvailable(selectionSchema.parse(selection),{templates:['experience'],features:['servers','contact'],status:'ready'},[{key:'other-app-theme',catalog_id:'owntv',enabled:true}])).toThrow());
+ it('accepts general themes for any app',()=>expect(validateAvailable(selectionSchema.parse(selection),{templates:['experience'],features:['servers','contact'],status:'ready'},[{key:'bhsat',catalog_id:null,enabled:true}])).toBeTruthy());
+ it('accepts app-specific themes for their own app',()=>expect(validateAvailable(selectionSchema.parse({...selection,theme:'owntv-dark'}),{templates:['experience'],features:['servers','contact'],status:'ready'},[{key:'owntv-dark',catalog_id:'iptv-player',enabled:true}])).toBeTruthy());
+ it('rejects disabled themes',()=>expect(()=>validateAvailable(selectionSchema.parse(selection),{templates:['experience'],features:['servers','contact'],status:'ready'},[{key:'bhsat',catalog_id:null,enabled:false}])).toThrow());
+});

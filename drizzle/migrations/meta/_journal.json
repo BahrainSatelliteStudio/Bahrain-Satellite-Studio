@@ -148,6 +148,20 @@
       "when": 1792307710975,
       "tag": "0020_order_payload_security",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1792337679684,
+      "tag": "0021_catalog_sources_and_themes",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1792337728777,
+      "tag": "0022_catalog_admin_policy",
+      "breakpoints": true
     }
   ]
 }

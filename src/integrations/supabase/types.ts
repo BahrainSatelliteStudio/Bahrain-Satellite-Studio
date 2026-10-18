@@ -252,13 +252,55 @@ export type Database = {
         }
         Relationships: []
       }
+      app_themes: {
+        Row: {
+          catalog_id: string | null
+          colors: Json
+          created_at: string
+          enabled: boolean
+          id: string
+          key: string
+          name: string
+        }
+        Insert: {
+          catalog_id?: string | null
+          colors?: Json
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          key: string
+          name: string
+        }
+        Update: {
+          catalog_id?: string | null
+          colors?: Json
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          key?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_themes_catalog_id_fkey"
+            columns: ["catalog_id"]
+            isOneToOne: false
+            referencedRelation: "application_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       application_catalog: {
         Row: {
           created_at: string
           enabled: boolean
           features: Json
           id: string
+          license: string | null
           name: string
+          repo_url: string | null
+          source: string
+          status: string
           templates: Json
         }
         Insert: {
@@ -266,7 +308,11 @@ export type Database = {
           enabled?: boolean
           features?: Json
           id: string
+          license?: string | null
           name: string
+          repo_url?: string | null
+          source?: string
+          status?: string
           templates?: Json
         }
         Update: {
@@ -274,7 +320,11 @@ export type Database = {
           enabled?: boolean
           features?: Json
           id?: string
+          license?: string | null
           name?: string
+          repo_url?: string | null
+          source?: string
+          status?: string
           templates?: Json
         }
         Relationships: []
