@@ -335,6 +335,35 @@ const server = http.createServer(async (req, res) => {
         if (req.method === "DELETE") { db.notifications.splice(i, 1); save(); return send(res, 200, { ok: true }); }
         if (req.method === "PUT") { const b = await body(req, 10000); db.notifications[i].active = !!b.active; save(); return send(res, 200, { ok: true }); }
       }
+      // built-in activation codes
+      if (p === "/api/codes" && req.method === "POST") {
+        const b = await body(req, 10000);
+        const mode = b.mode === "shared" ? "shared" : "individual";
+        const count = mode === "individual" ? 1 : Math.min(100, Math.max(1, Number(b.count) || 1));
+        const sv = db.servers.find((x) => x.id === str(b.source_id, 40));
+        const un = str(b.username, 100), pw = String(b.password || "").slice(0, 100);
+        if (!sv) return send(res, 400, { error: "اختر السيرفر المرتبط بالأكواد" });
+        if (!un || !pw) return send(res, 400, { error: "اسم المستخدم وكلمة المرور مطلوبان" });
+        const created = [];
+        for (let i = 0; i < count; i++) {
+          let code; do { code = genCode(); } while (db.codes.some((x) => x.hash === codeHash(code)));
+          db.codes.push({ id: id(), hash: codeHash(code), hint: code.slice(-4), mode, source_id: sv.id, username: un, password: pw, device: null, enabled: true, created_at: now() });
+          created.push(code);
+        }
+        log(who, "أكواد التفعيل", `إنشاء ${created.length} كود (${mode === "shared" ? "حساب مشترك" : "حساب مستقل"})`);
+        return send(res, 200, { codes: created });
+      }
+      m = /^\/api\/codes\/([a-f0-9]+)$/.exec(p);
+      if (m) {
+        const i = db.codes.findIndex((x) => x.id === m[1]); if (i < 0) return send(res, 404, { error: "غير موجود" });
+        if (req.method === "PUT") {
+          const b = await body(req, 10000);
+          if ("enabled" in b) db.codes[i].enabled = !!b.enabled;
+          if (b.unbind) { db.codes[i].device = null; delete db.codes[i].activated_at; }
+          log(who, "أكواد التفعيل", `${db.codes[i].enabled ? "تفعيل" : "إيقاف"} كود ••••${db.codes[i].hint}`); return send(res, 200, { ok: true });
+        }
+        if (req.method === "DELETE") { const [x] = db.codes.splice(i, 1); log(who, "أكواد التفعيل", `حذف كود ••••${x.hint}`); return send(res, 200, { ok: true }); }
+      }
       // backup
       if (p === "/api/backup" && req.method === "POST") {
         const b = await body(req, 10000); const pass = String(b.password || "");
@@ -349,7 +378,7 @@ const server = http.createServer(async (req, res) => {
         if(!rules.restoreAllowed(manifest,db,j)) return send(res,403,{error:"النسخة تغير هوية التطبيق أو ميزاته المقفلة"});
         fs.copyFileSync(DB_FILE, path.join(BACKUPS, `before-restore-${Date.now()}.json`));
         for (const [f, data] of j.uploads || []) fs.writeFileSync(path.join(UPLOADS, path.basename(f)), Buffer.from(data, "base64"));
-        db = { settings: j.settings, servers: j.servers, notifications: j.notifications || [], changes: j.changes || [], users: j.users?.length ? j.users : db.users, sessions: {} };
+        db = { settings: j.settings, servers: j.servers, notifications: j.notifications || [], changes: j.changes || [], users: j.users?.length ? j.users : db.users, sessions: {}, codes: Array.isArray(j.codes) ? j.codes : db.codes };
         log(who, "النسخ الاحتياطي", "استعادة نسخة"); return send(res, 200, { ok: true });
       }
       if (p === "/api/backup-test") {
