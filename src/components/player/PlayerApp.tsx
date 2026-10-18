@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ExperienceNav } from "./ExperienceNav";
 import { ExperienceHome } from "./ExperienceHome";
-import { progressKey } from "@/lib/player/media";
+import { progressKey, progressNamespace } from "@/lib/player/media";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Tv, Film, Clapperboard, Heart, LogOut, Search, MessageCircle, Send, Phone, ChevronRight, Loader2, Settings, Play, History, Smartphone, House } from "lucide-react";
@@ -45,6 +45,7 @@ function useTvNav() {
       const dirs: Record<string, [number, number]> = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
       const d = dirs[e.key];
       if (!d) return;
+      if (document.querySelector("[data-player-active]")) return;
       const cur = document.activeElement as HTMLElement | null;
       if (cur && (cur.tagName === "INPUT" || cur.tagName === "TEXTAREA" || cur.tagName === "SELECT" || cur.tagName === "VIDEO")) return;
       const els = Array.from(document.querySelectorAll<HTMLElement>("[data-nav]")).filter((el) => el.offsetParent !== null);
@@ -93,11 +94,12 @@ function usePushRegistration(slug: string, enabled: boolean) {
 
 export function PlayerApp({ cfg, preview = false }: { cfg: TenantConfig; preview?: boolean }) {
   usePushRegistration(cfg.slug, !preview);
-  const key = `iptv:${cfg.slug}`;
+  const namespace = progressNamespace(cfg.slug, preview);
+  const key = `iptv:${namespace}`;
   const [session, setSession] = useState<Session | null>(null);
   const [ready, setReady] = useState(false);
   const [appVer, setAppVer] = useState<string | null>(null);
-  const [settings, setSettings] = useState<AppSettings>(() => prefs.settings(cfg.slug));
+  const [settings, setSettings] = useState<AppSettings>(() => prefs.settings(""));
   const [langChosen, setLangChosen] = useState(true);
   const [setupStep, setSetupStep] = useState<"device" | "lang">("device");
   const [showSettings, setShowSettings] = useState(false);
@@ -115,20 +117,21 @@ export function PlayerApp({ cfg, preview = false }: { cfg: TenantConfig; preview
   }, [preview, cfg.slug]);
 
   useEffect(() => {
+    setSettings(prefs.settings(namespace));
     if (preview) { if (new URLSearchParams(location.search).get("setup") !== "1") setSession({ type: "demo", sourceId: "" }); }
     else try { const s = localStorage.getItem(key); if (s) setSession(JSON.parse(s)); } catch {}
     const v = new URLSearchParams(location.search).get("v") || sessionStorage.getItem("appver");
     if (v) { sessionStorage.setItem("appver", v); setAppVer(v); }
     setLangChosen(preview ? new URLSearchParams(location.search).get("setup") !== "1" : !!localStorage.getItem(`${key}:langChosen`));
     setReady(true);
-  }, [key]);
+  }, [key, namespace, preview]);
 
   const L = str(settings.lang);
   const theme = preview || settings.theme === "auto" ? cfg.theme : settings.theme;
   const style = { "--primary": cfg.primary_color, "--ring": cfg.primary_color, "--accent": cfg.accent_color } as React.CSSProperties;
   const themeClass = theme === "blue" ? "theme-blue" : theme === "cinema" ? "theme-cinema" : theme === "bhsat" ? "theme-bhsat" : "";
 
-  const saveSettings = (s: AppSettings) => { setSettings(s); prefs.saveSettings(cfg.slug, s); };
+  const saveSettings = (s: AppSettings) => { setSettings(s); prefs.saveSettings(namespace, s); };
 
   if (!ready) return <Shell cfg={cfg} style={style} themeClass={themeClass} lang={settings.lang}><div /></Shell>;
 
@@ -190,7 +193,7 @@ export function PlayerApp({ cfg, preview = false }: { cfg: TenantConfig; preview
     <Shell cfg={cfg} style={style} themeClass={themeClass} lang={settings.lang} sidebar={!!session && layout.template === "sidebar"}
       onSettings={() => setShowSettings(true)}
       onLogout={session && !preview ? () => { localStorage.removeItem(key); setSession(null); } : undefined}>
-      {showSettings && <SettingsDialog cfg={cfg} settings={settings} onSave={saveSettings} onClose={() => setShowSettings(false)} />}
+      {showSettings && <SettingsDialog cfg={{ ...cfg, slug: namespace }} settings={settings} onSave={saveSettings} onClose={() => setShowSettings(false)} />}
       {session
         ? <Browser cfg={cfg} session={session} settings={settings} layout={layout} onSettings={() => setShowSettings(true)} />
         : preview
@@ -358,8 +361,8 @@ function SettingsDialog({ cfg, settings, onSave, onClose }: { cfg: TenantConfig;
               <button data-nav className="rounded-xl bg-secondary px-4 font-bold">{L.changePin}</button>
             </form>
             <div className="grid grid-cols-2 gap-2">
-              <button data-nav onClick={() => { localStorage.removeItem(`iptv:${cfg.slug}:fav`); toast.success(L.saved); }} className="rounded-xl bg-secondary py-2.5 text-sm font-bold">{L.clearFavs}</button>
-              <button data-nav onClick={() => { prefs.clearProgress(cfg.slug); toast.success(L.saved); }} className="rounded-xl bg-secondary py-2.5 text-sm font-bold">{L.clearHistory}</button>
+              <button data-nav onClick={() => { localStorage.removeItem(`iptv:${cfg.slug}:fav`); onSave({ ...settings }); toast.success(L.saved); }} className="rounded-xl bg-secondary py-2.5 text-sm font-bold">{L.clearFavs}</button>
+              <button data-nav onClick={() => { prefs.clearProgress(cfg.slug); onSave({ ...settings }); toast.success(L.saved); }} className="rounded-xl bg-secondary py-2.5 text-sm font-bold">{L.clearHistory}</button>
               <button data-nav onClick={downloadBackup} className="rounded-xl bg-secondary py-2.5 text-sm font-bold">{L.backup}</button>
               <button data-nav onClick={() => fileRef.current?.click()} className="rounded-xl bg-secondary py-2.5 text-sm font-bold">{L.restore}</button>
               <input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) restoreBackup(f); e.target.value = ""; }} />
@@ -376,7 +379,7 @@ const field = "w-full rounded-xl border bg-input/40 px-4 py-3 outline-none focus
 function deviceMac() {
   let m = localStorage.getItem("device-mac");
   if (!m) {
-    const b = crypto.getRandomValues(new Uint8Array(6)); b[0] = (b[0]! & 0xfc) | 0x02;
+    const b = crypto.getRandomValues(new Uint8Array(6)); b[0] = ((b[0] ?? 0) & 0xfc) | 0x02;
     m = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join(":").toUpperCase();
     localStorage.setItem("device-mac", m);
   }
@@ -493,11 +496,12 @@ function Browser({ cfg, session, settings, layout, onSettings }: { cfg: TenantCo
   const [q, setQ] = useState("");
   const [playing, setPlaying] = useState<Playing | null>(null);
   const [m3uAll, setM3uAll] = useState<{ name: string; group: string; logo: string; url: string }[] | null>(null);
-  const favKey = `iptv:${cfg.slug}:${session.type === "demo" ? "preview:" : ""}fav`;
+  const namespace = progressNamespace(cfg.slug, session.type === "demo");
+  const favKey = `iptv:${namespace}:fav`;
   const [favs, setFavs] = useState<Item[]>([]);
-  const [history, setHistory] = useState(() => prefs.progress(cfg.slug));
-  useEffect(() => { try { setFavs(JSON.parse(localStorage.getItem(favKey) || "[]")); } catch {} }, [favKey]);
-  useEffect(() => { if (!playing) setHistory(prefs.progress(cfg.slug)); }, [playing, cfg.slug]);
+  const [history, setHistory] = useState<Record<string, import("@/lib/player/prefs").Progress>>({});
+  useEffect(() => { try { setFavs(JSON.parse(localStorage.getItem(favKey) || "[]")); } catch {} }, [favKey, settings]);
+  useEffect(() => { if (!playing) setHistory(prefs.progress(namespace)); }, [playing, namespace, settings]);
   const toggleFav = (it: Item) => {
     const next = favs.some((f) => f.id === it.id && f.kind === it.kind) ? favs.filter((f) => !(f.id === it.id && f.kind === it.kind)) : [...favs, it];
     setFavs(next); localStorage.setItem(favKey, JSON.stringify(next));
@@ -726,7 +730,7 @@ function Browser({ cfg, session, settings, layout, onSettings }: { cfg: TenantCo
         <div className="flex aspect-square items-center justify-center bg-secondary p-4">{a.logo ? <img src={a.logo} alt={a.name} loading="lazy" className="h-full w-full object-contain" /> : <span className="text-3xl font-extrabold text-primary">{a.name[0]}</span>}</div>
         <p className="line-clamp-1 p-2 text-sm font-bold">{a.name}</p></button>)}
     </div></section>;
-  const removeHistory = (id: string) => { prefs.clearProgress(cfg.slug, id); setHistory(prefs.progress(cfg.slug)); };
+  const removeHistory = (id: string) => { prefs.clearProgress(namespace, id); setHistory(prefs.progress(namespace)); };
   const xHome = tpl === "experience" ? <ExperienceHome name={cfg.name} layout={layout} catalog={session.type === "demo" ? [...demoItems("movie"), ...demoItems("series")] : favs}
     favorites={favs} history={historyList} card={(it, extra) => card(it as Item, extra)} onOpen={(it) => play(it as Item)}
     onBrowse={(k) => { setTab(k); setScreen("browse"); }} onResume={(id, p) => setPlaying({ src: p.url, title: p.title, itemId: id, logo: p.logo })}
@@ -735,7 +739,7 @@ function Browser({ cfg, session, settings, layout, onSettings }: { cfg: TenantCo
 
   return (
     <div className={`space-y-4 ${tpl === "cinema" ? "pb-24" : ""}`}>
-      {playing && <VideoPlayer src={playing.src} title={playing.title} slug={cfg.slug} itemId={playing.itemId} logo={playing.logo} onClose={() => setPlaying(null)} />}
+      {playing && <VideoPlayer src={playing.src} title={playing.title} slug={namespace} itemId={playing.itemId} logo={playing.logo} onClose={() => setPlaying(null)} />}
       <Announcements cfg={cfg} />
       {tpl === "experience" ? <div className="flex gap-6 max-md:flex-col max-md:pb-20"><ExperienceNav name={cfg.name} logo={cfg.logo_url ?? null} sections={layout.sections.filter((s) => s.key !== "apps" || showApps)}
         active={screen === "browse" ? tab : screen} english={settings.lang === "en"} onSettings={onSettings}

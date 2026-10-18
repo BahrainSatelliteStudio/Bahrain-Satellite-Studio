@@ -33,6 +33,8 @@ export function VideoPlayer({ src, title, onClose, slug, itemId, logo, season, e
   const saveRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // الترجمة
   const [subOpen, setSubOpen] = useState(false);
+  const subOpenRef = useRef(false);
+  subOpenRef.current = subOpen;
   const [subQuery, setSubQuery] = useState(title);
   const [subLang, setSubLang] = useState<"ar" | "en">("ar");
   const [subs, setSubs] = useState<SubResult[] | null>(null);
@@ -48,6 +50,16 @@ export function VideoPlayer({ src, title, onClose, slug, itemId, logo, season, e
     setErr(null);
     let hls: { destroy: () => void } | null = null;
     let cancelled = false;
+    let resumePending = false;
+    let seek: (() => void) | undefined;
+    let hasMetadata = false;
+    const metadata = () => { hasMetadata = true; };
+    video.addEventListener("loadedmetadata", metadata);
+    const saveProgress = () => {
+      if (!cancelled && !resumePending && hasMetadata && slug && itemId && video.duration > 0 && Number.isFinite(video.duration)) {
+        prefs.saveProgress(slug, itemId, { t: video.currentTime, d: video.duration, title, logo, url: src, at: Date.now() });
+      }
+    };
     const isHls = /\.m3u8(\?|$)/i.test(src);
     (async () => {
       if (isHls && !video.canPlayType("application/vnd.apple.mpegurl")) {
@@ -66,13 +78,16 @@ export function VideoPlayer({ src, title, onClose, slug, itemId, logo, season, e
       if (slug && itemId) {
         const saved = prefs.progress(slug)[itemId];
         if (saved && saved.t > 10) {
-          const seek = () => { if (saved.t < video.duration - 5) video.currentTime = saved.t; };
+          resumePending = true;
+          seek = () => {
+            if (cancelled || !Number.isFinite(video.duration) || video.duration <= 0) return;
+            if (saved.t < video.duration - 5) video.currentTime = saved.t;
+            resumePending = false;
+          };
           if (video.readyState >= 1) seek(); else video.addEventListener("loadedmetadata", seek, { once: true });
         }
         saveRef.current = setInterval(() => {
-          if (video.duration > 0 && isFinite(video.duration) && !video.paused) {
-            prefs.saveProgress(slug, itemId, { t: video.currentTime, d: video.duration, title, logo, url: src, at: Date.now() });
-          }
+          if (!video.paused) saveProgress();
         }, 5000);
       }
       video.play().catch(() => {});
@@ -80,6 +95,9 @@ export function VideoPlayer({ src, title, onClose, slug, itemId, logo, season, e
 
     // مفاتيح الريموت والكيبورد
     const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.matches("input, textarea, select")) return;
+      if (subOpenRef.current) return;
       const k = e.key;
       if (k === "Escape" || k === "Backspace" || k === "GoBack" || k === "BrowserBack") { e.preventDefault(); onClose(); return; }
       if (k === " " || k === "MediaPlayPause" || k === "Enter" || k === "NumpadEnter") {
@@ -98,19 +116,18 @@ export function VideoPlayer({ src, title, onClose, slug, itemId, logo, season, e
     window.addEventListener("keydown", onKey);
 
     return () => {
+      saveProgress();
       cancelled = true;
       window.removeEventListener("keydown", onKey);
+      video.removeEventListener("loadedmetadata", metadata);
+      if (seek) video.removeEventListener("loadedmetadata", seek);
       if (saveRef.current) clearInterval(saveRef.current);
-      // حفظ أخير عند الإغلاق
-      if (slug && itemId && video.duration > 0 && isFinite(video.duration)) {
-        prefs.saveProgress(slug, itemId, { t: video.currentTime, d: video.duration, title, logo, url: src, at: Date.now() });
-      }
       hls?.destroy();
       video.removeAttribute("src");
       video.load();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [src]);
+  }, [src, slug, itemId, title, logo]);
 
   // تفعيل مسار الترجمة عند توفره
   useEffect(() => {
@@ -159,7 +176,7 @@ export function VideoPlayer({ src, title, onClose, slug, itemId, logo, season, e
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background">
+    <div data-player-active className="fixed inset-0 z-50 flex flex-col bg-background">
       <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
         <h2 className="truncate font-bold">{title}{subName && <span className="ms-2 text-xs font-normal text-primary">ترجمة: {subName}</span>}</h2>
         <div className="flex shrink-0 items-center gap-2">
@@ -171,7 +188,7 @@ export function VideoPlayer({ src, title, onClose, slug, itemId, logo, season, e
         </div>
       </div>
       <div className="relative flex flex-1 items-center justify-center bg-background">
-        <video ref={ref} controls autoPlay playsInline crossOrigin="anonymous" className="h-full max-h-full w-full" onError={() => setErr("تعذر تشغيل هذا المحتوى")}>
+        <video ref={ref} controls autoPlay playsInline className="h-full max-h-full w-full" onError={() => setErr("تعذر تشغيل هذا المحتوى")}>
           {vttUrl && <track kind="subtitles" label="الترجمة" srcLang="ar" src={vttUrl} default />}
         </video>
         {err && <div className="absolute bottom-6 rounded-lg bg-destructive px-4 py-2 text-sm font-bold text-destructive-foreground">{err}</div>}
