@@ -13,7 +13,7 @@ export function orderPanelSection(features:unknown,section:string){
  if(['studio','brand','layout'].includes(section))return false;
  return f.selected?.includes(section)??false;
 }
-export function themesForCatalog(themes:{key:string;catalog_id:string|null;enabled:boolean}[],catalogId:string){
+export function themesForCatalog<T extends {key:string;catalog_id:string|null;enabled:boolean}>(themes:T[],catalogId:string):T[]{
  return themes.filter(t=>t.enabled&&(t.catalog_id===null||t.catalog_id===catalogId));
 }
 export function validateAvailable(selection:Selection,catalog:{templates:unknown;features:unknown;status?:string},themes?:{key:string;catalog_id:string|null;enabled:boolean}[]){
