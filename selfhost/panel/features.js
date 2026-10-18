@@ -16,6 +16,7 @@ function restoreAllowed(m,current,next){
  if(!next.settings||JSON.stringify(next.settings)!==JSON.stringify(current.settings))return false;
  if(!featureEnabled(m,'servers')&&JSON.stringify(next.servers)!==JSON.stringify(current.servers))return false;
  if(!featureEnabled(m,'notify')&&JSON.stringify(next.notifications||[])!==JSON.stringify(current.notifications))return false;
+ if(!featureEnabled(m,'activation')&&JSON.stringify(next.codes||[])!==JSON.stringify(current.codes||[]))return false;
  return true;
 }
 module.exports={validateManifest,featureEnabled,settingsAllowed,restoreAllowed};

@@ -30,7 +30,7 @@ if (!db) {
     settings: { name: "Bahrain Satellite", logo: null, banner: null, theme: "bhsat", colors: DEFAULT_COLORS,
       whatsapp: "", telegram: "", facebook: "", website: "", email: "", phone: "", store_url: "", notice: "",
       latest_version: "1.0.0", min_version: "1.0.0", update_url: "", max_hosts: 40 },
-    servers: [], notifications: [], changes: [], users: [], sessions: {},
+    servers: [], notifications: [], changes: [], users: [], sessions: {}, codes: [],
   };
   if (manifest) { db.settings.name=manifest.name; db.settings.logo=manifest.logo; db.settings.theme=manifest.theme; db.settings.layout={template:manifest.template}; db.settings.max_hosts=2; }
   const pass = process.env.PANEL_ADMIN_PASSWORD || crypto.randomBytes(9).toString("base64url");
@@ -40,6 +40,7 @@ if (!db) {
   console.log(`\n  First login → user: ${user}  password: ${pass}\n  (saved in data/initial-login.txt)\n`);
   save();
 }
+if (!Array.isArray(db.codes)) db.codes = [];
 function save() { const tmp = DB_FILE + ".tmp"; fs.writeFileSync(tmp, JSON.stringify(db, null, 2)); fs.renameSync(tmp, DB_FILE); }
 function log(user, section, summary) { db.changes.unshift({ id: id(), user, section, summary, at: now() }); db.changes = db.changes.slice(0, 500); save(); }
 
@@ -127,6 +128,7 @@ function publicConfig() {
     latest_version: s.latest_version, min_version: s.min_version, update_url: s.update_url || null,
     sources: db.servers.filter((x) => x.enabled).map((x) => ({ id: x.id, type: x.type, name: x.name, has_code: !!x.login_code, activation_enabled: !!x.activation_api_url })),
     activation_enabled: db.servers.some((x) => x.enabled && x.type === "xtream" && x.activation_api_url),
+    builtin_activation_enabled: featureEnabled("activation") && db.codes.some((x) => x.enabled),
     announcements: db.notifications.filter((n) => n.active && (!n.expires_at || Date.parse(n.expires_at) > t)).map(({ id, title, body, image_url, kind }) => ({ id, title, body, image_url, kind })),
   };
 }
@@ -161,6 +163,21 @@ async function safeFetch(raw, init = {}) {
     if (init.body) r.write(init.body); r.end();
   });
 }
+/* ---------- built-in activation codes (BH-) — same rules as the cloud panel ---------- */
+const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const genCode = () => "BH-" + [0, 1, 2].map(() => Array.from(crypto.randomBytes(4)).map((b) => CODE_CHARS[b % CODE_CHARS.length]).join("")).join("-");
+const codeHash = (c) => crypto.createHash("sha256").update(c.trim().toUpperCase()).digest("hex");
+function redeemBuiltin(code, mac, res, cors) {
+  if (!featureEnabled("activation")) return send(res, 403, { error: "تفعيل الأكواد غير متاح لهذا التطبيق" }, cors);
+  const c = db.codes.find((x) => x.hash === codeHash(code));
+  if (!c || !c.enabled) return send(res, 400, { error: "كود التفعيل غير صحيح" }, cors);
+  if (c.device && c.device !== mac) return send(res, 403, { error: "هذا الكود مفعّل على جهاز آخر" }, cors);
+  const sv = db.servers.find((x) => x.id === c.source_id && x.enabled);
+  if (!sv) return send(res, 400, { error: "السيرفر المرتبط بالكود غير متاح" }, cors);
+  if (!c.device) { c.device = mac; c.activated_at = now(); save(); }
+  return send(res, 200, { serverId: sv.id, sourceId: sv.id, username: c.username, password: c.password, hosts: [sv.url, ...sv.backup_urls] }, cors);
+}
+
 async function activateRoute(req, res, cors) {
   const ip = req.headers["x-real-ip"] || req.socket.remoteAddress; const t = Date.now();
   const h = (actHits.get(ip) || []).filter((x) => t - x < 600_000); h.push(t); actHits.set(ip, h);
@@ -169,6 +186,7 @@ async function activateRoute(req, res, cors) {
   let b; try { b = await body(req, 4096); } catch { return send(res, 413, { error: "طلب كبير" }, cors); }
   const code = String(b.code || ""), mac = String(b.deviceId || "").toUpperCase(), sc = String(b.serverId || b.serverCode || "");
   if (!/^[\x20-\x7e]{1,128}$/.test(code) || !/^([0-9A-F]{2}:){5}[0-9A-F]{2}$/.test(mac) || (sc && !/^\d{1,6}$/.test(sc))) return send(res, 400, { error: "بيانات غير صحيحة" }, cors);
+  if (code.trim().toUpperCase().startsWith("BH-")) return redeemBuiltin(code, mac, res, cors);
   const list = db.servers.filter((x) => x.enabled && x.type === "xtream" && x.activation_api_url);
   const sv = sc ? list.find((x) => x.login_code === sc) : list.length === 1 ? list[0] : null;
   if (!sv) return send(res, 400, { error: list.length ? "كود السيرفر غير صحيح" : "تفعيل الأكواد غير متاح" }, cors);
@@ -255,12 +273,12 @@ const server = http.createServer(async (req, res) => {
       const s = session(req);
       if (!s) return send(res, 401, { error: "سجّل الدخول" });
       const who = s.user;
-      const feature = p.startsWith("/api/servers") ? "servers" : p.startsWith("/api/notifications") ? "notify" : ["/api/backups","/api/backup","/api/restore","/api/backup-test"].includes(p) ? "backup" : p==="/api/upload" ? "brand" : null;
+      const feature = p.startsWith("/api/servers") ? "servers" : p.startsWith("/api/notifications") ? "notify" : p.startsWith("/api/codes") ? "activation" : ["/api/backups","/api/backup","/api/restore","/api/backup-test"].includes(p) ? "backup" : p==="/api/upload" ? "brand" : null;
       if(feature && !featureEnabled(feature)) return send(res,403,{error:"الميزة غير متاحة لهذا التطبيق"});
       if (p === "/api/logout") { delete db.sessions[s.sid]; save(); return send(res, 200, { ok: true }, { "set-cookie": "sid=; Path=/; Max-Age=0" }); }
       if (p === "/api/logout-all") { for (const [k, v] of Object.entries(db.sessions)) if (v.user === who) delete db.sessions[k]; save(); return send(res, 200, { ok: true }); }
       if (p === "/api/me") return send(res, 200, { user: who, version: VERSION, users: db.users.map((u) => u.username) });
-      if (p === "/api/state") return send(res, 200, { settings: db.settings, servers: featureEnabled("servers") ? db.servers : [], notifications: featureEnabled("notify") ? db.notifications : [], features: manifest?.features ?? null, hosts_used: hostsUsed() });
+      if (p === "/api/state") return send(res, 200, { settings: db.settings, servers: featureEnabled("servers") ? db.servers : [], notifications: featureEnabled("notify") ? db.notifications : [], codes: featureEnabled("activation") ? db.codes.map(({ id, hint, mode, source_id, username, device, enabled, created_at, activated_at }) => ({ id, hint, mode, source_id, username, bound: !!device, enabled, created_at, activated_at: activated_at || null })) : [], features: manifest?.features ?? null, hosts_used: hostsUsed() });
       if (p === "/api/changes") return send(res, 200, db.changes);
       if (p === "/api/backups") return send(res, 200, fs.readdirSync(BACKUPS).filter((x) => x.startsWith("db-")).sort().reverse());
 
@@ -318,6 +336,35 @@ const server = http.createServer(async (req, res) => {
         if (req.method === "DELETE") { db.notifications.splice(i, 1); save(); return send(res, 200, { ok: true }); }
         if (req.method === "PUT") { const b = await body(req, 10000); db.notifications[i].active = !!b.active; save(); return send(res, 200, { ok: true }); }
       }
+      // built-in activation codes
+      if (p === "/api/codes" && req.method === "POST") {
+        const b = await body(req, 10000);
+        const mode = b.mode === "shared" ? "shared" : "individual";
+        const count = mode === "individual" ? 1 : Math.min(100, Math.max(1, Number(b.count) || 1));
+        const sv = db.servers.find((x) => x.id === str(b.source_id, 40));
+        const un = str(b.username, 100), pw = String(b.password || "").slice(0, 100);
+        if (!sv) return send(res, 400, { error: "اختر السيرفر المرتبط بالأكواد" });
+        if (!un || !pw) return send(res, 400, { error: "اسم المستخدم وكلمة المرور مطلوبان" });
+        const created = [];
+        for (let i = 0; i < count; i++) {
+          let code; do { code = genCode(); } while (db.codes.some((x) => x.hash === codeHash(code)));
+          db.codes.push({ id: id(), hash: codeHash(code), hint: code.slice(-4), mode, source_id: sv.id, username: un, password: pw, device: null, enabled: true, created_at: now() });
+          created.push(code);
+        }
+        log(who, "أكواد التفعيل", `إنشاء ${created.length} كود (${mode === "shared" ? "حساب مشترك" : "حساب مستقل"})`);
+        return send(res, 200, { codes: created });
+      }
+      m = /^\/api\/codes\/([a-f0-9]+)$/.exec(p);
+      if (m) {
+        const i = db.codes.findIndex((x) => x.id === m[1]); if (i < 0) return send(res, 404, { error: "غير موجود" });
+        if (req.method === "PUT") {
+          const b = await body(req, 10000);
+          if ("enabled" in b) db.codes[i].enabled = !!b.enabled;
+          if (b.unbind) { db.codes[i].device = null; delete db.codes[i].activated_at; }
+          log(who, "أكواد التفعيل", `${db.codes[i].enabled ? "تفعيل" : "إيقاف"} كود ••••${db.codes[i].hint}`); return send(res, 200, { ok: true });
+        }
+        if (req.method === "DELETE") { const [x] = db.codes.splice(i, 1); log(who, "أكواد التفعيل", `حذف كود ••••${x.hint}`); return send(res, 200, { ok: true }); }
+      }
       // backup
       if (p === "/api/backup" && req.method === "POST") {
         const b = await body(req, 10000); const pass = String(b.password || "");
@@ -332,7 +379,7 @@ const server = http.createServer(async (req, res) => {
         if(!rules.restoreAllowed(manifest,db,j)) return send(res,403,{error:"النسخة تغير هوية التطبيق أو ميزاته المقفلة"});
         fs.copyFileSync(DB_FILE, path.join(BACKUPS, `before-restore-${Date.now()}.json`));
         for (const [f, data] of j.uploads || []) fs.writeFileSync(path.join(UPLOADS, path.basename(f)), Buffer.from(data, "base64"));
-        db = { settings: j.settings, servers: j.servers, notifications: j.notifications || [], changes: j.changes || [], users: j.users?.length ? j.users : db.users, sessions: {} };
+        db = { settings: j.settings, servers: j.servers, notifications: j.notifications || [], changes: j.changes || [], users: j.users?.length ? j.users : db.users, sessions: {}, codes: Array.isArray(j.codes) ? j.codes : db.codes };
         log(who, "النسخ الاحتياطي", "استعادة نسخة"); return send(res, 200, { ok: true });
       }
       if (p === "/api/backup-test") {
