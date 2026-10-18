@@ -12,7 +12,9 @@ export const readWorkspace=createServerFn({method:'GET'}).middleware([requireSup
 });
 export const saveOrder=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((d:unknown)=>z.object({id:z.string().uuid().optional(),selection:selectionSchema}).strict().parse(d)).handler(async({data,context})=>{
  const {data:catalog,error}=await context.supabase.from('application_catalog').select('*').eq('id',data.selection.catalog_id).eq('enabled',true).single();
- if(error||!catalog)throw new Error('التطبيق غير متاح');validateAvailable(data.selection,catalog);
+ if(error||!catalog)throw new Error('التطبيق غير متاح');
+ const {data:themes}=await context.supabase.from('app_themes').select('key,catalog_id,enabled');
+ validateAvailable(data.selection,catalog,themes??[]);
  const r=await context.supabase.rpc('order_workflow',{_id:data.id??null as unknown as string,_action:'save',_payload:{selection:data.selection}});
  if(r.error)throw new Error(r.error.message);return r.data;
 });
