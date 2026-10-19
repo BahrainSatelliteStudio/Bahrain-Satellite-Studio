@@ -1,4 +1,5 @@
-import { activateCode, macCall, xtreamApi } from "@/lib/iptv.functions";
+import { activateCode } from "@/features/activation/redeem.functions";
+import { macCall, xtreamApi } from "@/features/player/providers.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";

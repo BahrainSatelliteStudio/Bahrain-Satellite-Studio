@@ -1,6 +1,6 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { Download } from "lucide-react";
-import { getTenantConfig } from "@/lib/iptv.functions";
+import { getTenantConfig } from "@/features/player/config.functions";
 
 export const Route = createFileRoute("/install/$slug")({
   loader: async ({ params }) => {

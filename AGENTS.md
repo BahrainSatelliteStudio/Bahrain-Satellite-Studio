@@ -20,7 +20,7 @@
 
 - APK builds are signed Release only: the keystore is generated server-side (src/lib/signing.server.ts) and stored as encrypted GitHub Actions secrets; builds refuse to run without it and without a logo, so every app ships with one stable signing identity.
 - Built-in activation separates broadcast accounts from hashed codes; authenticated tenant-scoped management and atomic database redemption keep individual/shared accounts isolated and prevent concurrent device claims. Raw codes are returned only at creation; disabling a code prevents future redemption, not upstream broadcast access already granted.
-- Feature implementations live in `src/features/`; routes retain their URL, metadata, access and loading contracts, while existing public modules may re-export implementations to preserve callers during incremental organization.
+- Feature implementations and all playback/experience UI live in `src/features/`; consumers import their owning modules directly instead of compatibility facades, so manufacturing and preview use one implementation while routes retain URLs, metadata, access and loading contracts.
 - Keep player identity and preference rules in browser-safe `src/lib/player/` and keep server helpers behind handler-local imports; this prevents organization changes from crossing runtime or storage boundaries.
 
 - Application orders and immutable quote snapshots live separately from tenants; only admin provisioning creates tenants after customer acceptance, so legacy applications and signing remain unchanged.

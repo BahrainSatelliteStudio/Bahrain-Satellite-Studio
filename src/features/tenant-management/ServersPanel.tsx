@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
-import { checkHost } from "@/lib/iptv.functions";
+import { checkHost } from "@/features/tenant-management/host-check.functions";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Plus, RefreshCw, Trash2 } from "lucide-react";

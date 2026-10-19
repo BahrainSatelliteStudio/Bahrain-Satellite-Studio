@@ -12,7 +12,7 @@ import {
   createActivationCodes,
   listActivationCodes,
   setActivationCodeEnabled,
-} from "@/lib/activation-codes.functions";
+} from "@/features/activation/manage.functions";
 
 export function ActivationCodesPanel({ tenantId }: { tenantId: string }) {
   const qc = useQueryClient();

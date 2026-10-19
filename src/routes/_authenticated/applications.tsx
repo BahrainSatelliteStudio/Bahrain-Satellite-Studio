@@ -4,7 +4,7 @@ import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { ArrowRight, Eye, Palette, Smartphone, Hammer, Check, Search, Layers } from "lucide-react";
 import { toast } from "sonner";
-import { applicationsQuery, withApplicationTemplate } from "@/lib/application-library";
+import { applicationsQuery, withApplicationTemplate } from "@/features/application-library/queries";
 import { TEMPLATES, resolveLayout, type TemplateKey } from "@/lib/layout";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";

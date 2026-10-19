@@ -1,36 +1,11 @@
-# لوحة تحكم التطبيق — دليل التثبيت
+# لوحة تحكم التطبيق — مرجع الاستخدام
 
-اللوحة تعمل على سيرفرك أنت، بدون الحاجة للإنترنت أثناء التثبيت، وكل البيانات محفوظة في مجلد `data`.
+لوحة مستقلة على سيرفر الزبون، تستخدم Node.js 18 أو أحدث دون اعتماديات إضافية. بياناتها محفوظة في ملفات JSON.
 
-## 1) Ubuntu / Debian (الأسهل)
-```bash
-unzip bhsat-panel.zip && cd bhsat-panel
-sudo bash installers/install-linux.sh
-```
-- يثبت Node.js من داخل الحزمة إذا لم يكن موجودًا (بدون إنترنت).
-- يشتغل تلقائيًا مع تشغيل السيرفر. الأوامر: `systemctl restart bhsat-panel`
-- البيانات: `/opt/bhsat-panel/data`
+## التركيب
+المرجع الوحيد لخطوات Linux وWindows وDocker وcPanel والتثبيت دون إنترنت هو [دليل التركيب المفصل](INSTALL-GUIDE-AR.md).
 
-## 2) Docker
-```bash
-cd bhsat-panel && bash installers/install-docker.sh
-```
-- إذا وُجد ملف `runtime/bhsat-panel-image.tar` يُثبت بدون إنترنت، وإلا يبني الصورة (يحتاج إنترنت مرة واحدة).
-- البيانات في `bhsat-panel/data`.
-
-## 3) Windows Server
-- فك الضغط، اضغط يمين على `installers\install-windows.bat` ← **Run as administrator**.
-- يضيف المهمة "BHSAT Panel" لتشتغل تلقائيًا مع ويندوز، ويفتح المنفذ في الجدار الناري.
-- البيانات: `C:\bhsat-panel\data`
-
-## 4) cPanel / استضافة عادية
-1. ارفع محتويات المجلد إلى مجلد مثل `~/bhsat-panel` (بدون مجلد runtime).
-2. cPanel ← **Setup Node.js App** ← Create Application:
-   - Node.js version: 18 أو أحدث
-   - Application root: `bhsat-panel`
-   - Application URL: الدومين أو الدومين الفرعي
-   - Application startup file: `app.js`
-3. اضغط **Start**. بيانات أول دخول تجدها في `bhsat-panel/data/initial-login.txt` من مدير الملفات.
+التثبيت دون إنترنت يتطلب تضمين بيئة التشغيل المناسبة في الحزمة. بيانات Docker محفوظة في مجلد `data` بجانب ملف `docker-compose.yml`، والمجلد يُربط داخل الحاوية بالمسار `/data`.
 
 ## أول دخول
 - اسم المستخدم وكلمة المرور تُنشأ تلقائيًا وتظهر بعد التثبيت وفي `data/initial-login.txt`.

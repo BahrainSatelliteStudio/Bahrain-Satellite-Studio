@@ -1,6 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { getTenantConfig } from "@/lib/iptv.functions";
-import { PlayerApp, type TenantConfig } from "@/components/player/PlayerApp";
+import { getTenantConfig } from "@/features/player/config.functions";
+import { PlayerApp } from "@/features/player/PlayerApp";
+import type { TenantConfig } from "@/features/player/types";
 import { TEMPLATES, resolveLayout, type TemplateKey } from "@/lib/layout";
 
 export const Route = createFileRoute("/preview/$slug")({

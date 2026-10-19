@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { withApplicationTemplate } from "@/lib/application-library";
+import { withApplicationTemplate } from "@/features/application-library/queries";
 import { resolveLayout } from "@/lib/layout";
 
 describe("shared application templates", () => {

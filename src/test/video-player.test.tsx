@@ -1,11 +1,13 @@
 import { act, cleanup, fireEvent, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { VideoPlayer } from "@/components/player/VideoPlayer";
-import { PlayerApp, type TenantConfig } from "@/components/player/PlayerApp";
+import { VideoPlayer } from "@/features/player/VideoPlayer";
+import { PlayerApp } from "@/features/player/PlayerApp";
+import type { TenantConfig } from "@/features/player/types";
 import { prefs } from "@/lib/player/prefs";
 
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
-vi.mock("@/lib/iptv.functions", () => ({ xtreamApi: vi.fn(), m3uFetch: vi.fn(), macCall: vi.fn(), activateCode: vi.fn() }));
+vi.mock("@/features/player/providers.functions", () => ({ xtreamApi: vi.fn(), m3uFetch: vi.fn(), macCall: vi.fn() }));
+vi.mock("@/features/activation/redeem.functions", () => ({ activateCode: vi.fn() }));
 vi.mock("@/lib/subtitles.functions", () => ({ searchSubtitles: vi.fn(), downloadSubtitle: vi.fn() }));
 
 const saved = { t: 120, d: 1800, title: "Saved movie", url: "/movie.mp4", at: 1 };

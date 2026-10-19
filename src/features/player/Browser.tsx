@@ -1,8 +1,8 @@
-import { ExperienceHome } from "@/components/player/ExperienceHome";
-import { ExperienceNav } from "@/components/player/ExperienceNav";
-import { VideoPlayer } from "@/components/player/VideoPlayer";
+import { ExperienceHome } from "@/features/player/ExperienceHome";
+import { ExperienceNav } from "@/features/player/ExperienceNav";
+import { VideoPlayer } from "@/features/player/VideoPlayer";
 import { Button } from "@/components/ui/button";
-import { m3uFetch, macCall, xtreamApi } from "@/lib/iptv.functions";
+import { m3uFetch, macCall, xtreamApi } from "@/features/player/providers.functions";
 import { ICONS, resolveLayout, type AppLayout, type SectionCfg } from "@/lib/layout";
 import { PREVIEW_CATALOG } from "@/lib/player/demo";
 import { progressKey, progressNamespace } from "@/lib/player/media";

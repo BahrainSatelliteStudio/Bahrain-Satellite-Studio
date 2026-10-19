@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getHomepage } from "@/lib/homepage.functions";
-import { HomepageView } from "@/components/HomepageView";
+import { HomepageView } from "@/features/homepage/HomepageView";
 import { resolveHomepage } from "@/lib/homepage";
 
 export const Route = createFileRoute("/")({
