@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="login_auto_host_failed">The server could not be detected automatically. Enter the host manually.</string>
+  <string name="login_connection_failed_fmt">Connection failed: %1$s</string>
+  <string name="login_enter_host">Enter the host or server URL</string>
+  <string name="login_host_hint">Server / host</string>
+  <string name="login_searching_server">Searching for the server…</string>
+  <string name="login_subtitle">Enter your IPTV account details</string>
+  <string name="login_title">Sign in</string>
+  <string name="login_try_host">Test host</string>
+  <string name="prefetch_choose_theme">Choose your preferred theme</string>
+  <string name="prefetch_theme_change_settings">You can change your selected theme in Settings.</string>
+  <string name="settings_nav_appearance">Appearance</string>
+  <string name="settings_section_appearance">Appearance</string>
+  <string name="settings_servers_full_subtitle">Activate / test / edit / remove servers</string>
+  <string name="settings_servers_title">Manage servers</string>
+  <string name="settings_theme_picker_title">Choose app theme</string>
+  <string name="settings_theme_selected_restart_fmt">%1$s selected — the app will restart</string>
+  <string name="settings_theme_title">App theme</string>
+  <string name="theme_blue">Blue theme</string>
+  <string name="theme_classic">Classic theme</string>
+  <string name="theme_modern">Modern dark theme</string>
+  <string name="theme_selected_blue">Blue theme selected</string>
+  <string name="theme_selected_classic">Classic theme selected</string>
+  <string name="theme_selected_modern">Modern dark theme selected</string>
+</resources>
