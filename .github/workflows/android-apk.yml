@@ -8,7 +8,7 @@ on:
       package_id: { required: true }
       version: { required: true }
       app_url: { required: true }
-      logo_url: { required: false, default: "" }
+      logo_url: { required: true }
       callback_url: { required: true }
       callback_secret: { required: true }
 
@@ -26,20 +26,17 @@ jobs:
           APP_NAME: ${{ inputs.app_name }}
           PKG: ${{ inputs.package_id }}
           APP_URL: ${{ inputs.app_url }}
+          LOGO_URL: ${{ inputs.logo_url }}
           VER: ${{ inputs.version }}
         run: |
           mkdir -p www && echo '<html></html>' > www/index.html
-          cat > capacitor.config.json <<EOF
-          { "appId": "$PKG", "appName": "$APP_NAME", "webDir": "www",
-            "server": { "url": "$APP_URL?v=$VER", "cleartext": true, "androidScheme": "https" },
-            "android": { "allowMixedContent": true } }
-          EOF
+          bun scripts/configure-player.ts
           rm -f capacitor.config.ts
           GS_URL="$(dirname "${{ inputs.callback_url }}")/google-services?package=$PKG"
           if curl -fsS "$GS_URL" -H "x-build-secret: ${{ inputs.callback_secret }}" -o /tmp/gs.json; then
             echo "Push notifications enabled for $PKG"; bun add @capacitor/push-notifications@^8
           else
-            echo "::warning::No google-services.json for $PKG — building without push notifications"; rm -f /tmp/gs.json
+            echo "::error::Firebase configuration is required for this package"; exit 1
           fi
           bunx cap add android
           [ -f /tmp/gs.json ] && cp /tmp/gs.json android/app/google-services.json
