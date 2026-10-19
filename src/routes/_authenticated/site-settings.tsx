@@ -8,7 +8,7 @@ import { useMe } from "@/lib/me";
 import { supabase } from "@/integrations/supabase/client";
 import { getHomepage, saveHomepage } from "@/lib/homepage.functions";
 import { defaultHomepage, type Homepage } from "@/lib/homepage";
-import { HomepageView, homeIcons } from "@/components/HomepageView";
+import { HomepageView, homeIcons } from "@/features/homepage/HomepageView";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";

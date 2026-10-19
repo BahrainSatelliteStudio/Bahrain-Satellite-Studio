@@ -1,5 +1,5 @@
 import { orderPanelSection } from "@/features/orders/rules";
-import { ActivationCodesPanel } from "@/components/ActivationCodesPanel";
+import { ActivationCodesPanel } from "@/features/activation/ActivationCodesPanel";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveFeatures, type FeatureKey } from "@/lib/features";
