@@ -1,4 +1,5 @@
 import { type Lang } from "@/lib/player/prefs";
+import { Button } from "@/components/ui/button";
 import { LogOut, MessageCircle, Phone, Send, Settings } from "lucide-react";
 
 import type { TenantConfig } from "./types";
@@ -44,7 +45,7 @@ export function Shell({
           {cfg.support_whatsapp && (
             <a
               data-nav
-              aria-label="واتساب"
+              aria-label={lang === "ar" ? "واتساب" : "WhatsApp"}
               href={`https://wa.me/${cfg.support_whatsapp.replace(/\D/g, "")}`}
               className="rounded-lg bg-secondary p-2"
             >
@@ -54,7 +55,7 @@ export function Shell({
           {cfg.support_telegram && (
             <a
               data-nav
-              aria-label="تلغرام"
+              aria-label={lang === "ar" ? "تلغرام" : "Telegram"}
               href={`https://t.me/${cfg.support_telegram.replace(/^@/, "")}`}
               className="rounded-lg bg-secondary p-2"
             >
@@ -64,7 +65,7 @@ export function Shell({
           {cfg.support_phone && (
             <a
               data-nav
-              aria-label="اتصال"
+              aria-label={lang === "ar" ? "اتصال" : "Call"}
               href={`tel:${cfg.support_phone}`}
               className="rounded-lg bg-secondary p-2"
             >
@@ -72,24 +73,24 @@ export function Shell({
             </a>
           )}
           {onSettings && (
-            <button
+            <Button variant="secondary" size="icon"
               data-nav
-              aria-label="الإعدادات"
+              aria-label={lang === "ar" ? "الإعدادات" : "Settings"}
               onClick={onSettings}
               className="rounded-lg bg-secondary p-2"
             >
               <Settings className="h-5 w-5" />
-            </button>
+            </Button>
           )}
           {onLogout && (
-            <button
+            <Button variant="secondary" size="icon"
               data-nav
-              aria-label="خروج"
+              aria-label={lang === "ar" ? "خروج" : "Sign out"}
               onClick={onLogout}
               className="rounded-lg bg-secondary p-2"
             >
               <LogOut className="h-5 w-5" />
-            </button>
+            </Button>
           )}
         </div>
       </header>

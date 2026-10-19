@@ -117,7 +117,7 @@ export function SettingsDialog({
                         default: L.themeDefault,
                         blue: L.themeBlue,
                         cinema: L.themeCinema,
-                        bhsat: L.themeBhsat,
+                        bhsat: cfg.name,
                       }[th]
                     }
                   </button>
