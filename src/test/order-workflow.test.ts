@@ -22,6 +22,11 @@ describe('customer order rules',()=>{
 });
 
 describe('catalog status and theme matching',()=>{
+ it('accepts an admin-added desert theme when enabled and general',()=>expect(validateAvailable(selectionSchema.parse({...selection,theme:'desert'}),{templates:['experience'],features:['servers','contact'],status:'ready'},[{key:'desert',catalog_id:null,enabled:true}]).theme).toBe('desert'));
+ it('accepts an admin-added desert theme for its matching app',()=>expect(validateAvailable(selectionSchema.parse({...selection,theme:'desert'}),{templates:['experience'],features:['servers','contact'],status:'ready'},[{key:'desert',catalog_id:'iptv-player',enabled:true}]).theme).toBe('desert'));
+ it('rejects an admin-added desert theme for a different app',()=>expect(()=>validateAvailable(selectionSchema.parse({...selection,theme:'desert'}),{templates:['experience'],features:['servers','contact'],status:'ready'},[{key:'desert',catalog_id:'owntv',enabled:true}])).toThrow());
+ it('rejects an admin-added desert theme when disabled',()=>expect(()=>validateAvailable(selectionSchema.parse({...selection,theme:'desert'}),{templates:['experience'],features:['servers','contact'],status:'ready'},[{key:'desert',catalog_id:null,enabled:false}])).toThrow());
+ it('rejects an unregistered desert theme',()=>expect(()=>validateAvailable(selectionSchema.parse({...selection,theme:'desert'}),{templates:['experience'],features:['servers','contact'],status:'ready'},[])).toThrow());
  it('rejects orders for apps still in preparation',()=>expect(()=>validateAvailable(selectionSchema.parse(selection),{templates:['experience'],features:['servers','contact'],status:'preparing'})).toThrow());
  it('accepts ready apps',()=>expect(validateAvailable(selectionSchema.parse(selection),{templates:['experience'],features:['servers','contact'],status:'ready'})).toBeTruthy());
  it('rejects a theme not compatible with the chosen app',()=>expect(()=>validateAvailable(selectionSchema.parse(selection),{templates:['experience'],features:['servers','contact'],status:'ready'},[{key:'other-app-theme',catalog_id:'owntv',enabled:true}])).toThrow());

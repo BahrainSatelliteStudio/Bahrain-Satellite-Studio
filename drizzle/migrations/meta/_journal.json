@@ -162,6 +162,13 @@
       "when": 1792337728777,
       "tag": "0022_catalog_admin_policy",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792576452377,
+      "tag": "0023_dynamic_order_theme_validation",
+      "breakpoints": true
     }
   ]
 }
