@@ -24,6 +24,7 @@
 - Keep player identity and preference rules in browser-safe `src/lib/player/` and keep server helpers behind handler-local imports; this prevents organization changes from crossing runtime or storage boundaries.
 
 - Application orders and immutable quote snapshots live separately from tenants; only admin provisioning creates tenants after customer acceptance, so legacy applications and signing remain unchanged.
+- Order saves validate theme availability and catalog compatibility against `app_themes` in both the workflow and selection trigger; tenant theme keys use the same key format rather than a fixed palette list so approved custom themes can be provisioned without altering legacy themes.
 - Order-managed panels derive capabilities from approved feature selections; optional selfhost delivery manifests enforce the same selections without adding panel dependencies.
 - `players/<name>/` holds vendored open-source native players (keep upstream LICENSE); each builds via its own GitHub workflow with build-time appId/appName and the shared signing secrets, so customer branding never edits upstream source.
 - `players/bahrain-satellite/` contains original-app audit evidence and unapplied resource overlays only; do not treat these as buildable source or connect this proprietary APK to the open-source build pipeline, because source and original signing identity must be verified first.
